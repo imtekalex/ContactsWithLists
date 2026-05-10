@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import {
   Users,
   Trash2,
@@ -75,6 +75,10 @@ export default function Home() {
   const [lists, setLists] = useState<ContactList[]>([])
   const [storageReady, setStorageReady] = useState(false)
 
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle")
+  const pendingSaveCount = useRef(0)
+  const saveStatusTimer = useRef<number | null>(null)
+
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [search, setSearch] = useState("")
   const [starredOnly, setStarredOnly] = useState(false)
@@ -135,14 +139,55 @@ export default function Home() {
     }
   }, [])
 
+  function trackSave(promise: Promise<void>) {
+    if (saveStatusTimer.current) {
+      window.clearTimeout(saveStatusTimer.current)
+      saveStatusTimer.current = null
+    }
+
+    pendingSaveCount.current += 1
+    setSaveStatus("saving")
+
+    promise.finally(() => {
+      pendingSaveCount.current -= 1
+      if (pendingSaveCount.current <= 0) {
+        pendingSaveCount.current = 0
+        setSaveStatus("saved")
+        saveStatusTimer.current = window.setTimeout(() => {
+          setSaveStatus("idle")
+        }, 2400)
+      }
+    })
+  }
+
+  useEffect(() => {
+    const beforeUnload = (event: BeforeUnloadEvent) => {
+      if (pendingSaveCount.current > 0) {
+        event.preventDefault()
+        // Some browsers require returnValue to be set.
+        event.returnValue = ""
+      }
+    }
+
+    window.addEventListener("beforeunload", beforeUnload)
+    return () => {
+      window.removeEventListener("beforeunload", beforeUnload)
+      if (saveStatusTimer.current) {
+        window.clearTimeout(saveStatusTimer.current)
+      }
+    }
+  }, [])
+
   useEffect(() => {
     if (!storageReady) return
 
     const timeoutId = window.setTimeout(() => {
-      saveContactsCollection("contacts", contacts).catch((error) => {
-        console.error(error)
-        showBanner("Could not save contacts")
-      })
+      trackSave(
+        saveContactsCollection("contacts", contacts).catch((error) => {
+          console.error(error)
+          showBanner("Could not save contacts")
+        }),
+      )
     }, 400)
 
     return () => window.clearTimeout(timeoutId)
@@ -152,10 +197,12 @@ export default function Home() {
     if (!storageReady) return
 
     const timeoutId = window.setTimeout(() => {
-      saveContactsCollection("deleted", deleted).catch((error) => {
-        console.error(error)
-        showBanner("Could not save deleted contacts")
-      })
+      trackSave(
+        saveContactsCollection("deleted", deleted).catch((error) => {
+          console.error(error)
+          showBanner("Could not save deleted contacts")
+        }),
+      )
     }, 400)
 
     return () => window.clearTimeout(timeoutId)
@@ -165,10 +212,12 @@ export default function Home() {
     if (!storageReady) return
 
     const timeoutId = window.setTimeout(() => {
-      saveContactsCollection("groups", groups).catch((error) => {
-        console.error(error)
-        showBanner("Could not save groups")
-      })
+      trackSave(
+        saveContactsCollection("groups", groups).catch((error) => {
+          console.error(error)
+          showBanner("Could not save groups")
+        }),
+      )
     }, 400)
 
     return () => window.clearTimeout(timeoutId)
@@ -178,10 +227,12 @@ export default function Home() {
     if (!storageReady) return
 
     const timeoutId = window.setTimeout(() => {
-      saveContactsCollection("activity", activity).catch((error) => {
-        console.error(error)
-        showBanner("Could not save activity")
-      })
+      trackSave(
+        saveContactsCollection("activity", activity).catch((error) => {
+          console.error(error)
+          showBanner("Could not save activity")
+        }),
+      )
     }, 400)
 
     return () => window.clearTimeout(timeoutId)
@@ -191,10 +242,12 @@ export default function Home() {
     if (!storageReady) return
 
     const timeoutId = window.setTimeout(() => {
-      saveContactsCollection("customFields", customFields).catch((error) => {
-        console.error(error)
-        showBanner("Could not save custom fields")
-      })
+      trackSave(
+        saveContactsCollection("customFields", customFields).catch((error) => {
+          console.error(error)
+          showBanner("Could not save custom fields")
+        }),
+      )
     }, 400)
 
     return () => window.clearTimeout(timeoutId)
@@ -204,10 +257,12 @@ export default function Home() {
     if (!storageReady) return
 
     const timeoutId = window.setTimeout(() => {
-      saveContactsCollection("lists", lists).catch((error) => {
-        console.error(error)
-        showBanner("Could not save lists")
-      })
+      trackSave(
+        saveContactsCollection("lists", lists).catch((error) => {
+          console.error(error)
+          showBanner("Could not save lists")
+        }),
+      )
     }, 400)
 
     return () => window.clearTimeout(timeoutId)
@@ -600,6 +655,17 @@ export default function Home() {
         {banner && (
           <div className="absolute top-3 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-foreground text-background rounded-md text-sm shadow-lg pointer-events-none">
             {banner}
+          </div>
+        )}
+
+        {saveStatus !== "idle" && (
+          <div className="absolute top-3 right-3 z-50 flex items-center gap-2 rounded-full border border-border bg-background/95 px-3 py-1 text-xs text-muted-foreground shadow-sm">
+            {saveStatus === "saving" ? (
+              <Spinner className="w-3 h-3 text-primary" />
+            ) : (
+              <span className="inline-block h-3 w-3 rounded-full bg-emerald-500" />
+            )}
+            {saveStatus === "saving" ? "Saving..." : "All changes saved"}
           </div>
         )}
 

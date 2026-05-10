@@ -111,10 +111,10 @@ export function PrintDialog({
   const previewAreaRef = useRef<HTMLDivElement>(null)
   const measureRef = useRef<HTMLDivElement>(null)
 
-  // Reset selection when contacts change (open/close)
+  // Reset selection when contacts change or the dialog opens.
   useEffect(() => {
     setSelectedContactIds(new Set(contacts.map((c) => c.id)))
-  }, [contacts])
+  }, [contacts, open])
 
   // Auto-suggest landscape when many columns are selected in table layout
   useEffect(() => {
@@ -215,7 +215,7 @@ export function PrintDialog({
     })
   }
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (visibleContacts.length === 0 || orderedSelectedFields.length === 0) {
       commitPages([[]])
       return
@@ -265,8 +265,6 @@ export function PrintDialog({
       return
     }
 
-    // Cards layout �� 2-column grid where each grid row's height is the
-    // tallest of the two cards in that row.
     const cardEls = Array.from(container.querySelectorAll("article")) as HTMLElement[]
     if (cardEls.length === 0) {
       commitPages([visibleContacts])
@@ -287,7 +285,7 @@ export function PrintDialog({
       if (current.length > 0 && used + inc > budget) {
         result.push(current)
         current = []
-        used = rowH // new page, this row is the first row on it
+        used = rowH
         budget = otherPageBudget
       } else {
         used += inc
@@ -305,6 +303,7 @@ export function PrintDialog({
     orderedSelectedFields,
     sheetWidthPx,
     sheetHeightPx,
+    open,
   ])
 
   // -------------------------------------------------------------------------

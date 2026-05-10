@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import {
   Mail,
   Phone,
@@ -57,19 +57,55 @@ export function ContactDetail({
   }
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState<Contact>(contact)
+  const [dirty, setDirty] = useState(false)
+  const previousContactId = useRef(contact.id)
 
   useEffect(() => {
-    setDraft(contact)
-    setEditing(false)
-  }, [contact])
+    const isNewContact = contact.id !== previousContactId.current
+
+    if (dirty && isNewContact) {
+      onUpdate(draft)
+      setDirty(false)
+    }
+
+    if (isNewContact) {
+      setDraft(contact)
+      setEditing(false)
+      setDirty(false)
+    } else if (!editing) {
+      setDraft(contact)
+    }
+
+    previousContactId.current = contact.id
+  }, [contact, editing, dirty, draft, onUpdate])
+
+  useEffect(() => {
+    if (!editing || !dirty) return
+
+    const timeoutId = window.setTimeout(() => {
+      onUpdate(draft)
+      setDirty(false)
+    }, 700)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [draft, editing, dirty, onUpdate])
+
+  function updateDraft(next: Contact) {
+    setDraft(next)
+    setDirty(true)
+  }
 
   function save() {
-    onUpdate(draft)
+    if (dirty) {
+      onUpdate(draft)
+      setDirty(false)
+    }
     setEditing(false)
   }
 
   function cancel() {
     setDraft(contact)
+    setDirty(false)
     setEditing(false)
   }
 
@@ -86,13 +122,13 @@ export function ContactDetail({
               <div className="flex gap-2">
                 <Input
                   value={draft.firstName}
-                  onChange={(e) => setDraft({ ...draft, firstName: e.target.value })}
+                  onChange={(e) => updateDraft({ ...draft, firstName: e.target.value })}
                   className="text-lg font-semibold h-10"
                   placeholder="First name"
                 />
                 <Input
                   value={draft.lastName}
-                  onChange={(e) => setDraft({ ...draft, lastName: e.target.value })}
+                  onChange={(e) => updateDraft({ ...draft, lastName: e.target.value })}
                   className="text-lg font-semibold h-10"
                   placeholder="Last name"
                 />
@@ -174,7 +210,7 @@ export function ContactDetail({
       <div className="px-8 py-6 space-y-6">
         {editing ? (
           <>
-            <EditFields draft={draft} setDraft={setDraft} />
+            <EditFields draft={draft} setDraft={updateDraft} />
             <Separator />
             <section>
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
@@ -187,7 +223,7 @@ export function ContactDetail({
                   const next = { ...draft.customValues }
                   if (value === undefined) delete next[fieldId]
                   else next[fieldId] = value
-                  setDraft({ ...draft, customValues: next })
+                  updateDraft({ ...draft, customValues: next })
                 }}
               />
             </section>
