@@ -1,0 +1,492 @@
+[
+  {
+    "id": "c1",
+    "firstName": "John",
+    "lastName": "Doe",
+    "email": "john.doe@acmecorp.com",
+    "email2": "john.personal@gmail.com",
+    "phone": "+1 (555) 123-4567",
+    "phone2": "+1 (555) 123-4568",
+    "company": "Acme Corp",
+    "title": "Product Manager",
+    "addressLine1": "375 Mission Street",
+    "addressLine2": "Suite 4200",
+    "city": "San Francisco",
+    "zip": "94105",
+    "country": "USA",
+    "website": "https://acmecorp.com",
+    "notes": "Key decision maker for the enterprise deal. Met at the SaaStr conference.",
+    "starred": true,
+    "tags": [
+      "enterprise",
+      "saas"
+    ],
+    "groupIds": [
+      "g1",
+      "g2"
+    ],
+    "customValues": {
+      "cf_status": {
+        "type": "dropdown",
+        "value": "opt_active"
+      },
+      "cf_source": {
+        "type": "dropdown",
+        "value": "opt_event"
+      },
+      "cf_interests": {
+        "type": "multiSelect",
+        "value": [
+          "opt_design",
+          "opt_tech"
+        ]
+      },
+      "cf_birthday": {
+        "type": "date",
+        "value": "1985-04-12"
+      },
+      "cf_member": {
+        "type": "text",
+        "value": "ACM-00231"
+      },
+      "cf_vip": {
+        "type": "boolean",
+        "value": true
+      },
+      "cf_budget": {
+        "type": "number",
+        "value": 250000
+      }
+    },
+    "createdAt": 1759104000000,
+    "updatedAt": 1761523200000
+  },
+  {
+    "id": "c2",
+    "firstName": "Jane",
+    "lastName": "Smith",
+    "email": "jane.smith@techinnovations.io",
+    "phone": "+1 (555) 987-6543",
+    "company": "Tech Innovations",
+    "title": "Chief Executive Officer",
+    "addressLine1": "1185 Avenue of the Americas",
+    "city": "New York",
+    "zip": "10036",
+    "country": "USA",
+    "website": "https://techinnovations.io",
+    "notes": "Strategic partner. Discussing co-marketing opportunities for Q3.",
+    "starred": true,
+    "tags": [
+      "partner",
+      "executive"
+    ],
+    "groupIds": [
+      "g1",
+      "g2"
+    ],
+    "customValues": {
+      "cf_status": {
+        "type": "dropdown",
+        "value": "opt_active"
+      },
+      "cf_source": {
+        "type": "dropdown",
+        "value": "opt_referral"
+      },
+      "cf_interests": {
+        "type": "multiSelect",
+        "value": [
+          "opt_arch",
+          "opt_events"
+        ]
+      },
+      "cf_vip": {
+        "type": "boolean",
+        "value": true
+      },
+      "cf_member": {
+        "type": "text",
+        "value": "ACM-00118"
+      }
+    },
+    "createdAt": 1757808000000,
+    "updatedAt": 1761264000000
+  },
+  {
+    "id": "c3",
+    "firstName": "Bob",
+    "lastName": "Johnson",
+    "email": "bob.johnson@globalsolutions.com",
+    "phone": "+1 (555) 456-7890",
+    "company": "Global Solutions",
+    "title": "Sales Director",
+    "city": "Chicago",
+    "country": "USA",
+    "website": "https://globalsolutions.com",
+    "notes": "Interested in Q2 partnership. Follow up next week.",
+    "starred": false,
+    "tags": [
+      "sales",
+      "prospect"
+    ],
+    "groupIds": [
+      "g2"
+    ],
+    "customValues": {},
+    "createdAt": 1760486400000,
+    "updatedAt": 1778425195348
+  },
+  {
+    "id": "c4",
+    "firstName": "Sarah",
+    "lastName": "Williams",
+    "email": "sarah.w@designstudio.co",
+    "phone": "+1 (555) 234-5678",
+    "company": "Design Studio Co",
+    "title": "Creative Director",
+    "city": "Los Angeles",
+    "country": "USA",
+    "website": "https://designstudio.co",
+    "notes": "Handles all our branding projects. Excellent quality and reliable delivery.",
+    "starred": true,
+    "tags": [
+      "creative",
+      "vendor"
+    ],
+    "groupIds": [
+      "g4"
+    ],
+    "customValues": {},
+    "createdAt": 1756512000000,
+    "updatedAt": 1761609600000
+  },
+  {
+    "id": "c5",
+    "firstName": "Michael",
+    "lastName": "Chen",
+    "email": "mchen@startupventures.vc",
+    "email2": "michael.chen@gmail.com",
+    "phone": "+1 (555) 345-6789",
+    "phone2": "+1 (650) 555-0142",
+    "company": "Startup Ventures",
+    "title": "Managing Partner",
+    "addressLine1": "2882 Sand Hill Road",
+    "addressLine2": "Building 1, Suite 200",
+    "city": "Menlo Park",
+    "zip": "94025",
+    "country": "USA",
+    "website": "https://startupventures.vc",
+    "notes": "Lead investor for Series B. Quarterly check-ins scheduled.",
+    "starred": true,
+    "tags": [
+      "investor",
+      "vc"
+    ],
+    "groupIds": [
+      "g1",
+      "g5"
+    ],
+    "customValues": {
+      "cf_status": {
+        "type": "dropdown",
+        "value": "opt_active"
+      },
+      "cf_vip": {
+        "type": "boolean",
+        "value": true
+      },
+      "cf_budget": {
+        "type": "number",
+        "value": 1500000
+      },
+      "cf_invest_stage": {
+        "type": "dropdown",
+        "value": "opt_stage_b"
+      }
+    },
+    "createdAt": 1759968000000,
+    "updatedAt": 1761436800000
+  },
+  {
+    "id": "c6",
+    "firstName": "Emily",
+    "lastName": "Brown",
+    "email": "emily.brown@brownassociates.legal",
+    "phone": "+1 (555) 567-8901",
+    "company": "Brown & Associates",
+    "title": "Senior Partner",
+    "city": "Boston",
+    "country": "USA",
+    "website": "https://brownassociates.legal",
+    "notes": "Corporate counsel for contract reviews and compliance.",
+    "starred": false,
+    "tags": [
+      "legal",
+      "professional"
+    ],
+    "groupIds": [
+      "g4"
+    ],
+    "customValues": {},
+    "createdAt": 1753920000000,
+    "updatedAt": 1778429215901
+  },
+  {
+    "id": "c7",
+    "firstName": "David",
+    "lastName": "Martinez",
+    "email": "david.m@cloudtech.io",
+    "phone": "+1 (555) 678-9012",
+    "company": "CloudTech Solutions",
+    "title": "Chief Technology Officer",
+    "city": "Seattle",
+    "country": "USA",
+    "website": "https://cloudtech.io",
+    "notes": "Technical integration partner. Working on API v2 rollout.",
+    "starred": false,
+    "tags": [
+      "technical",
+      "partner"
+    ],
+    "groupIds": [
+      "g2",
+      "g3"
+    ],
+    "customValues": {},
+    "createdAt": 1759536000000,
+    "updatedAt": 1760832000000
+  },
+  {
+    "id": "c8",
+    "firstName": "Lisa",
+    "lastName": "Anderson",
+    "email": "lisa.anderson@mediagroup.com",
+    "phone": "+1 (555) 789-0123",
+    "company": "Media Group Inc",
+    "title": "VP of Marketing",
+    "city": "Austin",
+    "country": "USA",
+    "website": "https://mediagroup.com",
+    "notes": "Handles PR and media relations for product launches.",
+    "starred": false,
+    "tags": [
+      "marketing",
+      "vendor"
+    ],
+    "groupIds": [
+      "g4"
+    ],
+    "customValues": {},
+    "createdAt": 1758672000000,
+    "updatedAt": 1761004800000
+  },
+  {
+    "id": "c9",
+    "firstName": "Thomas",
+    "lastName": "Wilson",
+    "email": "thomas.wilson@financeplus.com",
+    "phone": "+1 (555) 890-1234",
+    "company": "Finance Plus",
+    "title": "Chief Financial Officer",
+    "city": "New York",
+    "country": "USA",
+    "website": "https://financeplus.com",
+    "notes": "Financial advisor for Series A. Strong network in fintech.",
+    "starred": true,
+    "tags": [
+      "finance",
+      "advisor"
+    ],
+    "groupIds": [
+      "g1",
+      "g5"
+    ],
+    "customValues": {
+      "cf_status": {
+        "type": "dropdown",
+        "value": "opt_active"
+      },
+      "cf_vip": {
+        "type": "boolean",
+        "value": true
+      },
+      "cf_invest_stage": {
+        "type": "dropdown",
+        "value": "opt_stage_a"
+      },
+      "cf_budget": {
+        "type": "number",
+        "value": 750000
+      }
+    },
+    "createdAt": 1758240000000,
+    "updatedAt": 1761350400000
+  },
+  {
+    "id": "c10",
+    "firstName": "Amanda",
+    "lastName": "Taylor",
+    "email": "amanda.taylor@hrconnect.io",
+    "phone": "+1 (555) 901-2345",
+    "company": "HR Connect",
+    "title": "HR Director",
+    "city": "Denver",
+    "country": "USA",
+    "website": "https://hrconnect.io",
+    "notes": "Recruitment partner for senior engineering hires.",
+    "starred": false,
+    "tags": [
+      "hr",
+      "recruitment"
+    ],
+    "groupIds": [
+      "g4"
+    ],
+    "customValues": {},
+    "createdAt": 1757376000000,
+    "updatedAt": 1761177600000
+  },
+  {
+    "id": "c11",
+    "firstName": "Robert",
+    "lastName": "Garcia",
+    "email": "robert.garcia@devops.tech",
+    "phone": "+1 (555) 012-3456",
+    "company": "DevOps Tech",
+    "title": "Lead Site Reliability Engineer",
+    "city": "Portland",
+    "country": "USA",
+    "website": "https://devops.tech",
+    "notes": "Infrastructure consultant. Helping with the Kubernetes migration.",
+    "starred": false,
+    "tags": [
+      "technical",
+      "devops"
+    ],
+    "groupIds": [
+      "g3"
+    ],
+    "customValues": {},
+    "createdAt": 1756944000000,
+    "updatedAt": 1760918400000
+  },
+  {
+    "id": "c12",
+    "firstName": "Jennifer",
+    "lastName": "Lee",
+    "email": "jennifer.lee@datainsights.ai",
+    "phone": "+1 (555) 123-7890",
+    "company": "Data Insights AI",
+    "title": "Principal Data Scientist",
+    "city": "San Jose",
+    "country": "USA",
+    "website": "https://datainsights.ai",
+    "notes": "AI/ML consultant for product features. Expert in LLM fine-tuning.",
+    "starred": true,
+    "tags": [
+      "ai",
+      "data",
+      "technical"
+    ],
+    "groupIds": [
+      "g1",
+      "g3"
+    ],
+    "customValues": {
+      "cf_status": {
+        "type": "dropdown",
+        "value": "opt_prospect"
+      },
+      "cf_source": {
+        "type": "dropdown",
+        "value": "opt_website"
+      },
+      "cf_interests": {
+        "type": "multiSelect",
+        "value": [
+          "opt_tech",
+          "opt_news"
+        ]
+      },
+      "cf_vip": {
+        "type": "boolean",
+        "value": false
+      }
+    },
+    "createdAt": 1759276800000,
+    "updatedAt": 1761523200000
+  },
+  {
+    "id": "c13",
+    "firstName": "Christopher",
+    "lastName": "Davis",
+    "email": "chris.davis@securitycore.io",
+    "phone": "+1 (555) 234-1098",
+    "company": "Security Core",
+    "title": "Chief Information Security Officer",
+    "city": "Washington",
+    "country": "USA",
+    "website": "https://securitycore.io",
+    "notes": "Security audit partner. Annual SOC 2 reviews.",
+    "starred": false,
+    "tags": [
+      "security",
+      "compliance"
+    ],
+    "groupIds": [
+      "g3",
+      "g4"
+    ],
+    "customValues": {},
+    "createdAt": 1755648000000,
+    "updatedAt": 1760659200000
+  },
+  {
+    "id": "c14",
+    "firstName": "Olivia",
+    "lastName": "Martinez",
+    "email": "olivia.m@productlabs.co",
+    "phone": "+1 (555) 345-2109",
+    "company": "Product Labs",
+    "title": "Head of Product",
+    "city": "Miami",
+    "country": "USA",
+    "website": "https://productlabs.co",
+    "notes": "Joint product roadmap discussions for integrated features.",
+    "starred": true,
+    "tags": [
+      "product",
+      "partner"
+    ],
+    "groupIds": [
+      "g2"
+    ],
+    "customValues": {},
+    "createdAt": 1760140800000,
+    "updatedAt": 1761609600000
+  },
+  {
+    "id": "c15",
+    "firstName": "James",
+    "lastName": "Thompson",
+    "email": "james.t@growthcapital.fund",
+    "phone": "+1 (555) 456-3210",
+    "company": "Growth Capital Fund",
+    "title": "Investment Director",
+    "city": "Boston",
+    "country": "USA",
+    "website": "https://growthcapital.fund",
+    "notes": "Series C lead candidate. Quarterly board observer.",
+    "starred": true,
+    "tags": [
+      "investor",
+      "vc"
+    ],
+    "groupIds": [
+      "g5"
+    ],
+    "customValues": {},
+    "createdAt": 1759795200000,
+    "updatedAt": 1761436800000
+  }
+]

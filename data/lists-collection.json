@@ -1,0 +1,85 @@
+[
+  {
+    "id": "l1",
+    "name": "Holiday Cards 2025",
+    "description": "Send custom holiday cards to these contacts",
+    "type": "manual",
+    "contactIds": [
+      "c1",
+      "c2",
+      "c4",
+      "c9",
+      "c14"
+    ],
+    "createdAt": 1759104000000,
+    "updatedAt": 1761091200000
+  },
+  {
+    "id": "l2",
+    "name": "Newsletter Q4",
+    "description": "Recipients of the Q4 product newsletter",
+    "type": "manual",
+    "contactIds": [
+      "c1",
+      "c2",
+      "c5",
+      "c7",
+      "c9",
+      "c12",
+      "c14",
+      "c15"
+    ],
+    "createdAt": 1759968000000,
+    "updatedAt": 1761436800000
+  },
+  {
+    "id": "l3",
+    "name": "Board Meeting Attendees",
+    "description": "Quarterly board meeting roster",
+    "type": "manual",
+    "contactIds": [
+      "c2",
+      "c5",
+      "c9",
+      "c15"
+    ],
+    "createdAt": 1760832000000,
+    "updatedAt": 1761523200000
+  },
+  {
+    "id": "l4",
+    "name": "Starred Contacts",
+    "description": "Auto-updating list of all starred contacts",
+    "type": "dynamic",
+    "filter": {
+      "starred": true
+    },
+    "createdAt": 1756512000000,
+    "updatedAt": 1756512000000
+  },
+  {
+    "id": "l5",
+    "name": "All Investors",
+    "description": "Auto-updating list of contacts in the Investors group",
+    "type": "dynamic",
+    "filter": {
+      "groupId": "g5"
+    },
+    "createdAt": 1759536000000,
+    "updatedAt": 1759536000000
+  },
+  {
+    "id": "l6",
+    "name": "Active Customers",
+    "description": "Auto-updating list filtered by Customer Status = Active",
+    "type": "dynamic",
+    "filter": {
+      "customField": {
+        "fieldId": "cf_status",
+        "equals": "opt_active"
+      }
+    },
+    "createdAt": 1760400000000,
+    "updatedAt": 1760400000000
+  }
+]

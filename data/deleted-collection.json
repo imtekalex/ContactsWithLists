@@ -1,0 +1,40 @@
+[
+  {
+    "id": "d1",
+    "firstName": "Mark",
+    "lastName": "Thompson",
+    "email": "mark.t@oldcompany.com",
+    "phone": "+1 (555) 111-2222",
+    "company": "Old Company Inc",
+    "title": "Account Manager",
+    "city": "Houston",
+    "country": "USA",
+    "website": "",
+    "notes": "No longer at company",
+    "starred": false,
+    "tags": [],
+    "groupIds": [],
+    "customValues": {},
+    "createdAt": 1753056000000,
+    "updatedAt": 1761264000000
+  },
+  {
+    "id": "d2",
+    "firstName": "Susan",
+    "lastName": "Parker",
+    "email": "susan.p@formerclient.com",
+    "phone": "+1 (555) 222-3333",
+    "company": "Former Client Co",
+    "title": "Director",
+    "city": "Phoenix",
+    "country": "USA",
+    "website": "",
+    "notes": "Account churned",
+    "starred": false,
+    "tags": [],
+    "groupIds": [],
+    "customValues": {},
+    "createdAt": 1751328000000,
+    "updatedAt": 1760659200000
+  }
+]

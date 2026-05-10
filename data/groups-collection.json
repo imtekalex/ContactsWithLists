@@ -1,0 +1,32 @@
+[
+  {
+    "id": "g1",
+    "name": "VIP Contacts",
+    "description": "Key decision makers",
+    "color": "blue"
+  },
+  {
+    "id": "g2",
+    "name": "Business Partners",
+    "description": "Strategic partners",
+    "color": "green"
+  },
+  {
+    "id": "g3",
+    "name": "Technical Team",
+    "description": "Engineers & technical contacts",
+    "color": "purple"
+  },
+  {
+    "id": "g4",
+    "name": "Vendors",
+    "description": "External service providers",
+    "color": "amber"
+  },
+  {
+    "id": "g5",
+    "name": "Investors",
+    "description": "Current & prospective investors",
+    "color": "rose"
+  }
+]

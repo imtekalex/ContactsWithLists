@@ -26,6 +26,7 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Spinner } from "@/components/ui/spinner"
 import { cn } from "@/lib/utils"
 import {
   matchesGlobalSearch,
@@ -40,7 +41,7 @@ import {
 import {
   createDefaultContactsState,
   loadContactsState,
-  saveContactsState,
+  saveContactsCollection,
 } from "@/lib/contacts-store"
 import { NewContactDialog } from "@/components/new-contact-dialog"
 import { ContactDetail } from "@/components/contact-detail"
@@ -66,15 +67,15 @@ const defaultContactsState = createDefaultContactsState()
 
 export default function Home() {
   const [view, setView] = useState<View>("contacts")
-  const [contacts, setContacts] = useState<Contact[]>(defaultContactsState.contacts)
-  const [deleted, setDeleted] = useState<Contact[]>(defaultContactsState.deleted)
-  const [groups, setGroups] = useState<Group[]>(defaultContactsState.groups)
-  const [activity, setActivity] = useState<ActivityEntry[]>(defaultContactsState.activity)
-  const [customFields, setCustomFields] = useState<CustomField[]>(defaultContactsState.customFields)
-  const [lists, setLists] = useState<ContactList[]>(defaultContactsState.lists)
+  const [contacts, setContacts] = useState<Contact[]>([])
+  const [deleted, setDeleted] = useState<Contact[]>([])
+  const [groups, setGroups] = useState<Group[]>([])
+  const [activity, setActivity] = useState<ActivityEntry[]>([])
+  const [customFields, setCustomFields] = useState<CustomField[]>([])
+  const [lists, setLists] = useState<ContactList[]>([])
   const [storageReady, setStorageReady] = useState(false)
 
-  const [selectedId, setSelectedId] = useState<string | null>(defaultContactsState.contacts[0]?.id ?? null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
   const [search, setSearch] = useState("")
   const [starredOnly, setStarredOnly] = useState(false)
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null)
@@ -114,7 +115,16 @@ export default function Home() {
       })
       .catch((error) => {
         console.error(error)
-        if (!cancelled) showBanner("Could not load data file; using starter data")
+        if (!cancelled) {
+          showBanner("Could not load data file; using starter data")
+          setContacts(defaultContactsState.contacts)
+          setDeleted(defaultContactsState.deleted)
+          setGroups(defaultContactsState.groups)
+          setActivity(defaultContactsState.activity)
+          setCustomFields(defaultContactsState.customFields)
+          setLists(defaultContactsState.lists)
+          setSelectedId(defaultContactsState.contacts[0]?.id ?? null)
+        }
       })
       .finally(() => {
         if (!cancelled) setStorageReady(true)
@@ -129,14 +139,79 @@ export default function Home() {
     if (!storageReady) return
 
     const timeoutId = window.setTimeout(() => {
-      saveContactsState({ contacts, deleted, groups, activity, customFields, lists }).catch((error) => {
+      saveContactsCollection("contacts", contacts).catch((error) => {
         console.error(error)
-        showBanner("Could not save data file")
+        showBanner("Could not save contacts")
       })
     }, 400)
 
     return () => window.clearTimeout(timeoutId)
-  }, [contacts, deleted, groups, activity, customFields, lists, storageReady])
+  }, [contacts, storageReady])
+
+  useEffect(() => {
+    if (!storageReady) return
+
+    const timeoutId = window.setTimeout(() => {
+      saveContactsCollection("deleted", deleted).catch((error) => {
+        console.error(error)
+        showBanner("Could not save deleted contacts")
+      })
+    }, 400)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [deleted, storageReady])
+
+  useEffect(() => {
+    if (!storageReady) return
+
+    const timeoutId = window.setTimeout(() => {
+      saveContactsCollection("groups", groups).catch((error) => {
+        console.error(error)
+        showBanner("Could not save groups")
+      })
+    }, 400)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [groups, storageReady])
+
+  useEffect(() => {
+    if (!storageReady) return
+
+    const timeoutId = window.setTimeout(() => {
+      saveContactsCollection("activity", activity).catch((error) => {
+        console.error(error)
+        showBanner("Could not save activity")
+      })
+    }, 400)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [activity, storageReady])
+
+  useEffect(() => {
+    if (!storageReady) return
+
+    const timeoutId = window.setTimeout(() => {
+      saveContactsCollection("customFields", customFields).catch((error) => {
+        console.error(error)
+        showBanner("Could not save custom fields")
+      })
+    }, 400)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [customFields, storageReady])
+
+  useEffect(() => {
+    if (!storageReady) return
+
+    const timeoutId = window.setTimeout(() => {
+      saveContactsCollection("lists", lists).catch((error) => {
+        console.error(error)
+        showBanner("Could not save lists")
+      })
+    }, 400)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [lists, storageReady])
 
   const filteredContacts = useMemo(() => {
     let list = contacts
@@ -161,6 +236,17 @@ export default function Home() {
     () => contacts.filter((c) => selectedIds.has(c.id)),
     [contacts, selectedIds],
   )
+
+  if (!storageReady) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-background text-foreground">
+        <div className="flex flex-col items-center gap-3">
+          <Spinner className="w-10 h-10 text-primary" />
+          <p className="text-sm text-muted-foreground">Loading contacts...</p>
+        </div>
+      </div>
+    )
+  }
 
   function logActivity(entry: Omit<ActivityEntry, "id" | "timestamp">) {
     setActivity((prev) => [

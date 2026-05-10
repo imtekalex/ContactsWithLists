@@ -23,6 +23,8 @@ export type ContactsState = {
   lists: ContactList[]
 }
 
+export type ContactsCollectionKey = keyof ContactsState
+
 export function createDefaultContactsState(): ContactsState {
   return {
     contacts: initialContacts,
@@ -70,5 +72,22 @@ export async function saveContactsState(state: ContactsState): Promise<void> {
 
   if (!response.ok) {
     throw new Error(`Failed to save contacts data: ${response.status}`)
+  }
+}
+
+export async function saveContactsCollection<K extends ContactsCollectionKey>(
+  collection: K,
+  data: ContactsState[K],
+): Promise<void> {
+  const response = await fetch(CONTACTS_STORE_ENDPOINT, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ collection, data }),
+  })
+
+  if (!response.ok) {
+    throw new Error(`Failed to save ${collection}: ${response.status}`)
   }
 }

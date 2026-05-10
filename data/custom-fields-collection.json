@@ -1,0 +1,153 @@
+[
+  {
+    "id": "cf_status",
+    "name": "Customer Status",
+    "slug": "customer_status",
+    "type": "dropdown",
+    "description": "Lifecycle stage of this contact",
+    "isGlobal": true,
+    "groupIds": [],
+    "options": [
+      {
+        "id": "opt_active",
+        "label": "Active"
+      },
+      {
+        "id": "opt_paused",
+        "label": "Paused"
+      },
+      {
+        "id": "opt_prospect",
+        "label": "Prospect"
+      },
+      {
+        "id": "opt_former",
+        "label": "Former"
+      }
+    ]
+  },
+  {
+    "id": "cf_source",
+    "name": "Source",
+    "slug": "source",
+    "type": "dropdown",
+    "description": "How did we meet this contact",
+    "isGlobal": true,
+    "groupIds": [],
+    "options": [
+      {
+        "id": "opt_referral",
+        "label": "Referral"
+      },
+      {
+        "id": "opt_website",
+        "label": "Website"
+      },
+      {
+        "id": "opt_event",
+        "label": "Event"
+      },
+      {
+        "id": "opt_import",
+        "label": "Manual Import"
+      }
+    ]
+  },
+  {
+    "id": "cf_interests",
+    "name": "Interests",
+    "slug": "interests",
+    "type": "multiSelect",
+    "description": "Topics this contact cares about",
+    "isGlobal": true,
+    "groupIds": [],
+    "options": [
+      {
+        "id": "opt_design",
+        "label": "Design"
+      },
+      {
+        "id": "opt_arch",
+        "label": "Architecture"
+      },
+      {
+        "id": "opt_tech",
+        "label": "Technology"
+      },
+      {
+        "id": "opt_events",
+        "label": "Events"
+      },
+      {
+        "id": "opt_news",
+        "label": "Newsletter"
+      }
+    ]
+  },
+  {
+    "id": "cf_birthday",
+    "name": "Birthday",
+    "slug": "birthday",
+    "type": "date",
+    "isGlobal": true,
+    "groupIds": []
+  },
+  {
+    "id": "cf_member",
+    "name": "Member Number",
+    "slug": "member_number",
+    "type": "text",
+    "isGlobal": true,
+    "groupIds": []
+  },
+  {
+    "id": "cf_vip",
+    "name": "VIP",
+    "slug": "vip",
+    "type": "boolean",
+    "description": "Flagged as a VIP contact",
+    "isGlobal": true,
+    "groupIds": []
+  },
+  {
+    "id": "cf_budget",
+    "name": "Budget",
+    "slug": "budget",
+    "type": "number",
+    "description": "Annual budget in USD",
+    "isGlobal": false,
+    "groupIds": [
+      "g1",
+      "g5"
+    ]
+  },
+  {
+    "id": "cf_invest_stage",
+    "name": "Investment Stage",
+    "slug": "invest_stage",
+    "type": "dropdown",
+    "description": "Preferred funding stage",
+    "isGlobal": false,
+    "groupIds": [
+      "g5"
+    ],
+    "options": [
+      {
+        "id": "opt_stage_seed",
+        "label": "Seed"
+      },
+      {
+        "id": "opt_stage_a",
+        "label": "Series A"
+      },
+      {
+        "id": "opt_stage_b",
+        "label": "Series B"
+      },
+      {
+        "id": "opt_stage_c",
+        "label": "Series C+"
+      }
+    ]
+  }
+]

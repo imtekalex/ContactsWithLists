@@ -1,0 +1,90 @@
+[
+  {
+    "action": "update",
+    "entityType": "Contact",
+    "entityName": "Emily Brown",
+    "description": "Updated contact details",
+    "id": "a1778429215901",
+    "timestamp": 1778429215901
+  },
+  {
+    "action": "update",
+    "entityType": "Contact",
+    "entityName": "Emily BrownX",
+    "description": "Updated contact details",
+    "id": "a1778429203968",
+    "timestamp": 1778429203968
+  },
+  {
+    "action": "update",
+    "entityType": "Contact",
+    "entityName": "Bob Johnson",
+    "description": "Updated contact details",
+    "id": "a1778425195349",
+    "timestamp": 1778425195349
+  },
+  {
+    "action": "update",
+    "entityType": "Contact",
+    "entityName": "Bob JohnsoY2",
+    "description": "Updated contact details",
+    "id": "a1778425081908",
+    "timestamp": 1778425081908
+  },
+  {
+    "action": "update",
+    "entityType": "Contact",
+    "entityName": "Bob JohnsoY",
+    "description": "Updated contact details",
+    "id": "a1778425016723",
+    "timestamp": 1778425016723
+  },
+  {
+    "id": "a1",
+    "action": "create",
+    "entityType": "Contact",
+    "entityName": "Jennifer Lee",
+    "description": "Created contact in Data Insights AI",
+    "timestamp": 1761523200000
+  },
+  {
+    "id": "a2",
+    "action": "update",
+    "entityType": "Contact",
+    "entityName": "John Doe",
+    "description": "Updated phone number",
+    "timestamp": 1761436800000
+  },
+  {
+    "id": "a3",
+    "action": "delete",
+    "entityType": "Contact",
+    "entityName": "Mark Thompson",
+    "description": "Moved to trash",
+    "timestamp": 1761264000000
+  },
+  {
+    "id": "a4",
+    "action": "update",
+    "entityType": "Contact",
+    "entityName": "Jane Smith",
+    "description": "Added to VIP Contacts group",
+    "timestamp": 1761264000000
+  },
+  {
+    "id": "a5",
+    "action": "create",
+    "entityType": "Group",
+    "entityName": "Investors",
+    "description": "Created new group with 2 contacts",
+    "timestamp": 1759968000000
+  },
+  {
+    "id": "a6",
+    "action": "update",
+    "entityType": "Contact",
+    "entityName": "Sarah Williams",
+    "description": "Marked as starred",
+    "timestamp": 1761609600000
+  }
+]
