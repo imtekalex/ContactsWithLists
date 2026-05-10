@@ -91,6 +91,16 @@ export function ContactCustomFields({ contact, fields, onChange, readOnly }: Pro
   )
 }
 
+function formatDateString(value: string) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  })
+}
+
 function CustomFieldRow({
   field,
   value,
@@ -325,7 +335,7 @@ function renderReadOnly(field: CustomField, value: CustomFieldValue | undefined)
     case "dropdown":
       return field.options?.find((o) => o.id === value.value)?.label ?? value.value
     case "date":
-      return value.value
+      return formatDateString(value.value)
     case "number":
       return String(value.value)
     default:

@@ -1,5 +1,5 @@
 {
-  "printType": "envelope",
+  "printType": "standard",
   "addressLayout": "european",
   "returnAddressPreset": "business",
   "returnAddresses": {

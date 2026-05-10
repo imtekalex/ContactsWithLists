@@ -329,12 +329,17 @@ export default function Home() {
     ])
   }
 
+  function getTodayIso(timestamp = Date.now()) {
+    return new Date(timestamp).toISOString().slice(0, 10)
+  }
+
   function handleCreate(contact: Omit<Contact, "id" | "createdAt" | "updatedAt">) {
+    const now = Date.now()
     const newContact: Contact = {
       ...contact,
-      id: `c${Date.now()}`,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+      id: `c${now}`,
+      createdAt: now,
+      updatedAt: now,
     }
     setContacts((prev) => [newContact, ...prev])
     setSelectedId(newContact.id)
@@ -347,7 +352,9 @@ export default function Home() {
   }
 
   function handleUpdate(updated: Contact) {
-    setContacts((prev) => prev.map((c) => (c.id === updated.id ? { ...updated, updatedAt: Date.now() } : c)))
+    const now = Date.now()
+    const updatedContact = { ...updated, updatedAt: now }
+    setContacts((prev) => prev.map((c) => (c.id === updated.id ? updatedContact : c)))
     logActivity({
       action: "update",
       entityType: "Contact",
@@ -376,14 +383,22 @@ export default function Home() {
   }
 
   function handleToggleStar(id: string) {
-    setContacts((prev) => prev.map((c) => (c.id === id ? { ...c, starred: !c.starred, updatedAt: Date.now() } : c)))
+    const now = Date.now()
+    setContacts((prev) =>
+      prev.map((c) =>
+        c.id === id
+          ? { ...c, starred: !c.starred, updatedAt: now }
+          : c,
+      ),
+    )
   }
 
   function handleRestore(id: string) {
     const target = deleted.find((c) => c.id === id)
     if (!target) return
+    const now = Date.now()
     setDeleted((prev) => prev.filter((c) => c.id !== id))
-    setContacts((prev) => [{ ...target, updatedAt: Date.now() }, ...prev])
+    setContacts((prev) => [{ ...target, updatedAt: now }, ...prev])
     logActivity({
       action: "restore",
       entityType: "Contact",
@@ -545,10 +560,11 @@ export default function Home() {
     if (!target) return
     setGroups((prev) => prev.filter((g) => g.id !== id))
     // Strip the group id from every contact
+    const now = Date.now()
     setContacts((prev) =>
       prev.map((c) =>
         c.groupIds.includes(id)
-          ? { ...c, groupIds: c.groupIds.filter((gid) => gid !== id), updatedAt: Date.now() }
+          ? { ...c, groupIds: c.groupIds.filter((gid) => gid !== id), updatedAt: now }
           : c,
       ),
     )
@@ -584,9 +600,12 @@ export default function Home() {
   }
 
   function handleSetContactGroups(contactId: string, groupIds: string[]) {
+    const now = Date.now()
     setContacts((prev) =>
       prev.map((c) =>
-        c.id === contactId ? { ...c, groupIds, updatedAt: Date.now() } : c,
+        c.id === contactId
+          ? { ...c, groupIds, updatedAt: now }
+          : c,
       ),
     )
   }

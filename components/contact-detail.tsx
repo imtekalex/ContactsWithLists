@@ -172,6 +172,11 @@ export function ContactDetail({
                 })}
               </div>
             )}
+            {!editing && (
+              <div className="mt-2 text-xs text-muted-foreground">
+                Last modified: {new Date(contact.updatedAt).toLocaleDateString()}
+              </div>
+            )}
           </div>
           <div className="flex gap-2 flex-shrink-0">
             {editing ? (
