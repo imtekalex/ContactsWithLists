@@ -26,6 +26,7 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
 import { Spinner } from "@/components/ui/spinner"
 import { cn } from "@/lib/utils"
 import {
@@ -42,6 +43,7 @@ import {
   createDefaultContactsState,
   loadContactsState,
   saveContactsCollection,
+  type PrintPreferences,
 } from "@/lib/contacts-store"
 import { NewContactDialog } from "@/components/new-contact-dialog"
 import { ContactDetail } from "@/components/contact-detail"
@@ -73,6 +75,7 @@ export default function Home() {
   const [activity, setActivity] = useState<ActivityEntry[]>([])
   const [customFields, setCustomFields] = useState<CustomField[]>([])
   const [lists, setLists] = useState<ContactList[]>([])
+  const [printPreferences, setPrintPreferences] = useState<PrintPreferences>(defaultContactsState.printPreferences)
   const [storageReady, setStorageReady] = useState(false)
 
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle")
@@ -115,6 +118,7 @@ export default function Home() {
         setActivity(stored.activity)
         setCustomFields(stored.customFields)
         setLists(stored.lists)
+        setPrintPreferences(stored.printPreferences)
         setSelectedId(stored.contacts[0]?.id ?? null)
       })
       .catch((error) => {
@@ -267,6 +271,21 @@ export default function Home() {
 
     return () => window.clearTimeout(timeoutId)
   }, [lists, storageReady])
+
+  useEffect(() => {
+    if (!storageReady) return
+
+    const timeoutId = window.setTimeout(() => {
+      trackSave(
+        saveContactsCollection("printPreferences", printPreferences).catch((error) => {
+          console.error(error)
+          showBanner("Could not save print settings")
+        }),
+      )
+    }, 400)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [printPreferences, storageReady])
 
   const filteredContacts = useMemo(() => {
     let list = contacts
@@ -858,6 +877,8 @@ export default function Home() {
             contacts={contacts}
             groups={groups}
             customFields={customFields}
+            printPreferences={printPreferences}
+            onUpdatePrintPreferences={setPrintPreferences}
             onCreateField={handleCreateField}
             onUpdateField={handleUpdateField}
             onDeleteField={handleDeleteField}
@@ -885,6 +906,8 @@ export default function Home() {
         groups={groups}
         customFields={customFields}
         title={printTitle}
+        printPreferences={printPreferences}
+        onUpdatePrintPreferences={setPrintPreferences}
       />
 
       <AddToListDialog
@@ -1157,6 +1180,8 @@ function SettingsView({
   contacts,
   groups,
   customFields,
+  printPreferences,
+  onUpdatePrintPreferences,
   onCreateField,
   onUpdateField,
   onDeleteField,
@@ -1168,6 +1193,8 @@ function SettingsView({
   contacts: Contact[]
   groups: Group[]
   customFields: CustomField[]
+  printPreferences: PrintPreferences
+  onUpdatePrintPreferences: (prefs: PrintPreferences) => void
   onCreateField: (f: CustomField) => void
   onUpdateField: (f: CustomField) => void
   onDeleteField: (id: string) => void
@@ -1239,6 +1266,350 @@ function SettingsView({
             <Stat label="Contacts" value={contacts.length} />
             <Stat label="Groups" value={groups.length} />
             <Stat label="Custom fields" value={customFields.length} />
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <h3 className="text-base font-semibold">Envelope printing</h3>
+          <p className="text-sm text-muted-foreground mt-1">Configure return address presets and envelope address formatting.</p>
+
+          <div className="mt-4 grid gap-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Default address layout
+                </Label>
+                <div className="mt-2 flex gap-2">
+                  <Button
+                    size="sm"
+                    variant={printPreferences.addressLayout === "european" ? "default" : "outline"}
+                    onClick={() =>
+                      onUpdatePrintPreferences({
+                        ...printPreferences,
+                        addressLayout: "european",
+                      })
+                    }
+                  >
+                    European
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={printPreferences.addressLayout === "usa" ? "default" : "outline"}
+                    onClick={() =>
+                      onUpdatePrintPreferences({
+                        ...printPreferences,
+                        addressLayout: "usa",
+                      })
+                    }
+                  >
+                    USA
+                  </Button>
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Active return address preset
+                </Label>
+                <div className="mt-2 flex gap-2">
+                  <Button
+                    size="sm"
+                    variant={printPreferences.returnAddressPreset === "business" ? "default" : "outline"}
+                    onClick={() =>
+                      onUpdatePrintPreferences({
+                        ...printPreferences,
+                        returnAddressPreset: "business",
+                      })
+                    }
+                  >
+                    Business
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={printPreferences.returnAddressPreset === "personal" ? "default" : "outline"}
+                    onClick={() =>
+                      onUpdatePrintPreferences({
+                        ...printPreferences,
+                        returnAddressPreset: "personal",
+                      })
+                    }
+                  >
+                    Personal
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            <div>
+              <h4 className="text-sm font-semibold">Business return address</h4>
+              <div className="mt-4 grid gap-3">
+                <div>
+                  <Label className="text-xs text-muted-foreground">Company</Label>
+                  <Input
+                    value={printPreferences.returnAddresses.business.company}
+                    onChange={(event) =>
+                      onUpdatePrintPreferences({
+                        ...printPreferences,
+                        returnAddresses: {
+                          ...printPreferences.returnAddresses,
+                          business: {
+                            ...printPreferences.returnAddresses.business,
+                            company: event.target.value,
+                          },
+                        },
+                      })
+                    }
+                    className="mt-2"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-muted-foreground">First name</Label>
+                    <Input
+                      value={printPreferences.returnAddresses.business.firstName}
+                      onChange={(event) =>
+                        onUpdatePrintPreferences({
+                          ...printPreferences,
+                          returnAddresses: {
+                            ...printPreferences.returnAddresses,
+                            business: {
+                              ...printPreferences.returnAddresses.business,
+                              firstName: event.target.value,
+                            },
+                          },
+                        })
+                      }
+                      className="mt-2"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Last name</Label>
+                    <Input
+                      value={printPreferences.returnAddresses.business.lastName}
+                      onChange={(event) =>
+                        onUpdatePrintPreferences({
+                          ...printPreferences,
+                          returnAddresses: {
+                            ...printPreferences.returnAddresses,
+                            business: {
+                              ...printPreferences.returnAddresses.business,
+                              lastName: event.target.value,
+                            },
+                          },
+                        })
+                      }
+                      className="mt-2"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Street</Label>
+                  <Input
+                    value={printPreferences.returnAddresses.business.street}
+                    onChange={(event) =>
+                      onUpdatePrintPreferences({
+                        ...printPreferences,
+                        returnAddresses: {
+                          ...printPreferences.returnAddresses,
+                          business: {
+                            ...printPreferences.returnAddresses.business,
+                            street: event.target.value,
+                          },
+                        },
+                      })
+                    }
+                    className="mt-2"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-muted-foreground">ZIP</Label>
+                    <Input
+                      value={printPreferences.returnAddresses.business.zip}
+                      onChange={(event) =>
+                        onUpdatePrintPreferences({
+                          ...printPreferences,
+                          returnAddresses: {
+                            ...printPreferences.returnAddresses,
+                            business: {
+                              ...printPreferences.returnAddresses.business,
+                              zip: event.target.value,
+                            },
+                          },
+                        })
+                      }
+                      className="mt-2"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">City</Label>
+                    <Input
+                      value={printPreferences.returnAddresses.business.city}
+                      onChange={(event) =>
+                        onUpdatePrintPreferences({
+                          ...printPreferences,
+                          returnAddresses: {
+                            ...printPreferences.returnAddresses,
+                            business: {
+                              ...printPreferences.returnAddresses.business,
+                              city: event.target.value,
+                            },
+                          },
+                        })
+                      }
+                      className="mt-2"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Country</Label>
+                  <Input
+                    value={printPreferences.returnAddresses.business.country}
+                    onChange={(event) =>
+                      onUpdatePrintPreferences({
+                        ...printPreferences,
+                        returnAddresses: {
+                          ...printPreferences.returnAddresses,
+                          business: {
+                            ...printPreferences.returnAddresses.business,
+                            country: event.target.value,
+                          },
+                        },
+                      })
+                    }
+                    className="mt-2"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            <div>
+              <h4 className="text-sm font-semibold">Personal return address</h4>
+              <div className="mt-4 grid gap-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-muted-foreground">First name</Label>
+                    <Input
+                      value={printPreferences.returnAddresses.personal.firstName}
+                      onChange={(event) =>
+                        onUpdatePrintPreferences({
+                          ...printPreferences,
+                          returnAddresses: {
+                            ...printPreferences.returnAddresses,
+                            personal: {
+                              ...printPreferences.returnAddresses.personal,
+                              firstName: event.target.value,
+                            },
+                          },
+                        })
+                      }
+                      className="mt-2"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Last name</Label>
+                    <Input
+                      value={printPreferences.returnAddresses.personal.lastName}
+                      onChange={(event) =>
+                        onUpdatePrintPreferences({
+                          ...printPreferences,
+                          returnAddresses: {
+                            ...printPreferences.returnAddresses,
+                            personal: {
+                              ...printPreferences.returnAddresses.personal,
+                              lastName: event.target.value,
+                            },
+                          },
+                        })
+                      }
+                      className="mt-2"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Street</Label>
+                  <Input
+                    value={printPreferences.returnAddresses.personal.street}
+                    onChange={(event) =>
+                      onUpdatePrintPreferences({
+                        ...printPreferences,
+                        returnAddresses: {
+                          ...printPreferences.returnAddresses,
+                          personal: {
+                            ...printPreferences.returnAddresses.personal,
+                            street: event.target.value,
+                          },
+                        },
+                      })
+                    }
+                    className="mt-2"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-muted-foreground">ZIP</Label>
+                    <Input
+                      value={printPreferences.returnAddresses.personal.zip}
+                      onChange={(event) =>
+                        onUpdatePrintPreferences({
+                          ...printPreferences,
+                          returnAddresses: {
+                            ...printPreferences.returnAddresses,
+                            personal: {
+                              ...printPreferences.returnAddresses.personal,
+                              zip: event.target.value,
+                            },
+                          },
+                        })
+                      }
+                      className="mt-2"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">City</Label>
+                    <Input
+                      value={printPreferences.returnAddresses.personal.city}
+                      onChange={(event) =>
+                        onUpdatePrintPreferences({
+                          ...printPreferences,
+                          returnAddresses: {
+                            ...printPreferences.returnAddresses,
+                            personal: {
+                              ...printPreferences.returnAddresses.personal,
+                              city: event.target.value,
+                            },
+                          },
+                        })
+                      }
+                      className="mt-2"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Country</Label>
+                  <Input
+                    value={printPreferences.returnAddresses.personal.country}
+                    onChange={(event) =>
+                      onUpdatePrintPreferences({
+                        ...printPreferences,
+                        returnAddresses: {
+                          ...printPreferences.returnAddresses,
+                          personal: {
+                            ...printPreferences.returnAddresses.personal,
+                            country: event.target.value,
+                          },
+                        },
+                      })
+                    }
+                    className="mt-2"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </Card>
 

@@ -10,10 +10,13 @@ import {
   FileText,
   RectangleVertical,
   RectangleHorizontal,
+  ListPlus,
+  Mail,
 } from "lucide-react"
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
@@ -36,6 +39,7 @@ import {
   formatCustomValue,
   visibleCustomFieldsFor,
 } from "@/lib/contacts-data"
+import type { PrintPreferences } from "@/lib/contacts-store"
 
 type FieldKey =
   | "firstName"
@@ -63,6 +67,8 @@ interface PrintDialogProps {
   groups: Group[]
   customFields: CustomField[]
   title?: string
+  printPreferences: PrintPreferences
+  onUpdatePrintPreferences: (prefs: PrintPreferences) => void
 }
 
 const CORE_FIELDS: { key: FieldKey; label: string }[] = [
@@ -96,7 +102,10 @@ export function PrintDialog({
   groups,
   customFields,
   title,
+  printPreferences,
+  onUpdatePrintPreferences,
 }: PrintDialogProps) {
+  const [printType, setPrintType] = useState<PrintPreferences["printType"]>(printPreferences.printType)
   const [layout, setLayout] = useState<"table" | "cards">("table")
   const [orientation, setOrientation] = useState<"portrait" | "landscape">("portrait")
   const [zoomMode, setZoomMode] = useState<"fit" | number>("fit")
@@ -107,7 +116,19 @@ export function PrintDialog({
   const [selectedContactIds, setSelectedContactIds] = useState<Set<string>>(
     new Set(contacts.map((c) => c.id)),
   )
+  const [addressLayout, setAddressLayout] = useState<PrintPreferences["addressLayout"]>(
+    printPreferences.addressLayout,
+  )
+  const [returnAddressPreset, setReturnAddressPreset] = useState<PrintPreferences["returnAddressPreset"]>(
+    printPreferences.returnAddressPreset,
+  )
   const printFrameRef = useRef<HTMLIFrameElement>(null)
+
+  useEffect(() => {
+    setPrintType(printPreferences.printType)
+    setAddressLayout(printPreferences.addressLayout)
+    setReturnAddressPreset(printPreferences.returnAddressPreset)
+  }, [printPreferences, open])
   const previewAreaRef = useRef<HTMLDivElement>(null)
   const measureRef = useRef<HTMLDivElement>(null)
 
@@ -221,6 +242,21 @@ export function PrintDialog({
       return
     }
 
+    if (printType === "label") {
+      const pages: Contact[][] = []
+      for (let i = 0; i < visibleContacts.length; i += 24) {
+        pages.push(visibleContacts.slice(i, i + 24))
+      }
+      commitPages(pages.length > 0 ? pages : [[]])
+      return
+    }
+
+    if (printType === "envelope") {
+      const pages: Contact[][] = visibleContacts.map((contact) => [contact])
+      commitPages(pages.length > 0 ? pages : [[]])
+      return
+    }
+
     const container = measureRef.current
     if (!container) return
 
@@ -304,6 +340,7 @@ export function PrintDialog({
     sheetWidthPx,
     sheetHeightPx,
     open,
+    printType,
   ])
 
   // -------------------------------------------------------------------------
@@ -340,6 +377,51 @@ export function PrintDialog({
     return (c[key as keyof Contact] as string) ?? ""
   }
 
+  function getAddressLines(c: Contact): string[] {
+    const lines: string[] = []
+    const name = [c.firstName, c.lastName].filter(Boolean).join(" ")
+    if (name) lines.push(name)
+    if (c.company) lines.push(c.company)
+    if (c.addressLine1) lines.push(c.addressLine1)
+    if (c.addressLine2) lines.push(c.addressLine2)
+    const cityZip = [c.city, c.zip].filter(Boolean).join(" ")
+    if (cityZip) lines.push(cityZip)
+    if (c.country) lines.push(c.country)
+    return lines
+  }
+
+  function getReturnAddressLines() {
+    const returnAddress = printPreferences.returnAddresses[returnAddressPreset]
+    const lines: string[] = []
+    if (returnAddress.company) lines.push(returnAddress.company)
+    const name = [returnAddress.firstName, returnAddress.lastName].filter(Boolean).join(" ")
+    if (name) lines.push(name)
+    if (returnAddress.street) lines.push(returnAddress.street)
+    const location = [returnAddress.city, returnAddress.zip].filter(Boolean).join(" ")
+    if (location) lines.push(location)
+    if (returnAddress.country) lines.push(returnAddress.country)
+    return lines
+  }
+
+  function getEnvelopeAddressLines(c: Contact): string[] {
+    const lines: string[] = []
+    const name = [c.firstName, c.lastName].filter(Boolean).join(" ")
+    if (name) lines.push(name)
+    if (c.company) lines.push(c.company)
+    if (c.addressLine1) lines.push(c.addressLine1)
+    if (c.addressLine2) lines.push(c.addressLine2)
+    if (addressLayout === "european") {
+      const cityZip = [c.city, c.zip].filter(Boolean).join(" ")
+      if (cityZip) lines.push(cityZip)
+      if (c.country) lines.push(c.country)
+    } else {
+      const cityZip = [c.city, c.zip].filter(Boolean).join(", ")
+      if (cityZip) lines.push(cityZip)
+      if (c.country) lines.push(c.country)
+    }
+    return lines
+  }
+
   function escapeHtml(s: string): string {
     return s
       .replace(/&/g, "&amp;")
@@ -355,36 +437,61 @@ export function PrintDialog({
 
     let body = ""
 
-    if (layout === "table") {
-      const headerCells = orderedSelectedFields
-        .map((f) => `<th>${escapeHtml(f.label)}</th>`)
-        .join("")
-      const rows = visibleContacts
+    if (printType === "standard") {
+      if (layout === "table") {
+        const headerCells = orderedSelectedFields
+          .map((f) => `<th>${escapeHtml(f.label)}</th>`)
+          .join("")
+        const rows = visibleContacts
+          .map((c) => {
+            const cells = orderedSelectedFields
+              .map((f) => {
+                const val = fieldValue(c, f.key)
+                return `<td>${val ? escapeHtml(val) : "&mdash;"}</td>`
+              })
+              .join("")
+            return `<tr>${cells}</tr>`
+          })
+          .join("")
+        body = `<table class="data"><thead><tr>${headerCells}</tr></thead><tbody>${rows}</tbody></table>`
+      } else {
+        body = `<div class="cards">${visibleContacts
+          .map((c) => {
+            const fields = orderedSelectedFields
+              .filter((f) => f.key !== "firstName" && f.key !== "lastName")
+              .map((f) => {
+                const val = fieldValue(c, f.key)
+                if (!val) return ""
+                return `<div class="row"><span class="label">${escapeHtml(f.label)}</span><span class="value">${escapeHtml(val)}</span></div>`
+              })
+              .join("")
+            return `<article class="card"><h3>${escapeHtml(c.firstName)} ${escapeHtml(c.lastName)}</h3>${c.title ? `<p class="title">${escapeHtml(c.title)}</p>` : ""}${fields}</article>`
+          })
+          .join("")}</div>`
+      }
+    } else if (printType === "label") {
+      const labelItems = visibleContacts
         .map((c) => {
-          const cells = orderedSelectedFields
-            .map((f) => {
-              const val = fieldValue(c, f.key)
-              return `<td>${val ? escapeHtml(val) : "&mdash;"}</td>`
-            })
-            .join("")
-          return `<tr>${cells}</tr>`
+          const address = getAddressLines(c).slice(0, 5) // avoid too many lines
+          return `<div class="label"><div class="label-recipient">${address
+            .map((line) => `<div>${escapeHtml(line)}</div>`)
+            .join("")}</div></div>`
         })
         .join("")
-      body = `<table class="data"><thead><tr>${headerCells}</tr></thead><tbody>${rows}</tbody></table>`
+      body = `<div class="labels">${labelItems}</div>`
     } else {
-      body = `<div class="cards">${visibleContacts
+      const envelopeItems = visibleContacts
         .map((c) => {
-          const fields = orderedSelectedFields
-            .filter((f) => f.key !== "firstName" && f.key !== "lastName")
-            .map((f) => {
-              const val = fieldValue(c, f.key)
-              if (!val) return ""
-              return `<div class="row"><span class="label">${escapeHtml(f.label)}</span><span class="value">${escapeHtml(val)}</span></div>`
-            })
-            .join("")
-          return `<article class="card"><h3>${escapeHtml(c.firstName)} ${escapeHtml(c.lastName)}</h3>${c.title ? `<p class="title">${escapeHtml(c.title)}</p>` : ""}${fields}</article>`
+          const returnAddress = getReturnAddressLines()
+          const recipient = getEnvelopeAddressLines(c)
+          return `<div class="envelope-page"><div class="return-address">${returnAddress
+            .map((line) => `<div>${escapeHtml(line)}</div>`)
+            .join("")}</div><div class="recipient-address">${recipient
+            .map((line) => `<div>${escapeHtml(line)}</div>`)
+            .join("")}</div></div>`
         })
-        .join("")}</div>`
+        .join("")
+      body = envelopeItems
     }
 
     return `<!DOCTYPE html>
@@ -468,6 +575,53 @@ export function PrintDialog({
       color: #0f172a; word-break: break-word;
     }
 
+    .labels {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8pt;
+    }
+    .label {
+      border: 0.75pt solid #cbd5e1;
+      border-radius: 3pt;
+      padding: 8pt;
+      min-height: 35mm;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: left;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .label-recipient div {
+      line-height: 1.25;
+      font-size: 10pt;
+      color: #0f172a;
+    }
+
+    .envelope-page {
+      position: relative;
+      min-height: calc(100vh - 28mm);
+      padding: 18mm;
+      box-sizing: border-box;
+    }
+    .return-address {
+      position: absolute;
+      top: 18mm;
+      left: 18mm;
+      line-height: 1.3;
+      font-size: 9pt;
+      color: #475569;
+    }
+    .recipient-address {
+      position: absolute;
+      top: 55mm;
+      left: 40mm;
+      line-height: 1.3;
+      font-size: 10.5pt;
+      font-weight: 600;
+      color: #0f172a;
+    }
+
     @media print {
       .doc-header { page-break-after: avoid; }
     }
@@ -476,7 +630,7 @@ export function PrintDialog({
 <body>
   <div class="doc-header">
     <h1>${escapeHtml(title ?? "Contact list")}</h1>
-    <p>${visibleContacts.length} contact${visibleContacts.length === 1 ? "" : "s"} &middot; ${orderedSelectedFields.length} field${orderedSelectedFields.length === 1 ? "" : "s"} &middot; ${orientation === "landscape" ? "Landscape" : "Portrait"}</p>
+    <p>${visibleContacts.length} contact${visibleContacts.length === 1 ? "" : "s"}${printType === "standard" ? " &middot; " + orderedSelectedFields.length + " field" + (orderedSelectedFields.length === 1 ? "" : "s") : ""} &middot; ${orientation === "landscape" ? "Landscape" : "Portrait"}</p>
   </div>
   ${body}
 </body>
@@ -511,6 +665,54 @@ export function PrintDialog({
     setTimeout(tryPrint, 80)
   }
 
+  function PreviewLabels({ contacts }: { contacts: Contact[] }) {
+    return (
+      <div className="grid grid-cols-3 gap-4 w-full">
+        {contacts.map((contact) => (
+          <div key={contact.id} className="border border-border rounded-md p-4 min-h-[150px] bg-white">
+            {getAddressLines(contact).map((line, idx) => (
+              <p key={idx} className="text-sm leading-tight text-slate-900">
+                {line}
+              </p>
+            ))}
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  function PreviewEnvelope({
+    contacts,
+    addressLayout,
+    returnAddressLines,
+  }: {
+    contacts: Contact[]
+    addressLayout: PrintPreferences["addressLayout"]
+    returnAddressLines: string[]
+  }) {
+    return (
+      <div className="w-full h-full flex flex-col gap-4">
+        {contacts.map((contact) => (
+          <div key={contact.id} className="relative w-full h-[360px] rounded-xl border border-border bg-white p-6 overflow-hidden">
+            <div className="absolute top-6 left-6 text-xs leading-5 text-slate-600">
+              {returnAddressLines.map((line, idx) => (
+                <p key={idx}>{line}</p>
+              ))}
+            </div>
+            <div className="absolute top-28 left-16 text-base font-semibold leading-6 text-slate-900">
+              {getEnvelopeAddressLines(contact).map((line, idx) => (
+                <p key={idx}>{line}</p>
+              ))}
+            </div>
+            <div className="absolute bottom-6 right-6 text-[10px] text-slate-400">
+              {addressLayout === "european" ? "European envelope layout" : "USA envelope layout"}
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
   const totalPages = pages.length
 
   return (
@@ -531,32 +733,72 @@ export function PrintDialog({
               {orderedSelectedFields.length} field{orderedSelectedFields.length === 1 ? "" : "s"}
             </span>
           </DialogTitle>
+          <DialogDescription>
+            Preview and configure your contact list printout.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-1 min-h-0 overflow-hidden">
           {/* Left: configuration panel — independently scrollable */}
           <aside className="w-80 border-r border-border flex-shrink-0 overflow-y-auto">
             <div className="p-5 space-y-5">
-              {/* Layout */}
+              {/* Print type */}
               <section>
                 <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Layout
+                  Print mode
                 </Label>
-                <div className="mt-2 grid grid-cols-2 gap-2">
+                <div className="mt-2 grid grid-cols-3 gap-2">
                   <ToggleButton
-                    active={layout === "table"}
-                    onClick={() => setLayout("table")}
+                    active={printType === "standard"}
+                    onClick={() => {
+                      setPrintType("standard")
+                      onUpdatePrintPreferences({ ...printPreferences, printType: "standard" })
+                    }}
                     icon={<Rows className="w-4 h-4" />}
-                    label="Table"
+                    label="Standard"
                   />
                   <ToggleButton
-                    active={layout === "cards"}
-                    onClick={() => setLayout("cards")}
-                    icon={<LayoutGrid className="w-4 h-4" />}
-                    label="Cards"
+                    active={printType === "label"}
+                    onClick={() => {
+                      setPrintType("label")
+                      onUpdatePrintPreferences({ ...printPreferences, printType: "label" })
+                    }}
+                    icon={<ListPlus className="w-4 h-4" />}
+                    label="Labels"
+                  />
+                  <ToggleButton
+                    active={printType === "envelope"}
+                    onClick={() => {
+                      setPrintType("envelope")
+                      onUpdatePrintPreferences({ ...printPreferences, printType: "envelope" })
+                    }}
+                    icon={<Mail className="w-4 h-4" />}
+                    label="Envelopes"
                   />
                 </div>
               </section>
+
+              {printType === "standard" && (
+                <section>
+                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Layout
+                  </Label>
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    <ToggleButton
+                      active={layout === "table"}
+                      onClick={() => setLayout("table")}
+                      icon={<Rows className="w-4 h-4" />}
+                      label="Table"
+                    />
+                    <ToggleButton
+                      active={layout === "cards"}
+                      onClick={() => setLayout("cards")}
+                      icon={<LayoutGrid className="w-4 h-4" />}
+                      label="Cards"
+                    />
+                  </div>
+                </section>
+              )}
 
               {/* Orientation — button toggle, matches Layout */}
               <section>
@@ -611,63 +853,148 @@ export function PrintDialog({
 
               <Separator />
 
-              {/* Fields */}
-              <section>
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    Fields ({selectedFields.size})
-                  </Label>
-                  <div className="flex gap-1">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedFields(new Set(allFields.map((f) => f.key)))}
-                      className="text-xs text-primary hover:underline"
-                    >
-                      All
-                    </button>
-                    <span className="text-xs text-muted-foreground">·</span>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedFields(new Set())}
-                      className="text-xs text-primary hover:underline"
-                    >
-                      None
-                    </button>
-                  </div>
-                </div>
-                <div className="mt-2 space-y-1">
-                  {CORE_FIELDS.map((f) => (
-                    <FieldCheck
-                      key={f.key}
-                      label={f.label}
-                      checked={selectedFields.has(f.key)}
-                      onChange={() => toggleField(f.key)}
-                    />
-                  ))}
-                </div>
-
-                {availableCustomFields.length > 0 && (
-                  <>
-                    <Separator className="my-3" />
+              {printType === "standard" ? (
+                <section>
+                  <div className="flex items-center justify-between">
                     <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                      Custom fields
+                      Fields ({selectedFields.size})
                     </Label>
-                    <div className="mt-2 space-y-1">
-                      {availableCustomFields.map((f) => {
-                        const key = `cf:${f.id}` as FieldKey
-                        return (
-                          <FieldCheck
-                            key={f.id}
-                            label={f.name}
-                            checked={selectedFields.has(key)}
-                            onChange={() => toggleField(key)}
-                          />
-                        )
-                      })}
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedFields(new Set(allFields.map((f) => f.key)))}
+                        className="text-xs text-primary hover:underline"
+                      >
+                        All
+                      </button>
+                      <span className="text-xs text-muted-foreground">·</span>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedFields(new Set())}
+                        className="text-xs text-primary hover:underline"
+                      >
+                        None
+                      </button>
                     </div>
-                  </>
-                )}
-              </section>
+                  </div>
+                  <div className="mt-2 space-y-1">
+                    {CORE_FIELDS.map((f) => (
+                      <FieldCheck
+                        key={f.key}
+                        label={f.label}
+                        checked={selectedFields.has(f.key)}
+                        onChange={() => toggleField(f.key)}
+                      />
+                    ))}
+                  </div>
+
+                  {availableCustomFields.length > 0 && (
+                    <>
+                      <Separator className="my-3" />
+                      <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        Custom fields
+                      </Label>
+                      <div className="mt-2 space-y-1">
+                        {availableCustomFields.map((f) => {
+                          const key = `cf:${f.id}` as FieldKey
+                          return (
+                            <FieldCheck
+                              key={f.id}
+                              label={f.name}
+                              checked={selectedFields.has(key)}
+                              onChange={() => toggleField(key)}
+                            />
+                          )
+                        })}
+                      </div>
+                    </>
+                  )}
+                </section>
+              ) : null}
+
+              {printType === "label" && (
+                <section>
+                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Label printing
+                  </Label>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Avery Zweckform 3490 format — 24 contacts per page.
+                  </p>
+                </section>
+              )}
+
+              {printType === "envelope" && (
+                <section>
+                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Envelope printing
+                  </Label>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <Button
+                      size="sm"
+                      variant={addressLayout === "european" ? "default" : "outline"}
+                      onClick={() => {
+                        setAddressLayout("european")
+                        onUpdatePrintPreferences({
+                          ...printPreferences,
+                          addressLayout: "european",
+                        })
+                      }}
+                      className="w-full"
+                    >
+                      European layout
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={addressLayout === "usa" ? "default" : "outline"}
+                      onClick={() => {
+                        setAddressLayout("usa")
+                        onUpdatePrintPreferences({
+                          ...printPreferences,
+                          addressLayout: "usa",
+                        })
+                      }}
+                      className="w-full"
+                    >
+                      USA layout
+                    </Button>
+                  </div>
+                  <div className="mt-3">
+                    <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      Return address preset
+                    </Label>
+                    <div className="mt-2 flex gap-2">
+                      <Button
+                        size="sm"
+                        variant={returnAddressPreset === "business" ? "default" : "outline"}
+                        onClick={() => {
+                          setReturnAddressPreset("business")
+                          onUpdatePrintPreferences({
+                            ...printPreferences,
+                            returnAddressPreset: "business",
+                          })
+                        }}
+                        className="w-full"
+                      >
+                        Business
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={returnAddressPreset === "personal" ? "default" : "outline"}
+                        onClick={() => {
+                          setReturnAddressPreset("personal")
+                          onUpdatePrintPreferences({
+                            ...printPreferences,
+                            returnAddressPreset: "personal",
+                          })
+                        }}
+                        className="w-full"
+                      >
+                        Personal
+                      </Button>
+                    </div>
+                  </div>
+                </section>
+              )}
 
               <Separator />
 
@@ -728,6 +1055,14 @@ export function PrintDialog({
                 >
                   {visibleContacts.length === 0 ? (
                     <p className="text-sm text-slate-500 italic">No contacts selected.</p>
+                  ) : printType === "label" ? (
+                    <PreviewLabels contacts={pageContacts} />
+                  ) : printType === "envelope" ? (
+                    <PreviewEnvelope
+                      contacts={pageContacts}
+                      addressLayout={addressLayout}
+                      returnAddressLines={getReturnAddressLines()}
+                    />
                   ) : orderedSelectedFields.length === 0 ? (
                     <p className="text-sm text-slate-500 italic">No fields selected.</p>
                   ) : layout === "table" ? (

@@ -20,6 +20,7 @@ const collectionFiles: Record<keyof ContactsState, string> = {
   activity: "activity-collection.json",
   customFields: "custom-fields-collection.json",
   lists: "lists-collection.json",
+  printPreferences: "print-preferences-collection.json",
 }
 
 function collectionDataFile(collection: keyof ContactsState) {
@@ -57,16 +58,17 @@ async function readContactsState(): Promise<ContactsState> {
   const defaults = createDefaultContactsState()
 
   try {
-    const [contacts, deleted, groups, activity, customFields, lists] = await Promise.all([
+    const [contacts, deleted, groups, activity, customFields, lists, printPreferences] = await Promise.all([
       readCollectionFile("contacts", defaults.contacts),
       readCollectionFile("deleted", defaults.deleted),
       readCollectionFile("groups", defaults.groups),
       readCollectionFile("activity", defaults.activity),
       readCollectionFile("customFields", defaults.customFields),
       readCollectionFile("lists", defaults.lists),
+      readCollectionFile("printPreferences", defaults.printPreferences),
     ])
 
-    return { contacts, deleted, groups, activity, customFields, lists }
+    return { contacts, deleted, groups, activity, customFields, lists, printPreferences }
   } catch (error) {
     const code = (error as NodeJS.ErrnoException).code
     if (code !== "ENOENT") {

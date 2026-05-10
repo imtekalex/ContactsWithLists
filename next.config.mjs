@@ -1,4 +1,6 @@
 /** @type {import('next').NextConfig} */
+import path from 'path'
+
 const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
@@ -12,10 +14,10 @@ const nextConfig = {
         '**/node_modules/**',
         '**/.next/**',
         '**/data/**',
-        'C:/DumpStack.log.tmp',
-        'C:/hiberfil.sys',
-        'C:/pagefile.sys',
-        'C:/swapfile.sys',
+        path.resolve('C:/DumpStack.log.tmp'),
+        path.resolve('C:/hiberfil.sys'),
+        path.resolve('C:/pagefile.sys'),
+        path.resolve('C:/swapfile.sys'),
       ],
     }
     return config

@@ -1,0 +1,24 @@
+{
+  "printType": "envelope",
+  "addressLayout": "european",
+  "returnAddressPreset": "business",
+  "returnAddresses": {
+    "business": {
+      "company": "",
+      "firstName": "",
+      "lastName": "",
+      "street": "",
+      "city": "",
+      "zip": "",
+      "country": ""
+    },
+    "personal": {
+      "firstName": "",
+      "lastName": "",
+      "street": "",
+      "city": "",
+      "zip": "",
+      "country": ""
+    }
+  }
+}

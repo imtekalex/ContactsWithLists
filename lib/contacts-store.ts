@@ -14,6 +14,27 @@ import {
 
 const CONTACTS_STORE_ENDPOINT = "/api/contacts-store"
 
+export type EnvelopeAddressLayout = "european" | "usa"
+export type PrintType = "standard" | "label" | "envelope"
+export type ReturnAddressKind = "business" | "personal"
+
+export type ReturnAddress = {
+  company?: string
+  firstName: string
+  lastName: string
+  street: string
+  city: string
+  zip: string
+  country: string
+}
+
+export type PrintPreferences = {
+  printType: PrintType
+  addressLayout: EnvelopeAddressLayout
+  returnAddressPreset: ReturnAddressKind
+  returnAddresses: Record<ReturnAddressKind, ReturnAddress>
+}
+
 export type ContactsState = {
   contacts: Contact[]
   deleted: Contact[]
@@ -21,6 +42,7 @@ export type ContactsState = {
   activity: ActivityEntry[]
   customFields: CustomField[]
   lists: ContactList[]
+  printPreferences: PrintPreferences
 }
 
 export type ContactsCollectionKey = keyof ContactsState
@@ -33,6 +55,30 @@ export function createDefaultContactsState(): ContactsState {
     activity: initialActivity,
     customFields: initialCustomFields,
     lists: initialLists,
+    printPreferences: {
+      printType: "standard",
+      addressLayout: "european",
+      returnAddressPreset: "business",
+      returnAddresses: {
+        business: {
+          company: "",
+          firstName: "",
+          lastName: "",
+          street: "",
+          city: "",
+          zip: "",
+          country: "",
+        },
+        personal: {
+          firstName: "",
+          lastName: "",
+          street: "",
+          city: "",
+          zip: "",
+          country: "",
+        },
+      },
+    },
   }
 }
 
@@ -46,6 +92,17 @@ export function normalizeContactsState(input: Partial<ContactsState> | null | un
     activity: Array.isArray(input?.activity) ? input.activity : defaults.activity,
     customFields: Array.isArray(input?.customFields) ? input.customFields : defaults.customFields,
     lists: Array.isArray(input?.lists) ? input.lists : defaults.lists,
+    printPreferences:
+      input?.printPreferences && typeof input.printPreferences === "object"
+        ? {
+            ...defaults.printPreferences,
+            ...input.printPreferences,
+            returnAddresses: {
+              ...defaults.printPreferences.returnAddresses,
+              ...(input.printPreferences as Partial<PrintPreferences>).returnAddresses,
+            },
+          }
+        : defaults.printPreferences,
   }
 }
 
