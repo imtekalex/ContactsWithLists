@@ -1,4 +1,4 @@
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises"
+import { mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises"
 import path from "node:path"
 import { NextResponse } from "next/server"
 
@@ -31,7 +31,18 @@ async function writeAtomic(filePath: string, contents: string) {
   await mkdir(dataDirectory, { recursive: true })
   const temporaryFile = `${filePath}.tmp`
   await writeFile(temporaryFile, contents, "utf8")
-  await rename(temporaryFile, filePath)
+
+  try {
+    await rename(temporaryFile, filePath)
+  } catch (error) {
+    const err = error as NodeJS.ErrnoException
+    if (err.code === "EPERM") {
+      await unlink(filePath).catch(() => undefined)
+      await rename(temporaryFile, filePath)
+      return
+    }
+    throw error
+  }
 }
 
 async function writeCollectionFile<K extends keyof ContactsState>(collection: K, data: ContactsState[K]) {
