@@ -11,7 +11,6 @@ import {
   Pencil,
   Trash2,
   X,
-  Save,
   Tag,
   Home,
 } from "lucide-react"
@@ -95,7 +94,7 @@ export function ContactDetail({
     setDirty(true)
   }
 
-  function save() {
+  function finishEditing() {
     if (dirty) {
       onUpdate(draft)
       setDirty(false)
@@ -185,9 +184,8 @@ export function ContactDetail({
                   <X className="w-3.5 h-3.5" />
                   Cancel
                 </Button>
-                <Button size="sm" onClick={save} className="gap-1.5">
-                  <Save className="w-3.5 h-3.5" />
-                  Save
+                <Button size="sm" onClick={finishEditing} className="gap-1.5">
+                  Done
                 </Button>
               </>
             ) : (
