@@ -58,6 +58,7 @@ export function ContactDetail({
   const [draft, setDraft] = useState<Contact>(contact)
   const [dirty, setDirty] = useState(false)
   const previousContactId = useRef(contact.id)
+  const originalContact = useRef<Contact>(contact)
 
   useEffect(() => {
     const isNewContact = contact.id !== previousContactId.current
@@ -103,7 +104,8 @@ export function ContactDetail({
   }
 
   function cancel() {
-    setDraft(contact)
+    onUpdate(originalContact.current)
+    setDraft(originalContact.current)
     setDirty(false)
     setEditing(false)
   }
@@ -190,7 +192,15 @@ export function ContactDetail({
               </>
             ) : (
               <>
-                <Button size="sm" variant="outline" onClick={() => setEditing(true)} className="gap-1.5">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    originalContact.current = contact
+                    setEditing(true)
+                  }}
+                  className="gap-1.5"
+                >
                   <Pencil className="w-3.5 h-3.5" />
                   Edit
                 </Button>
