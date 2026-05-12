@@ -68,8 +68,9 @@ Linting is not configured in this import yet.
 - `hooks/` - Shared React hooks.
 - `lib/contacts-data.ts` - Contact, group, list, custom-field types plus seed data and query helpers.
 - `lib/contacts-store.ts` - Shared contact-state shape plus client load/save helpers.
-- `app/api/contacts-store/route.ts` - Local file persistence API for `data/contacts.json`.
-- `data/` - Local JSON data file location.
+- `app/api/contacts-store/route.ts` - File persistence API that reads sample data from `data/` and writes local changes to `data/local/`.
+- `data/` - Tracked sample JSON collection files.
+- `data/local/` - Ignored local JSON collection files created while running the app.
 - `public/` - Icons and placeholder assets.
 - `public/fonts/geist/` - Local Geist font files and license.
 - `app/globals.css` - Global styling and design tokens.
@@ -82,9 +83,11 @@ Geist is created by Vercel in collaboration with Basement Studio and is licensed
 
 ## Data Notes
 
-The app starts from the seed data in `lib/contacts-data.ts`, then persists edits to `data/contacts.json` through the local Next.js API route in `app/api/contacts-store/route.ts`. Contacts, deleted contacts, groups, activity, custom fields, and lists survive page refreshes and are stored in a normal JSON file in this project folder.
+The app starts from the tracked sample JSON files in `data/`, then persists edits to ignored local copies in `data/local/` through the local Next.js API route in `app/api/contacts-store/route.ts`. Contacts, deleted contacts, groups, activity, custom fields, lists, and print preferences survive page refreshes and are stored as normal JSON files in this project folder.
 
-The data file is created automatically the first time the app runs. This file-backed storage is intended for local development and personal desktop use with `pnpm dev` or `pnpm start`; a static deployment would need a different persistence layer.
+The local data files are created automatically the first time the app runs. `data/local/` is ignored by Git, so everyone can keep personal changes without accidentally committing them, while the repository still carries stable sample data in `data/`.
+
+This file-backed storage is intended for local development and personal desktop use with `pnpm dev` or `pnpm start`; a static deployment would need a different persistence layer.
 
 CSV export is available from Settings; CSV import is visible but disabled.
 

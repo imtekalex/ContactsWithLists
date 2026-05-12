@@ -612,6 +612,14 @@ export default function Home() {
 
   const selectionMode = selectedIds.size > 0
 
+  if (!storageReady) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-background text-sm text-muted-foreground">
+        Loading contacts...
+      </div>
+    )
+  }
+
   return (
     <div className="h-screen flex overflow-hidden bg-background text-foreground">
       {/* Sidebar */}

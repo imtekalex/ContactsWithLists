@@ -11,7 +11,9 @@ import {
 export const runtime = "nodejs"
 
 const dataDirectory = path.join(process.cwd(), "data")
-const combinedDataFile = path.join(dataDirectory, "contacts.json")
+const localDataDirectory = path.join(dataDirectory, "local")
+const combinedSampleDataFile = path.join(dataDirectory, "contacts.json")
+const combinedLocalDataFile = path.join(localDataDirectory, "contacts.json")
 
 const collectionFiles: Record<keyof ContactsState, string> = {
   contacts: "contacts-collection.json",
@@ -24,11 +26,15 @@ const collectionFiles: Record<keyof ContactsState, string> = {
 }
 
 function collectionDataFile(collection: keyof ContactsState) {
+  return path.join(localDataDirectory, collectionFiles[collection])
+}
+
+function sampleCollectionDataFile(collection: keyof ContactsState) {
   return path.join(dataDirectory, collectionFiles[collection])
 }
 
 async function writeAtomic(filePath: string, contents: string) {
-  await mkdir(dataDirectory, { recursive: true })
+  await mkdir(path.dirname(filePath), { recursive: true })
   const temporaryFile = `${filePath}.tmp`
   await writeFile(temporaryFile, contents, "utf8")
 
@@ -56,13 +62,38 @@ async function writeAllCollectionFiles(state: ContactsState) {
 
 async function readCollectionFile<K extends keyof ContactsState>(collection: K, fallback: ContactsState[K]): Promise<ContactsState[K]> {
   const filePath = collectionDataFile(collection)
-  const content = await readFile(filePath, "utf8")
-  return JSON.parse(content) as ContactsState[K]
+  try {
+    const content = await readFile(filePath, "utf8")
+    return JSON.parse(content) as ContactsState[K]
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+      throw error
+    }
+
+    try {
+      const sampleContent = await readFile(sampleCollectionDataFile(collection), "utf8")
+      return JSON.parse(sampleContent) as ContactsState[K]
+    } catch (sampleError) {
+      if ((sampleError as NodeJS.ErrnoException).code !== "ENOENT") {
+        throw sampleError
+      }
+      return fallback
+    }
+  }
 }
 
 async function readCombinedStateFile(): Promise<ContactsState> {
-  const content = await readFile(combinedDataFile, "utf8")
-  return normalizeContactsState(JSON.parse(content) as Partial<ContactsState>)
+  try {
+    const content = await readFile(combinedLocalDataFile, "utf8")
+    return normalizeContactsState(JSON.parse(content) as Partial<ContactsState>)
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+      throw error
+    }
+
+    const content = await readFile(combinedSampleDataFile, "utf8")
+    return normalizeContactsState(JSON.parse(content) as Partial<ContactsState>)
+  }
 }
 
 async function readContactsState(): Promise<ContactsState> {
