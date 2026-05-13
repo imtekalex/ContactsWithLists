@@ -59,10 +59,12 @@ import { PrintDialog } from "@/components/print-dialog"
 import { AddToListDialog } from "@/components/add-to-list-dialog"
 import { CustomFieldsManager } from "@/components/custom-fields-manager"
 import { GroupsManager } from "@/components/groups-manager"
+import { getParticipationBalance } from "@/lib/payments"
 import {
   ParticipationSection,
   type CreateParticipationInput,
   type CreatePaymentInput,
+  type UpdatePaymentInput,
 } from "@/components/participation-section"
 import { EventsView, type CreateEventOccurrenceInput } from "@/components/events-view"
 import { PaymentsView } from "@/components/payments-view"
@@ -734,27 +736,49 @@ export default function Home() {
 
   function handleCreateParticipation(input: CreateParticipationInput) {
     const now = Date.now()
-    const occurrenceId = ensureEventOccurrence({
-      name: input.eventName,
-      date: input.date,
-      recurrence: input.recurrence,
-      currency: input.currency,
-      defaultAmountOwed: input.amountOwed,
-    })
+    const occurrence = eventOccurrences.find((item) => item.id === input.occurrenceId)
+    if (!occurrence) {
+      showBanner("Choose an existing event first")
+      return
+    }
+
+    const duplicate = participations.some(
+      (participation) =>
+        participation.contactId === input.contactId && participation.occurrenceId === input.occurrenceId,
+    )
+    if (duplicate) {
+      showBanner("That event is already assigned to this contact")
+      return
+    }
+
+    const eventName = input.eventName ?? occurrence?.name ?? "Event"
+    const initialPayments: PaymentEntry[] =
+      input.initialPayment && input.initialPayment.amount > 0
+        ? [
+            {
+              id: `pay${now}`,
+              amount: input.initialPayment.amount,
+              date: input.initialPayment.date,
+              label: input.initialPayment.label,
+              note: input.initialPayment.note,
+              createdAt: now,
+            },
+          ]
+        : []
     const participation: EventParticipation = {
       id: `ep${now}`,
       contactId: input.contactId,
-      occurrenceId,
+      occurrenceId: input.occurrenceId,
       status: "registered",
       amountOwed: input.amountOwed,
       currency: input.currency,
       notes: input.notes,
-      payments: [],
+      payments: initialPayments,
       createdAt: now,
       updatedAt: now,
     }
     setParticipations((prev) => [participation, ...prev])
-    showBanner(`Added ${input.eventName}`)
+    showBanner(`Added ${eventName}`)
   }
 
   function handleAddPayment(participationId: string, input: CreatePaymentInput) {
@@ -780,6 +804,31 @@ export default function Home() {
     )
   }
 
+  function handleUpdatePayment(participationId: string, paymentId: string, input: UpdatePaymentInput) {
+    const now = Date.now()
+    setParticipations((prev) =>
+      prev.map((participation) =>
+        participation.id === participationId
+          ? {
+              ...participation,
+              payments: participation.payments.map((payment) =>
+                payment.id === paymentId
+                  ? {
+                      ...payment,
+                      amount: input.amount,
+                      date: input.date,
+                      label: input.label,
+                      note: input.note,
+                    }
+                  : payment,
+              ),
+              updatedAt: now,
+            }
+          : participation,
+      ),
+    )
+  }
+
   function handleDeletePayment(participationId: string, paymentId: string) {
     const now = Date.now()
     setParticipations((prev) =>
@@ -793,6 +842,21 @@ export default function Home() {
           : participation,
       ),
     )
+  }
+
+  function handleDeleteParticipation(participationId: string) {
+    setParticipations((prev) => {
+      const participation = prev.find((item) => item.id === participationId)
+      if (!participation) return prev
+
+      const balance = getParticipationBalance(participation)
+      if (balance.remaining > 0) {
+        showBanner("Settle this participation before deleting it")
+        return prev
+      }
+
+      return prev.filter((item) => item.id !== participationId)
+    })
   }
 
   const selectionMode = selectedIds.size > 0
@@ -1040,6 +1104,8 @@ export default function Home() {
                   onToggleStar={handleToggleStar}
                   onCreateParticipation={handleCreateParticipation}
                   onAddPayment={handleAddPayment}
+                  onUpdatePayment={handleUpdatePayment}
+                  onDeleteParticipation={handleDeleteParticipation}
                   onDeletePayment={handleDeletePayment}
                 />
               ) : (

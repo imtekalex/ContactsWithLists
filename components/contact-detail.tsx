@@ -35,6 +35,7 @@ import {
   ParticipationSection,
   type CreateParticipationInput,
   type CreatePaymentInput,
+  type UpdatePaymentInput,
 } from "@/components/participation-section"
 
 type ColorClass = { dot: string; bg: string; text: string; ring: string }
@@ -52,6 +53,8 @@ interface Props {
   onToggleStar: (id: string) => void
   onCreateParticipation: (input: CreateParticipationInput) => void
   onAddPayment: (participationId: string, payment: CreatePaymentInput) => void
+  onUpdatePayment: (participationId: string, paymentId: string, payment: UpdatePaymentInput) => void
+  onDeleteParticipation: (participationId: string) => void
   onDeletePayment: (participationId: string, paymentId: string) => void
 }
 
@@ -68,6 +71,8 @@ export function ContactDetail({
   onToggleStar,
   onCreateParticipation,
   onAddPayment,
+  onUpdatePayment,
+  onDeleteParticipation,
   onDeletePayment,
 }: Props) {
   function handleCustomChange(fieldId: string, value: CustomFieldValue | undefined) {
@@ -265,6 +270,19 @@ export function ContactDetail({
                 }}
               />
             </section>
+            <Separator />
+            <ParticipationSection
+              contact={contact}
+              eventSeries={eventSeries}
+              eventOccurrences={eventOccurrences}
+              participations={participations}
+              canEdit
+              onCreateParticipation={onCreateParticipation}
+              onAddPayment={onAddPayment}
+              onUpdatePayment={onUpdatePayment}
+              onDeleteParticipation={onDeleteParticipation}
+              onDeletePayment={onDeletePayment}
+            />
           </>
         ) : (
           <>
@@ -376,8 +394,11 @@ export function ContactDetail({
               eventSeries={eventSeries}
               eventOccurrences={eventOccurrences}
               participations={participations}
+              canEdit={false}
               onCreateParticipation={onCreateParticipation}
               onAddPayment={onAddPayment}
+              onUpdatePayment={onUpdatePayment}
+              onDeleteParticipation={onDeleteParticipation}
               onDeletePayment={onDeletePayment}
             />
 
