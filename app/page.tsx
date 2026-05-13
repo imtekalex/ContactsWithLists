@@ -66,7 +66,13 @@ import {
   type CreatePaymentInput,
   type UpdatePaymentInput,
 } from "@/components/participation-section"
-import { EventsView, type CreateEventOccurrenceInput } from "@/components/events-view"
+import {
+  EventsView,
+  type CreateEventOccurrenceInput,
+  type EventParticipantInput,
+  type EventParticipantsInput,
+  type UpdateEventOccurrenceInput,
+} from "@/components/events-view"
 import { PaymentsView } from "@/components/payments-view"
 
 type View = "contacts" | "lists" | "events" | "payments" | "trash" | "analytics" | "settings"
@@ -82,6 +88,26 @@ const groupColorClasses: Record<GroupColor, { dot: string; bg: string; text: str
 }
 
 const defaultContactsState = createDefaultContactsState()
+
+function getRecurringOccurrenceDates(startDate: string | undefined, recurrence: EventRecurrence) {
+  if (!startDate || recurrence === "none") return [startDate]
+
+  const dates: string[] = []
+  const start = new Date(`${startDate}T00:00:00`)
+  const today = new Date()
+  const next = new Date(start)
+
+  while (next <= today) {
+    dates.push(next.toISOString().slice(0, 10))
+    if (recurrence === "yearly") {
+      next.setFullYear(next.getFullYear() + 1)
+    } else {
+      next.setMonth(next.getMonth() + 1)
+    }
+  }
+
+  return dates.length > 0 ? dates : [startDate]
+}
 
 export default function Home() {
   const [view, setView] = useState<View>("contacts")
@@ -730,8 +756,76 @@ export default function Home() {
   }
 
   function handleCreateEventOccurrence(input: CreateEventOccurrenceInput) {
-    ensureEventOccurrence(input)
+    const now = Date.now()
+    const seriesName = input.name.trim()
+    if (!seriesName) return
+    const seriesId = `es${now}`
+    const nextSeries: EventSeries = {
+      id: seriesId,
+      name: seriesName,
+      recurrence: input.recurrence,
+      defaultCurrency: "EUR",
+      defaultAmountOwed: input.defaultAmountOwed,
+      createdAt: now,
+      updatedAt: now,
+    }
+    const dates = getRecurringOccurrenceDates(input.date, input.recurrence)
+    const nextOccurrences: EventOccurrence[] = dates.map((date, index) => ({
+      id: `eo${now}_${index}`,
+      seriesId,
+      name:
+        input.recurrence !== "none" && date && !seriesName.match(/\b\d{4}\b/)
+          ? `${seriesName} ${date.slice(0, 4)}`
+          : seriesName,
+      date,
+      participantMode: "manual",
+      contactIds: [],
+      createdAt: now,
+      updatedAt: now,
+    }))
+    setEventSeries((prev) => [...prev, nextSeries])
+    setEventOccurrences((prev) => [...nextOccurrences, ...prev])
     showBanner(`Created ${input.name}`)
+  }
+
+  function handleUpdateEventOccurrence(input: UpdateEventOccurrenceInput) {
+    setEventSeries((prev) => prev.map((series) => (series.id === input.series.id ? input.series : series)))
+    setEventOccurrences((prev) =>
+      prev.map((occurrence) => (occurrence.id === input.occurrence.id ? input.occurrence : occurrence)),
+    )
+  }
+
+  function handleAddEventParticipants(input: EventParticipantsInput) {
+    const now = Date.now()
+    setEventOccurrences((prev) =>
+      prev.map((occurrence) => {
+        if (occurrence.id !== input.occurrenceId) return occurrence
+        const ids = new Set(occurrence.contactIds ?? [])
+        input.contactIds.forEach((contactId) => ids.add(contactId))
+        return { ...occurrence, contactIds: Array.from(ids), participantMode: occurrence.participantMode ?? "manual", updatedAt: now }
+      }),
+    )
+  }
+
+  function handleRemoveEventParticipant(input: EventParticipantInput) {
+    const now = Date.now()
+    setEventOccurrences((prev) =>
+      prev.map((occurrence) =>
+        occurrence.id === input.occurrenceId
+          ? {
+              ...occurrence,
+              contactIds: (occurrence.contactIds ?? []).filter((id) => id !== input.contactId),
+              updatedAt: now,
+            }
+          : occurrence,
+      ),
+    )
+    setParticipations((prev) =>
+      prev.filter(
+        (participation) =>
+          !(participation.occurrenceId === input.occurrenceId && participation.contactId === input.contactId && participation.payments.length === 0),
+      ),
+    )
   }
 
   function handleCreateParticipation(input: CreateParticipationInput) {
@@ -1145,10 +1239,16 @@ export default function Home() {
         {view === "events" && (
           <EventsView
             contacts={contacts}
+            groups={groups}
+            customFields={customFields}
+            groupColorClasses={groupColorClasses}
             eventSeries={eventSeries}
             eventOccurrences={eventOccurrences}
             participations={participations}
             onCreateEvent={handleCreateEventOccurrence}
+            onUpdateEvent={handleUpdateEventOccurrence}
+            onAddParticipants={handleAddEventParticipants}
+            onRemoveParticipant={handleRemoveEventParticipant}
           />
         )}
 

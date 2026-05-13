@@ -53,6 +53,9 @@ export type EventOccurrence = {
   date?: string
   location?: string
   notes?: string
+  participantMode?: "manual" | "dynamic"
+  contactIds?: string[]
+  filter?: ContactList["filter"]
   createdAt: number
   updatedAt: number
 }
