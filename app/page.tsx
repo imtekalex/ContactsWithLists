@@ -19,6 +19,8 @@ import {
   ListPlus,
   X,
   CheckSquare,
+  CalendarDays,
+  CreditCard,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -38,6 +40,11 @@ import {
   type Group,
   type GroupColor,
   type ActivityEntry,
+  type EventOccurrence,
+  type EventParticipation,
+  type EventRecurrence,
+  type EventSeries,
+  type PaymentEntry,
 } from "@/lib/contacts-data"
 import {
   createDefaultContactsState,
@@ -52,8 +59,15 @@ import { PrintDialog } from "@/components/print-dialog"
 import { AddToListDialog } from "@/components/add-to-list-dialog"
 import { CustomFieldsManager } from "@/components/custom-fields-manager"
 import { GroupsManager } from "@/components/groups-manager"
+import {
+  ParticipationSection,
+  type CreateParticipationInput,
+  type CreatePaymentInput,
+} from "@/components/participation-section"
+import { EventsView, type CreateEventOccurrenceInput } from "@/components/events-view"
+import { PaymentsView } from "@/components/payments-view"
 
-type View = "contacts" | "lists" | "trash" | "analytics" | "settings"
+type View = "contacts" | "lists" | "events" | "payments" | "trash" | "analytics" | "settings"
 
 const groupColorClasses: Record<GroupColor, { dot: string; bg: string; text: string; ring: string }> = {
   blue: { dot: "bg-blue-500", bg: "bg-blue-50", text: "text-blue-700", ring: "ring-blue-200" },
@@ -75,6 +89,9 @@ export default function Home() {
   const [activity, setActivity] = useState<ActivityEntry[]>([])
   const [customFields, setCustomFields] = useState<CustomField[]>([])
   const [lists, setLists] = useState<ContactList[]>([])
+  const [eventSeries, setEventSeries] = useState<EventSeries[]>([])
+  const [eventOccurrences, setEventOccurrences] = useState<EventOccurrence[]>([])
+  const [participations, setParticipations] = useState<EventParticipation[]>([])
   const [printPreferences, setPrintPreferences] = useState<PrintPreferences>(defaultContactsState.printPreferences)
   const [storageReady, setStorageReady] = useState(false)
 
@@ -118,6 +135,9 @@ export default function Home() {
         setActivity(stored.activity)
         setCustomFields(stored.customFields)
         setLists(stored.lists)
+        setEventSeries(stored.eventSeries)
+        setEventOccurrences(stored.eventOccurrences)
+        setParticipations(stored.participations)
         setPrintPreferences(stored.printPreferences)
         setSelectedId(stored.contacts[0]?.id ?? null)
       })
@@ -131,6 +151,9 @@ export default function Home() {
           setActivity(defaultContactsState.activity)
           setCustomFields(defaultContactsState.customFields)
           setLists(defaultContactsState.lists)
+          setEventSeries(defaultContactsState.eventSeries)
+          setEventOccurrences(defaultContactsState.eventOccurrences)
+          setParticipations(defaultContactsState.participations)
           setSelectedId(defaultContactsState.contacts[0]?.id ?? null)
         }
       })
@@ -286,6 +309,51 @@ export default function Home() {
 
     return () => window.clearTimeout(timeoutId)
   }, [printPreferences, storageReady])
+
+  useEffect(() => {
+    if (!storageReady) return
+
+    const timeoutId = window.setTimeout(() => {
+      trackSave(
+        saveContactsCollection("eventSeries", eventSeries).catch((error) => {
+          console.error(error)
+          showBanner("Could not save event series")
+        }),
+      )
+    }, 400)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [eventSeries, storageReady])
+
+  useEffect(() => {
+    if (!storageReady) return
+
+    const timeoutId = window.setTimeout(() => {
+      trackSave(
+        saveContactsCollection("eventOccurrences", eventOccurrences).catch((error) => {
+          console.error(error)
+          showBanner("Could not save events")
+        }),
+      )
+    }, 400)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [eventOccurrences, storageReady])
+
+  useEffect(() => {
+    if (!storageReady) return
+
+    const timeoutId = window.setTimeout(() => {
+      trackSave(
+        saveContactsCollection("participations", participations).catch((error) => {
+          console.error(error)
+          showBanner("Could not save participation")
+        }),
+      )
+    }, 400)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [participations, storageReady])
 
   const filteredContacts = useMemo(() => {
     let list = contacts
@@ -610,15 +678,124 @@ export default function Home() {
     )
   }
 
-  const selectionMode = selectedIds.size > 0
+  function ensureEventOccurrence(input: {
+    name: string
+    date?: string
+    recurrence: EventRecurrence
+    currency: string
+    defaultAmountOwed?: number
+  }) {
+    const now = Date.now()
+    const seriesName = input.name.trim()
+    const occurrenceName =
+      input.date && input.recurrence !== "none" && !seriesName.match(/\b\d{4}\b/)
+        ? `${seriesName} ${input.date.slice(0, 4)}`
+        : seriesName
+    const existingSeries = eventSeries.find((series) => series.name.toLowerCase() === seriesName.toLowerCase())
+    const seriesId = existingSeries?.id ?? `es${now}`
 
-  if (!storageReady) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-background text-sm text-muted-foreground">
-        Loading contacts...
-      </div>
+    if (!existingSeries) {
+      const nextSeries: EventSeries = {
+        id: seriesId,
+        name: seriesName,
+        recurrence: input.recurrence,
+        defaultCurrency: input.currency,
+        defaultAmountOwed: input.defaultAmountOwed,
+        createdAt: now,
+        updatedAt: now,
+      }
+      setEventSeries((prev) => [...prev, nextSeries])
+    }
+
+    const existingOccurrence = eventOccurrences.find(
+      (occurrence) =>
+        occurrence.name.toLowerCase() === occurrenceName.toLowerCase() &&
+        (occurrence.date ?? "") === (input.date ?? ""),
+    )
+    if (existingOccurrence) return existingOccurrence.id
+
+    const occurrenceId = `eo${now}`
+    const nextOccurrence: EventOccurrence = {
+      id: occurrenceId,
+      seriesId,
+      name: occurrenceName,
+      date: input.date,
+      createdAt: now,
+      updatedAt: now,
+    }
+    setEventOccurrences((prev) => [...prev, nextOccurrence])
+    return occurrenceId
+  }
+
+  function handleCreateEventOccurrence(input: CreateEventOccurrenceInput) {
+    ensureEventOccurrence(input)
+    showBanner(`Created ${input.name}`)
+  }
+
+  function handleCreateParticipation(input: CreateParticipationInput) {
+    const now = Date.now()
+    const occurrenceId = ensureEventOccurrence({
+      name: input.eventName,
+      date: input.date,
+      recurrence: input.recurrence,
+      currency: input.currency,
+      defaultAmountOwed: input.amountOwed,
+    })
+    const participation: EventParticipation = {
+      id: `ep${now}`,
+      contactId: input.contactId,
+      occurrenceId,
+      status: "registered",
+      amountOwed: input.amountOwed,
+      currency: input.currency,
+      notes: input.notes,
+      payments: [],
+      createdAt: now,
+      updatedAt: now,
+    }
+    setParticipations((prev) => [participation, ...prev])
+    showBanner(`Added ${input.eventName}`)
+  }
+
+  function handleAddPayment(participationId: string, input: CreatePaymentInput) {
+    const now = Date.now()
+    const payment: PaymentEntry = {
+      id: `pay${now}`,
+      amount: input.amount,
+      date: input.date,
+      label: input.label,
+      note: input.note,
+      createdAt: now,
+    }
+    setParticipations((prev) =>
+      prev.map((participation) =>
+        participation.id === participationId
+          ? {
+              ...participation,
+              payments: [...participation.payments, payment],
+              updatedAt: now,
+            }
+          : participation,
+      ),
     )
   }
+
+  function handleDeletePayment(participationId: string, paymentId: string) {
+    const now = Date.now()
+    setParticipations((prev) =>
+      prev.map((participation) =>
+        participation.id === participationId
+          ? {
+              ...participation,
+              payments: participation.payments.filter((payment) => payment.id !== paymentId),
+              updatedAt: now,
+            }
+          : participation,
+      ),
+    )
+  }
+
+  const selectionMode = selectedIds.size > 0
 
   return (
     <div className="h-screen flex overflow-hidden bg-background text-foreground">
@@ -639,6 +816,8 @@ export default function Home() {
         <nav className="px-3 py-4 space-y-1">
           <NavItem icon={Users} label="Contacts" badge={contacts.length} active={view === "contacts"} onClick={() => setView("contacts")} />
           <NavItem icon={ListIcon} label="Lists" badge={lists.length} active={view === "lists"} onClick={() => setView("lists")} />
+          <NavItem icon={CalendarDays} label="Events" badge={eventOccurrences.length} active={view === "events"} onClick={() => setView("events")} />
+          <NavItem icon={CreditCard} label="Payments" badge={participations.length} active={view === "payments"} onClick={() => setView("payments")} />
           <NavItem icon={Trash2} label="Trash" badge={deleted.length} active={view === "trash"} onClick={() => setView("trash")} />
           <NavItem icon={BarChart3} label="Analytics" active={view === "analytics"} onClick={() => setView("analytics")} />
           <NavItem icon={SettingsIcon} label="Settings" active={view === "settings"} onClick={() => setView("settings")} />
@@ -853,9 +1032,15 @@ export default function Home() {
                   groups={groups.filter((g) => selected.groupIds.includes(g.id))}
                   groupColorClasses={groupColorClasses}
                   customFields={customFields}
+                  eventSeries={eventSeries}
+                  eventOccurrences={eventOccurrences}
+                  participations={participations}
                   onUpdate={handleUpdate}
                   onDelete={handleDelete}
                   onToggleStar={handleToggleStar}
+                  onCreateParticipation={handleCreateParticipation}
+                  onAddPayment={handleAddPayment}
+                  onDeletePayment={handleDeletePayment}
                 />
               ) : (
                 <EmptyState
@@ -888,6 +1073,25 @@ export default function Home() {
               openPrintFor(members, list.name)
             }}
             onCopyEmails={(items) => copyEmailsFor(items)}
+          />
+        )}
+
+        {view === "events" && (
+          <EventsView
+            contacts={contacts}
+            eventSeries={eventSeries}
+            eventOccurrences={eventOccurrences}
+            participations={participations}
+            onCreateEvent={handleCreateEventOccurrence}
+          />
+        )}
+
+        {view === "payments" && (
+          <PaymentsView
+            contacts={contacts}
+            eventSeries={eventSeries}
+            eventOccurrences={eventOccurrences}
+            participations={participations}
           />
         )}
 

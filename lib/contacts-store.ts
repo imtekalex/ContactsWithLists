@@ -3,12 +3,18 @@ import {
   initialContacts,
   initialCustomFields,
   initialDeleted,
+  initialEventOccurrences,
+  initialEventSeries,
   initialGroups,
+  initialParticipations,
   initialLists,
   type ActivityEntry,
   type Contact,
   type ContactList,
   type CustomField,
+  type EventOccurrence,
+  type EventParticipation,
+  type EventSeries,
   type Group,
 } from "@/lib/contacts-data"
 
@@ -42,6 +48,9 @@ export type ContactsState = {
   activity: ActivityEntry[]
   customFields: CustomField[]
   lists: ContactList[]
+  eventSeries: EventSeries[]
+  eventOccurrences: EventOccurrence[]
+  participations: EventParticipation[]
   printPreferences: PrintPreferences
 }
 
@@ -55,6 +64,9 @@ export function createDefaultContactsState(): ContactsState {
     activity: initialActivity,
     customFields: initialCustomFields,
     lists: initialLists,
+    eventSeries: initialEventSeries,
+    eventOccurrences: initialEventOccurrences,
+    participations: initialParticipations,
     printPreferences: {
       printType: "standard",
       addressLayout: "european",
@@ -92,6 +104,9 @@ export function normalizeContactsState(input: Partial<ContactsState> | null | un
     activity: Array.isArray(input?.activity) ? input.activity : defaults.activity,
     customFields: Array.isArray(input?.customFields) ? input.customFields : defaults.customFields,
     lists: Array.isArray(input?.lists) ? input.lists : defaults.lists,
+    eventSeries: Array.isArray(input?.eventSeries) ? input.eventSeries : defaults.eventSeries,
+    eventOccurrences: Array.isArray(input?.eventOccurrences) ? input.eventOccurrences : defaults.eventOccurrences,
+    participations: Array.isArray(input?.participations) ? input.participations : defaults.participations,
     printPreferences:
       input?.printPreferences && typeof input.printPreferences === "object"
         ? {

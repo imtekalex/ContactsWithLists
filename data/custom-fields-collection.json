@@ -149,5 +149,53 @@
         "label": "Series C+"
       }
     ]
+  },
+  {
+    "id": "cf_nickname",
+    "name": "Nickname",
+    "slug": "nickname",
+    "type": "text",
+    "isGlobal": true,
+    "groupIds": []
+  },
+  {
+    "id": "cf_keywords",
+    "name": "Keywords",
+    "slug": "keywords",
+    "type": "text",
+    "isGlobal": true,
+    "groupIds": []
+  },
+  {
+    "id": "cf_category",
+    "name": "Category",
+    "slug": "category",
+    "type": "text",
+    "isGlobal": true,
+    "groupIds": []
+  },
+  {
+    "id": "cf_contact_status",
+    "name": "Status",
+    "slug": "contact_status",
+    "type": "longText",
+    "isGlobal": true,
+    "groupIds": []
+  },
+  {
+    "id": "cf_user_defined",
+    "name": "User defined",
+    "slug": "user_defined",
+    "type": "text",
+    "isGlobal": true,
+    "groupIds": []
+  },
+  {
+    "id": "cf_profession",
+    "name": "Profession",
+    "slug": "profession",
+    "type": "text",
+    "isGlobal": true,
+    "groupIds": []
   }
 ]

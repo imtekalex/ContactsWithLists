@@ -488,5 +488,55 @@
     "customValues": {},
     "createdAt": 1759795200000,
     "updatedAt": 1761436800000
+  },
+  {
+    "id": "c16",
+    "firstName": "Mara",
+    "lastName": "Main",
+    "email": "mara.main@example.com",
+    "phone": "+49 170 555 0199",
+    "company": "Independent",
+    "title": "Gong Specialist",
+    "city": "Berlin",
+    "country": "Germany",
+    "website": "https://example.com/website-a",
+    "notes": "Details:\n- sometimes uses website a\n- has nice clothes\n\nStatus: Offers to assist in SQ. (on list)\nUser def.: 9 VOLTS / (X-OE)",
+    "starred": true,
+    "tags": [
+      "Former Adv. Grp.",
+      "M0 - VOLT x 2+",
+      "SQ"
+    ],
+    "groupIds": [
+      "g1"
+    ],
+    "customValues": {
+      "cf_nickname": {
+        "type": "text",
+        "value": "Main"
+      },
+      "cf_keywords": {
+        "type": "text",
+        "value": "-Former Adv. Grp."
+      },
+      "cf_category": {
+        "type": "text",
+        "value": "M0 - VOLT x 2+"
+      },
+      "cf_contact_status": {
+        "type": "longText",
+        "value": "Offers to assist in SQ. (on list)"
+      },
+      "cf_user_defined": {
+        "type": "text",
+        "value": "9 VOLTS / (X-OE)"
+      },
+      "cf_profession": {
+        "type": "text",
+        "value": "Gong Specialist"
+      }
+    },
+    "createdAt": 1760659200000,
+    "updatedAt": 1761609600000
   }
 ]

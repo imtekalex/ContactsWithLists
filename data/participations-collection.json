@@ -1,0 +1,48 @@
+[
+  {
+    "id": "ep_main_retreat_2026",
+    "contactId": "c16",
+    "occurrenceId": "eo_retreat_weekend_2026",
+    "status": "registered",
+    "amountOwed": 480,
+    "currency": "EUR",
+    "notes": "Primary example: two partial payments with a remaining balance.",
+    "payments": [
+      {
+        "id": "pay_main_retreat_down",
+        "amount": 100,
+        "date": "2026-05-10",
+        "label": "Down payment",
+        "createdAt": 1761177600000
+      },
+      {
+        "id": "pay_main_retreat_followup",
+        "amount": 100,
+        "date": "2026-05-10",
+        "label": "Follow up payment",
+        "createdAt": 1761177600000
+      }
+    ],
+    "createdAt": 1760659200000,
+    "updatedAt": 1761177600000
+  },
+  {
+    "id": "ep_main_event_a",
+    "contactId": "c16",
+    "occurrenceId": "eo_event_a_2026",
+    "status": "attended",
+    "amountOwed": 65,
+    "currency": "EUR",
+    "payments": [
+      {
+        "id": "pay_main_event_a",
+        "amount": 65,
+        "date": "2026-04-18",
+        "label": "Settled",
+        "createdAt": 1759968000000
+      }
+    ],
+    "createdAt": 1759968000000,
+    "updatedAt": 1759968000000
+  }
+]

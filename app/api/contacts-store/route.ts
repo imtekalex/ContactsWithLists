@@ -22,6 +22,9 @@ const collectionFiles: Record<keyof ContactsState, string> = {
   activity: "activity-collection.json",
   customFields: "custom-fields-collection.json",
   lists: "lists-collection.json",
+  eventSeries: "event-series-collection.json",
+  eventOccurrences: "event-occurrences-collection.json",
+  participations: "participations-collection.json",
   printPreferences: "print-preferences-collection.json",
 }
 
@@ -100,17 +103,42 @@ async function readContactsState(): Promise<ContactsState> {
   const defaults = createDefaultContactsState()
 
   try {
-    const [contacts, deleted, groups, activity, customFields, lists, printPreferences] = await Promise.all([
+    const [
+      contacts,
+      deleted,
+      groups,
+      activity,
+      customFields,
+      lists,
+      eventSeries,
+      eventOccurrences,
+      participations,
+      printPreferences,
+    ] = await Promise.all([
       readCollectionFile("contacts", defaults.contacts),
       readCollectionFile("deleted", defaults.deleted),
       readCollectionFile("groups", defaults.groups),
       readCollectionFile("activity", defaults.activity),
       readCollectionFile("customFields", defaults.customFields),
       readCollectionFile("lists", defaults.lists),
+      readCollectionFile("eventSeries", defaults.eventSeries),
+      readCollectionFile("eventOccurrences", defaults.eventOccurrences),
+      readCollectionFile("participations", defaults.participations),
       readCollectionFile("printPreferences", defaults.printPreferences),
     ])
 
-    return { contacts, deleted, groups, activity, customFields, lists, printPreferences }
+    return {
+      contacts,
+      deleted,
+      groups,
+      activity,
+      customFields,
+      lists,
+      eventSeries,
+      eventOccurrences,
+      participations,
+      printPreferences,
+    }
   } catch (error) {
     const code = (error as NodeJS.ErrnoException).code
     if (code !== "ENOENT") {

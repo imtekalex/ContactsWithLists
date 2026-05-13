@@ -1,0 +1,28 @@
+[
+  {
+    "id": "es_retreat_weekend",
+    "name": "Retreat Weekend",
+    "description": "Annual retreat participation and payment tracking.",
+    "recurrence": "yearly",
+    "defaultCurrency": "EUR",
+    "defaultAmountOwed": 480,
+    "createdAt": 1758240000000.0,
+    "updatedAt": 1760659200000
+  },
+  {
+    "id": "es_event_a",
+    "name": "Event A",
+    "recurrence": "none",
+    "defaultCurrency": "EUR",
+    "createdAt": 1758672000000.0,
+    "updatedAt": 1759968000000
+  },
+  {
+    "id": "es_event_c",
+    "name": "Event C",
+    "recurrence": "yearly",
+    "defaultCurrency": "EUR",
+    "createdAt": 1758931200000.0,
+    "updatedAt": 1759968000000
+  }
+]

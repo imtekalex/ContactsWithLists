@@ -31,6 +31,56 @@ export type Contact = {
   updatedAt: number
 }
 
+export type CurrencyCode = "EUR" | "USD" | "GBP" | "CHF" | string
+
+export type EventRecurrence = "none" | "yearly" | "monthly"
+
+export type EventSeries = {
+  id: string
+  name: string
+  description?: string
+  recurrence: EventRecurrence
+  defaultCurrency: CurrencyCode
+  defaultAmountOwed?: number
+  createdAt: number
+  updatedAt: number
+}
+
+export type EventOccurrence = {
+  id: string
+  seriesId: string
+  name: string
+  date?: string
+  location?: string
+  notes?: string
+  createdAt: number
+  updatedAt: number
+}
+
+export type ParticipationStatus = "invited" | "registered" | "attended" | "cancelled" | "waitlist"
+
+export type PaymentEntry = {
+  id: string
+  amount: number
+  date?: string
+  label?: string
+  note?: string
+  createdAt: number
+}
+
+export type EventParticipation = {
+  id: string
+  contactId: string
+  occurrenceId: string
+  status: ParticipationStatus
+  amountOwed: number
+  currency: CurrencyCode
+  notes?: string
+  payments: PaymentEntry[]
+  createdAt: number
+  updatedAt: number
+}
+
 export type GroupColor =
   | "blue"
   | "green"
@@ -468,6 +518,33 @@ export const initialContacts: Contact[] = [
     createdAt: now - 22 * day,
     updatedAt: now - 3 * day,
   },
+  {
+    id: "c16",
+    firstName: "Mara",
+    lastName: "Main",
+    email: "mara.main@example.com",
+    phone: "+49 170 555 0199",
+    company: "Independent",
+    title: "Gong Specialist",
+    city: "Berlin",
+    country: "Germany",
+    website: "https://example.com/website-a",
+    notes:
+      "Details:\n- sometimes uses website a\n- has nice clothes\n\nStatus: Offers to assist in SQ. (on list)\nUser def.: 9 VOLTS / (X-OE)",
+    starred: true,
+    tags: ["Former Adv. Grp.", "M0 - VOLT x 2+", "SQ"],
+    groupIds: ["g1"],
+    customValues: {
+      cf_nickname: { type: "text", value: "Main" },
+      cf_keywords: { type: "text", value: "-Former Adv. Grp." },
+      cf_category: { type: "text", value: "M0 - VOLT x 2+" },
+      cf_contact_status: { type: "longText", value: "Offers to assist in SQ. (on list)" },
+      cf_user_defined: { type: "text", value: "9 VOLTS / (X-OE)" },
+      cf_profession: { type: "text", value: "Gong Specialist" },
+    },
+    createdAt: now - 12 * day,
+    updatedAt: now - 1 * day,
+  },
 ]
 
 export const initialDeleted: Contact[] = [
@@ -668,6 +745,163 @@ export const initialCustomFields: CustomField[] = [
       { id: "opt_stage_b", label: "Series B" },
       { id: "opt_stage_c", label: "Series C+" },
     ],
+  },
+  {
+    id: "cf_nickname",
+    name: "Nickname",
+    slug: "nickname",
+    type: "text",
+    isGlobal: true,
+    groupIds: [],
+  },
+  {
+    id: "cf_keywords",
+    name: "Keywords",
+    slug: "keywords",
+    type: "text",
+    isGlobal: true,
+    groupIds: [],
+  },
+  {
+    id: "cf_category",
+    name: "Category",
+    slug: "category",
+    type: "text",
+    isGlobal: true,
+    groupIds: [],
+  },
+  {
+    id: "cf_contact_status",
+    name: "Status",
+    slug: "contact_status",
+    type: "longText",
+    isGlobal: true,
+    groupIds: [],
+  },
+  {
+    id: "cf_user_defined",
+    name: "User defined",
+    slug: "user_defined",
+    type: "text",
+    isGlobal: true,
+    groupIds: [],
+  },
+  {
+    id: "cf_profession",
+    name: "Profession",
+    slug: "profession",
+    type: "text",
+    isGlobal: true,
+    groupIds: [],
+  },
+]
+
+// ----- Event + payment seed data -----------------------------------------
+
+export const initialEventSeries: EventSeries[] = [
+  {
+    id: "es_retreat_weekend",
+    name: "Retreat Weekend",
+    description: "Annual retreat participation and payment tracking.",
+    recurrence: "yearly",
+    defaultCurrency: "EUR",
+    defaultAmountOwed: 480,
+    createdAt: now - 40 * day,
+    updatedAt: now - 12 * day,
+  },
+  {
+    id: "es_event_a",
+    name: "Event A",
+    recurrence: "none",
+    defaultCurrency: "EUR",
+    createdAt: now - 35 * day,
+    updatedAt: now - 20 * day,
+  },
+  {
+    id: "es_event_c",
+    name: "Event C",
+    recurrence: "yearly",
+    defaultCurrency: "EUR",
+    createdAt: now - 32 * day,
+    updatedAt: now - 20 * day,
+  },
+]
+
+export const initialEventOccurrences: EventOccurrence[] = [
+  {
+    id: "eo_retreat_weekend_2026",
+    seriesId: "es_retreat_weekend",
+    name: "Retreat Weekend 2026",
+    date: "2026-06-14",
+    location: "Countryside retreat house",
+    notes: "Example recurring event occurrence.",
+    createdAt: now - 12 * day,
+    updatedAt: now - 12 * day,
+  },
+  {
+    id: "eo_event_a_2026",
+    seriesId: "es_event_a",
+    name: "Event A",
+    date: "2026-04-18",
+    createdAt: now - 20 * day,
+    updatedAt: now - 20 * day,
+  },
+  {
+    id: "eo_event_c_2026",
+    seriesId: "es_event_c",
+    name: "Event C 2026",
+    date: "2026-09-12",
+    createdAt: now - 18 * day,
+    updatedAt: now - 18 * day,
+  },
+]
+
+export const initialParticipations: EventParticipation[] = [
+  {
+    id: "ep_main_retreat_2026",
+    contactId: "c16",
+    occurrenceId: "eo_retreat_weekend_2026",
+    status: "registered",
+    amountOwed: 480,
+    currency: "EUR",
+    notes: "Primary example: two partial payments with a remaining balance.",
+    payments: [
+      {
+        id: "pay_main_retreat_down",
+        amount: 100,
+        date: "2026-05-10",
+        label: "Down payment",
+        createdAt: now - 6 * day,
+      },
+      {
+        id: "pay_main_retreat_followup",
+        amount: 100,
+        date: "2026-05-10",
+        label: "Follow up payment",
+        createdAt: now - 6 * day,
+      },
+    ],
+    createdAt: now - 12 * day,
+    updatedAt: now - 6 * day,
+  },
+  {
+    id: "ep_main_event_a",
+    contactId: "c16",
+    occurrenceId: "eo_event_a_2026",
+    status: "attended",
+    amountOwed: 65,
+    currency: "EUR",
+    payments: [
+      {
+        id: "pay_main_event_a",
+        amount: 65,
+        date: "2026-04-18",
+        label: "Settled",
+        createdAt: now - 20 * day,
+      },
+    ],
+    createdAt: now - 20 * day,
+    updatedAt: now - 20 * day,
   },
 ]
 

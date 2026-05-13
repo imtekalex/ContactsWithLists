@@ -9,6 +9,7 @@ Vibe coded local-first contacts manager for keeping people, groups, and reusable
 - Build manual lists or dynamic lists based on starred contacts, groups, text search, or custom-field criteria.
 - Add and manage custom fields for all contacts or selected groups.
 - Search, filter, multi-select, print contacts, copy email lists, export CSV, and restore contacts from trash.
+- Track event participation, recurring event series, payment history, and outstanding balances.
 - Review simple analytics and recent activity from the seeded local data.
 
 ## Tech Stack
@@ -56,9 +57,10 @@ In VS Code you can keep the dev server running in the integrated terminal while 
 pnpm dev
 pnpm build
 pnpm start
+pnpm test
 ```
 
-Linting is not configured in this import yet.
+Linting is not configured in this import yet. `pnpm test` runs the Vitest unit tests.
 
 ## Project Structure
 
@@ -67,6 +69,7 @@ Linting is not configured in this import yet.
 - `components/ui/` - Reusable shadcn-style primitives.
 - `hooks/` - Shared React hooks.
 - `lib/contacts-data.ts` - Contact, group, list, custom-field types plus seed data and query helpers.
+- `lib/payments.ts` - Payment and event balance calculations.
 - `lib/contacts-store.ts` - Shared contact-state shape plus client load/save helpers.
 - `app/api/contacts-store/route.ts` - File persistence API that reads sample data from `data/` and writes local changes to `data/local/`.
 - `data/` - Tracked sample JSON collection files.
@@ -83,7 +86,7 @@ Geist is created by Vercel in collaboration with Basement Studio and is licensed
 
 ## Data Notes
 
-The app starts from the tracked sample JSON files in `data/`, then persists edits to ignored local copies in `data/local/` through the local Next.js API route in `app/api/contacts-store/route.ts`. Contacts, deleted contacts, groups, activity, custom fields, lists, and print preferences survive page refreshes and are stored as normal JSON files in this project folder.
+The app starts from the tracked sample JSON files in `data/`, then persists edits to ignored local copies in `data/local/` through the local Next.js API route in `app/api/contacts-store/route.ts`. Contacts, deleted contacts, groups, activity, custom fields, lists, event series, event occurrences, participations, payments, and print preferences survive page refreshes and are stored as normal JSON files in this project folder.
 
 The local data files are created automatically the first time the app runs. `data/local/` is ignored by Git, so everyone can keep personal changes without accidentally committing them, while the repository still carries stable sample data in `data/`.
 

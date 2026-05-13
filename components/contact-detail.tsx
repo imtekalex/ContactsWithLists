@@ -21,8 +21,21 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
-import type { Contact, CustomField, CustomFieldValue, Group } from "@/lib/contacts-data"
+import type {
+  Contact,
+  CustomField,
+  CustomFieldValue,
+  EventOccurrence,
+  EventParticipation,
+  EventSeries,
+  Group,
+} from "@/lib/contacts-data"
 import { ContactCustomFields, hasCustomValuesToShow } from "@/components/contact-custom-fields"
+import {
+  ParticipationSection,
+  type CreateParticipationInput,
+  type CreatePaymentInput,
+} from "@/components/participation-section"
 
 type ColorClass = { dot: string; bg: string; text: string; ring: string }
 
@@ -31,9 +44,15 @@ interface Props {
   groups: Group[]
   groupColorClasses: Record<Group["color"], ColorClass>
   customFields: CustomField[]
+  eventSeries: EventSeries[]
+  eventOccurrences: EventOccurrence[]
+  participations: EventParticipation[]
   onUpdate: (contact: Contact) => void
   onDelete: (id: string) => void
   onToggleStar: (id: string) => void
+  onCreateParticipation: (input: CreateParticipationInput) => void
+  onAddPayment: (participationId: string, payment: CreatePaymentInput) => void
+  onDeletePayment: (participationId: string, paymentId: string) => void
 }
 
 export function ContactDetail({
@@ -41,9 +60,15 @@ export function ContactDetail({
   groups,
   groupColorClasses,
   customFields,
+  eventSeries,
+  eventOccurrences,
+  participations,
   onUpdate,
   onDelete,
   onToggleStar,
+  onCreateParticipation,
+  onAddPayment,
+  onDeletePayment,
 }: Props) {
   function handleCustomChange(fieldId: string, value: CustomFieldValue | undefined) {
     const nextValues = { ...contact.customValues }
@@ -344,6 +369,17 @@ export function ContactDetail({
                 </section>
               </>
             )}
+
+            <Separator />
+            <ParticipationSection
+              contact={contact}
+              eventSeries={eventSeries}
+              eventOccurrences={eventOccurrences}
+              participations={participations}
+              onCreateParticipation={onCreateParticipation}
+              onAddPayment={onAddPayment}
+              onDeletePayment={onDeletePayment}
+            />
 
             {contact.notes && (
               <>
