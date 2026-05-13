@@ -1158,6 +1158,9 @@ export default function Home() {
             eventSeries={eventSeries}
             eventOccurrences={eventOccurrences}
             participations={participations}
+            onAddPayment={handleAddPayment}
+            onUpdatePayment={handleUpdatePayment}
+            onDeletePayment={handleDeletePayment}
           />
         )}
 

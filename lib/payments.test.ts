@@ -43,6 +43,20 @@ describe("payment calculations", () => {
     ).toBe("paid")
   })
 
+  it("treats overpayment as credit", () => {
+    expect(
+      getParticipationBalance({
+        ...baseParticipation,
+        amountOwed: 100,
+        payments: [{ id: "pay1", amount: 125, createdAt: 0 }],
+      }),
+    ).toMatchObject({
+      paid: 125,
+      remaining: -25,
+      status: "overpaid",
+    })
+  })
+
   it("summarizes multiple participations for an event overview", () => {
     const summary = getEventBalance([
       {
