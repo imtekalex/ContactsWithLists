@@ -51,6 +51,7 @@ type Props = {
   onUpdatePayment: (participationId: string, paymentId: string, payment: UpdatePaymentInput) => void
   onDeleteParticipation: (participationId: string) => void
   onDeletePayment: (participationId: string, paymentId: string) => void
+  onSelectEventPayments: (occurrenceId: string) => void
 }
 
 function getTodayIso() {
@@ -68,10 +69,24 @@ export function ParticipationSection({
   onUpdatePayment,
   onDeleteParticipation,
   onDeletePayment,
+  onSelectEventPayments,
 }: Props) {
   const contactParticipations = useMemo(
-    () => participations.filter((participation) => participation.contactId === contact.id),
-    [contact.id, participations],
+    () =>
+      participations
+        .filter((participation) => participation.contactId === contact.id)
+        .sort((a, b) => {
+          const aBalance = getParticipationBalance(a)
+          const bBalance = getParticipationBalance(b)
+          const aSettled = aBalance.remaining <= 0
+          const bSettled = bBalance.remaining <= 0
+          if (aSettled !== bSettled) return aSettled ? 1 : -1
+
+          const aDate = getParticipationLabel(a, eventOccurrences, eventSeries).date ?? "0000-00-00"
+          const bDate = getParticipationLabel(b, eventOccurrences, eventSeries).date ?? "0000-00-00"
+          return bDate.localeCompare(aDate)
+        }),
+    [contact.id, eventOccurrences, eventSeries, participations],
   )
   const balanceSummary = useMemo(() => {
     return contactParticipations.reduce<Record<string, { total: number; paid: number; remaining: number }>>(
@@ -412,7 +427,14 @@ export function ParticipationSection({
               <p className="text-xs text-muted-foreground">Total outstanding</p>
               <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
                 {summaryEntries.map(([currency, summary]) => (
-                  <span key={currency} className="text-xl font-semibold tabular-nums">
+                  <span
+                    key={currency}
+                    className={cn(
+                      "text-xl font-semibold tabular-nums",
+                      summary.remaining > 0 && "text-amber-700",
+                      summary.remaining < 0 && "text-emerald-700",
+                    )}
+                  >
                     {formatMoney(summary.remaining, currency)}
                   </span>
                 ))}
@@ -464,8 +486,21 @@ export function ParticipationSection({
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <h4 className="font-semibold truncate">{label.eventName}</h4>
-                        <Badge variant={balance.status === "paid" ? "secondary" : "outline"} className="capitalize">
+                        <button
+                          type="button"
+                          onClick={() => onSelectEventPayments(participation.occurrenceId)}
+                          className="font-semibold truncate hover:underline text-left"
+                        >
+                          {label.eventName}
+                        </button>
+                        <Badge
+                          variant={balance.status === "paid" ? "secondary" : "outline"}
+                          className={cn(
+                            "capitalize",
+                            balance.remaining > 0 && "border-amber-300 bg-amber-50 text-amber-800",
+                            balance.remaining < 0 && "border-emerald-300 bg-emerald-50 text-emerald-800",
+                          )}
+                        >
                           {balance.status}
                         </Badge>
                       </div>
@@ -476,7 +511,13 @@ export function ParticipationSection({
                     <div className="text-right text-sm tabular-nums">
                       <p>
                         <span className="text-muted-foreground">Owes </span>
-                        <span className={balance.remaining > 0 ? "font-semibold" : "text-muted-foreground"}>
+                        <span
+                          className={cn(
+                            balance.remaining > 0 && "font-semibold text-amber-700",
+                            balance.remaining === 0 && "text-muted-foreground",
+                            balance.remaining < 0 && "font-semibold text-emerald-700",
+                          )}
+                        >
                           {formatMoney(balance.remaining, participation.currency)}
                         </span>
                       </p>
@@ -726,7 +767,13 @@ export function ParticipationSection({
                       <span className="font-medium">Remaining</span>
                       <span />
                       <span />
-                      <span className="font-semibold tabular-nums text-right">
+                      <span
+                        className={cn(
+                          "font-semibold tabular-nums text-right",
+                          balance.remaining > 0 && "text-amber-700",
+                          balance.remaining < 0 && "text-emerald-700",
+                        )}
+                      >
                         {formatMoney(balance.remaining, participation.currency)}
                       </span>
                       <span />

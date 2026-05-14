@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { CalendarDays, Check, CreditCard, Pencil, Plus, Trash2, UserRound, X } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -22,9 +22,12 @@ type Props = {
   eventSeries: EventSeries[]
   eventOccurrences: EventOccurrence[]
   participations: EventParticipation[]
+  activeOccurrenceId?: string | null
   onAddPayment: (participationId: string, payment: CreatePaymentInput) => void
   onUpdatePayment: (participationId: string, paymentId: string, payment: UpdatePaymentInput) => void
   onDeletePayment: (participationId: string, paymentId: string) => void
+  onSelectContact: (contactId: string) => void
+  onSelectEvent: (occurrenceId: string) => void
 }
 
 type PaymentDraft = { amount: string; date: string; label: string; note: string }
@@ -70,16 +73,31 @@ function formatNetDue(summary: MoneySummary) {
   return entries.map(([currency, values]) => formatMoney(Math.max(values.net, 0), currency)).join(" / ")
 }
 
+function hasOpenBalance(summary: MoneySummary) {
+  return Object.values(summary).some((value) => value.net > 0)
+}
+
+function compareRows(a: PaymentRow, b: PaymentRow) {
+  const aSettled = a.balance.remaining <= 0
+  const bSettled = b.balance.remaining <= 0
+  if (aSettled !== bSettled) return aSettled ? 1 : -1
+  return (b.label.date ?? "0000-00-00").localeCompare(a.label.date ?? "0000-00-00")
+}
+
 export function PaymentsView({
   contacts,
   eventSeries,
   eventOccurrences,
   participations,
+  activeOccurrenceId,
   onAddPayment,
   onUpdatePayment,
   onDeletePayment,
+  onSelectContact,
+  onSelectEvent,
 }: Props) {
   const [viewMode, setViewMode] = useState<ViewMode>("events")
+  const groupNodes = useRef<Record<string, HTMLDivElement | null>>({})
   const [paymentDrafts, setPaymentDrafts] = useState<Record<string, PaymentDraft>>({})
   const [addingForParticipationId, setAddingForParticipationId] = useState<string | null>(null)
   const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null)
@@ -116,9 +134,15 @@ export function PaymentsView({
             total: row.balance.total,
           })
         })
+        group.rows.sort(compareRows)
         return { contactId, ...group }
       })
-      .sort((a, b) => getContactName(a.contact).localeCompare(getContactName(b.contact)))
+      .sort((a, b) => {
+        const aOpen = hasOpenBalance(a.summary)
+        const bOpen = hasOpenBalance(b.summary)
+        if (aOpen !== bOpen) return aOpen ? -1 : 1
+        return getContactName(a.contact).localeCompare(getContactName(b.contact))
+      })
   }, [rows])
 
   const eventGroups = useMemo(() => {
@@ -142,7 +166,16 @@ export function PaymentsView({
 
     return Array.from(groups.entries())
       .map(([occurrenceId, group]) => ({ occurrenceId, ...group }))
-      .sort((a, b) => (a.occurrence?.date ?? "9999-99-99").localeCompare(b.occurrence?.date ?? "9999-99-99"))
+      .map((group) => {
+        group.rows.sort(compareRows)
+        return group
+      })
+      .sort((a, b) => {
+        const aOpen = hasOpenBalance(a.summary)
+        const bOpen = hasOpenBalance(b.summary)
+        if (aOpen !== bOpen) return aOpen ? -1 : 1
+        return (b.occurrence?.date ?? "0000-00-00").localeCompare(a.occurrence?.date ?? "0000-00-00")
+      })
   }, [eventOccurrences, eventSeries, rows])
 
   const overview = useMemo(() => {
@@ -221,6 +254,14 @@ export function PaymentsView({
     setEditingPaymentId(null)
   }
 
+  useEffect(() => {
+    if (!activeOccurrenceId) return
+    setViewMode("events")
+    window.requestAnimationFrame(() => {
+      groupNodes.current[activeOccurrenceId]?.scrollIntoView({ behavior: "smooth", block: "center" })
+    })
+  }, [activeOccurrenceId])
+
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="px-8 py-6 border-b border-border flex items-start justify-between gap-4">
@@ -280,6 +321,12 @@ export function PaymentsView({
                   onCancelAdd={() => setAddingForParticipationId(null)}
                   onCancelEdit={() => setEditingPaymentId(null)}
                   onDeletePayment={onDeletePayment}
+                  onSelectContact={onSelectContact}
+                  onSelectEvent={onSelectEvent}
+                  activeOccurrenceId={activeOccurrenceId}
+                  setGroupNode={(node) => {
+                    groupNodes.current[group.occurrenceId] = node
+                  }}
                 />
               ))
             )}
@@ -304,6 +351,8 @@ export function PaymentsView({
                   onCancelAdd={() => setAddingForParticipationId(null)}
                   onCancelEdit={() => setEditingPaymentId(null)}
                   onDeletePayment={onDeletePayment}
+                  onSelectContact={onSelectContact}
+                  onSelectEvent={onSelectEvent}
                 />
               ))
             )}
@@ -344,10 +393,14 @@ type GroupControls = {
   onCancelAdd: () => void
   onCancelEdit: () => void
   onDeletePayment: (participationId: string, paymentId: string) => void
+  onSelectContact: (contactId: string) => void
+  onSelectEvent: (occurrenceId: string) => void
 }
 
 function EventPaymentGroup({
   group,
+  activeOccurrenceId,
+  setGroupNode,
   ...controls
 }: {
   group: {
@@ -357,14 +410,23 @@ function EventPaymentGroup({
     rows: PaymentRow[]
     summary: MoneySummary
   }
+  activeOccurrenceId?: string | null
+  setGroupNode: (node: HTMLDivElement | null) => void
 } & GroupControls) {
   return (
-    <Card className="p-0 overflow-hidden">
+    <Card
+      ref={setGroupNode}
+      className={cn(
+        "p-0 overflow-hidden transition-shadow",
+        activeOccurrenceId === group.occurrenceId && "ring-2 ring-primary ring-offset-2",
+      )}
+    >
       <GroupHeader
         icon={CalendarDays}
         title={group.occurrence?.name ?? "Unknown event"}
         subtitle={`${group.occurrence?.date ?? "No date"} · ${group.series?.name ?? "Standalone event"}`}
         summary={group.summary}
+        onTitleClick={group.occurrence ? () => controls.onSelectEvent(group.occurrence!.id) : undefined}
       />
       <div className="divide-y divide-border">
         {group.rows.map((row) => (
@@ -373,6 +435,7 @@ function EventPaymentGroup({
             row={row}
             title={getContactName(row.contact)}
             subtitle={row.label.eventName}
+            contactId={row.contact?.id}
             {...controls}
           />
         ))}
@@ -400,6 +463,7 @@ function PersonPaymentGroup({
         subtitle={`${group.rows.length} participation${group.rows.length === 1 ? "" : "s"}`}
         summary={group.summary}
         showCreditOffset
+        onTitleClick={group.contact ? () => controls.onSelectContact(group.contact!.id) : undefined}
       />
       <div className="divide-y divide-border">
         {group.rows.map((row) => (
@@ -408,6 +472,7 @@ function PersonPaymentGroup({
             row={row}
             title={row.label.eventName}
             subtitle={row.label.date ?? "No date"}
+            contactId={undefined}
             {...controls}
           />
         ))}
@@ -422,12 +487,14 @@ function GroupHeader({
   subtitle,
   summary,
   showCreditOffset = false,
+  onTitleClick,
 }: {
   icon: React.ComponentType<{ className?: string }>
   title: string
   subtitle: string
   summary: MoneySummary
   showCreditOffset?: boolean
+  onTitleClick?: () => void
 }) {
   return (
     <div className="px-5 py-4 bg-secondary/40 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
@@ -436,7 +503,13 @@ function GroupHeader({
           <Icon className="w-4 h-4 text-muted-foreground" />
         </div>
         <div className="min-w-0">
-          <h3 className="font-semibold truncate">{title}</h3>
+          {onTitleClick ? (
+            <button type="button" onClick={onTitleClick} className="font-semibold truncate hover:underline text-left">
+              {title}
+            </button>
+          ) : (
+            <h3 className="font-semibold truncate">{title}</h3>
+          )}
           <p className="text-xs text-muted-foreground truncate">{subtitle}</p>
         </div>
       </div>
@@ -449,11 +522,11 @@ function GroupHeader({
   )
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
+function Metric({ label, value, tone }: { label: string; value: string; tone?: "due" | "credit" }) {
   return (
     <div>
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="font-semibold tabular-nums mt-0.5">{value}</p>
+      <p className={cn("font-semibold tabular-nums mt-0.5", tone === "due" && "text-amber-700", tone === "credit" && "text-emerald-700")}>{value}</p>
     </div>
   )
 }
@@ -462,6 +535,7 @@ function ParticipationPaymentBlock({
   row,
   title,
   subtitle,
+  contactId,
   paymentDrafts,
   addingForParticipationId,
   editingPaymentId,
@@ -473,10 +547,12 @@ function ParticipationPaymentBlock({
   onCancelAdd,
   onCancelEdit,
   onDeletePayment,
+  onSelectContact,
 }: {
   row: PaymentRow
   title: string
   subtitle: string
+  contactId: string | undefined
 } & GroupControls) {
   const { participation, balance } = row
   const newPaymentDraft = paymentDrafts[participation.id] ?? emptyPaymentDraft()
@@ -488,8 +564,25 @@ function ParticipationPaymentBlock({
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <p className="font-medium truncate">{title}</p>
-            <Badge variant={balance.status === "paid" ? "secondary" : "outline"} className="capitalize">
+            {contactId ? (
+              <button
+                type="button"
+                onClick={() => onSelectContact(contactId)}
+                className="font-medium truncate hover:underline text-left"
+              >
+                {title}
+              </button>
+            ) : (
+              <p className="font-medium truncate">{title}</p>
+            )}
+            <Badge
+              variant={balance.status === "paid" ? "secondary" : "outline"}
+              className={cn(
+                "capitalize",
+                balance.remaining > 0 && "border-amber-300 bg-amber-50 text-amber-800",
+                balance.remaining < 0 && "border-emerald-300 bg-emerald-50 text-emerald-800",
+              )}
+            >
               {balance.status}
             </Badge>
           </div>
@@ -498,7 +591,11 @@ function ParticipationPaymentBlock({
         <div className="grid grid-cols-3 gap-5 text-right text-sm">
           <Metric label="Total" value={formatMoney(balance.total, participation.currency)} />
           <Metric label="Paid" value={formatMoney(balance.paid, participation.currency)} />
-          <Metric label={balance.remaining < 0 ? "Credit" : "Open"} value={formatMoney(Math.abs(balance.remaining), participation.currency)} />
+          <Metric
+            label={balance.remaining < 0 ? "Credit" : "Open"}
+            value={formatMoney(Math.abs(balance.remaining), participation.currency)}
+            tone={balance.remaining > 0 ? "due" : balance.remaining < 0 ? "credit" : undefined}
+          />
         </div>
       </div>
 

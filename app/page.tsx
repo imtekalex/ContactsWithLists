@@ -129,6 +129,7 @@ export default function Home() {
   const saveStatusTimer = useRef<number | null>(null)
 
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [focusedOccurrenceId, setFocusedOccurrenceId] = useState<string | null>(null)
   const [search, setSearch] = useState("")
   const [starredOnly, setStarredOnly] = useState(false)
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null)
@@ -890,6 +891,22 @@ export default function Home() {
     })
   }
 
+  function openContact(contactId: string) {
+    setSelectedId(contactId)
+    setActiveGroupId(null)
+    setView("contacts")
+  }
+
+  function openEventInPayments(occurrenceId: string) {
+    setFocusedOccurrenceId(occurrenceId)
+    setView("payments")
+  }
+
+  function openEventInEvents(occurrenceId: string) {
+    setFocusedOccurrenceId(occurrenceId)
+    setView("events")
+  }
+
   function handleCreateParticipation(input: CreateParticipationInput) {
     const now = Date.now()
     const occurrence = eventOccurrences.find((item) => item.id === input.occurrenceId)
@@ -1263,6 +1280,7 @@ export default function Home() {
                   onUpdatePayment={handleUpdatePayment}
                   onDeleteParticipation={handleDeleteParticipation}
                   onDeletePayment={handleDeletePayment}
+                  onSelectEventPayments={openEventInPayments}
                 />
               ) : (
                 <EmptyState
@@ -1307,11 +1325,14 @@ export default function Home() {
             eventSeries={eventSeries}
             eventOccurrences={eventOccurrences}
             participations={participations}
+            activeOccurrenceId={focusedOccurrenceId}
             onCreateEvent={handleCreateEventOccurrence}
             onUpdateEvent={handleUpdateEventOccurrence}
             onAddParticipants={handleAddEventParticipants}
             onRemoveParticipant={handleRemoveEventParticipant}
             onSetParticipantPrice={handleSetEventParticipantPrice}
+            onAddPayment={handleAddPayment}
+            onSelectContact={openContact}
           />
         )}
 
@@ -1321,9 +1342,12 @@ export default function Home() {
             eventSeries={eventSeries}
             eventOccurrences={eventOccurrences}
             participations={participations}
+            activeOccurrenceId={focusedOccurrenceId}
             onAddPayment={handleAddPayment}
             onUpdatePayment={handleUpdatePayment}
             onDeletePayment={handleDeletePayment}
+            onSelectContact={openContact}
+            onSelectEvent={openEventInEvents}
           />
         )}
 

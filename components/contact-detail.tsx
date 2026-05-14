@@ -56,6 +56,7 @@ interface Props {
   onUpdatePayment: (participationId: string, paymentId: string, payment: UpdatePaymentInput) => void
   onDeleteParticipation: (participationId: string) => void
   onDeletePayment: (participationId: string, paymentId: string) => void
+  onSelectEventPayments: (occurrenceId: string) => void
 }
 
 export function ContactDetail({
@@ -74,6 +75,7 @@ export function ContactDetail({
   onUpdatePayment,
   onDeleteParticipation,
   onDeletePayment,
+  onSelectEventPayments,
 }: Props) {
   function handleCustomChange(fieldId: string, value: CustomFieldValue | undefined) {
     const nextValues = { ...contact.customValues }
@@ -282,6 +284,7 @@ export function ContactDetail({
               onUpdatePayment={onUpdatePayment}
               onDeleteParticipation={onDeleteParticipation}
               onDeletePayment={onDeletePayment}
+              onSelectEventPayments={onSelectEventPayments}
             />
           </>
         ) : (
@@ -400,6 +403,7 @@ export function ContactDetail({
               onUpdatePayment={onUpdatePayment}
               onDeleteParticipation={onDeleteParticipation}
               onDeletePayment={onDeletePayment}
+              onSelectEventPayments={onSelectEventPayments}
             />
 
             {contact.notes && (

@@ -33,8 +33,9 @@ import type {
   GroupColor,
 } from "@/lib/contacts-data"
 import { resolveListMembers, STANDARD_SEARCHABLE_FIELDS } from "@/lib/contacts-data"
-import { getContactName } from "@/lib/payments"
+import { formatMoney, getContactName, getParticipationBalance } from "@/lib/payments"
 import { cn } from "@/lib/utils"
+import type { CreatePaymentInput } from "@/components/participation-section"
 
 type ColorClass = { dot: string; bg: string; text: string; ring: string }
 
@@ -89,14 +90,18 @@ type Props = {
   eventSeries: EventSeries[]
   eventOccurrences: EventOccurrence[]
   participations: EventParticipation[]
+  activeOccurrenceId?: string | null
   onCreateEvent: (input: CreateEventOccurrenceInput) => void
   onUpdateEvent: (input: UpdateEventOccurrenceInput) => void
   onAddParticipants: (input: EventParticipantsInput) => void
   onRemoveParticipant: (input: EventParticipantInput) => void
   onSetParticipantPrice: (input: EventParticipantPriceInput) => void
+  onAddPayment: (participationId: string, payment: CreatePaymentInput) => void
+  onSelectContact: (contactId: string) => void
 }
 
 type PriceDraft = { id: string; label: string; amount: string; currency: string; notes: string }
+type ParticipantPriceDraft = { priceId: string; amount: string; currency: string; customAmount: string }
 
 function draftToFilter(draft: FilterDraft): NonNullable<ContactList["filter"]> {
   const filter: NonNullable<ContactList["filter"]> = {}
@@ -181,11 +186,14 @@ export function EventsView({
   eventSeries,
   eventOccurrences,
   participations,
+  activeOccurrenceId: requestedActiveOccurrenceId,
   onCreateEvent,
   onUpdateEvent,
   onAddParticipants,
   onRemoveParticipant,
   onSetParticipantPrice,
+  onAddPayment,
+  onSelectContact,
 }: Props) {
   const [showForm, setShowForm] = useState(false)
   const [activeOccurrenceId, setActiveOccurrenceId] = useState<string | null>(eventOccurrences[0]?.id ?? null)
@@ -210,6 +218,12 @@ export function EventsView({
 
   const activeOccurrence = eventOccurrences.find((occurrence) => occurrence.id === activeOccurrenceId) ?? eventOccurrences[0]
   const activeSeries = activeOccurrence ? eventSeries.find((series) => series.id === activeOccurrence.seriesId) : undefined
+
+  useEffect(() => {
+    if (requestedActiveOccurrenceId && eventOccurrences.some((occurrence) => occurrence.id === requestedActiveOccurrenceId)) {
+      setActiveOccurrenceId(requestedActiveOccurrenceId)
+    }
+  }, [eventOccurrences, requestedActiveOccurrenceId])
 
   function submit() {
     if (!draft.name.trim()) return
@@ -362,6 +376,8 @@ export function EventsView({
             onAddParticipants={onAddParticipants}
             onRemoveParticipant={onRemoveParticipant}
             onSetParticipantPrice={onSetParticipantPrice}
+            onAddPayment={onAddPayment}
+            onSelectContact={onSelectContact}
           />
         ) : (
           <div className="h-full flex items-center justify-center text-center px-6">
@@ -393,6 +409,8 @@ function EventDetail({
   onAddParticipants,
   onRemoveParticipant,
   onSetParticipantPrice,
+  onAddPayment,
+  onSelectContact,
 }: {
   occurrence: EventOccurrence
   series: EventSeries
@@ -405,6 +423,8 @@ function EventDetail({
   onAddParticipants: (input: EventParticipantsInput) => void
   onRemoveParticipant: (input: EventParticipantInput) => void
   onSetParticipantPrice: (input: EventParticipantPriceInput) => void
+  onAddPayment: (participationId: string, payment: CreatePaymentInput) => void
+  onSelectContact: (contactId: string) => void
 }) {
   const [editingEvent, setEditingEvent] = useState(false)
   const [editingParticipants, setEditingParticipants] = useState(false)
@@ -421,6 +441,7 @@ function EventDetail({
   const [contactSearch, setContactSearch] = useState("")
   const [stagedContactIds, setStagedContactIds] = useState<string[]>([])
   const [excludedContactIds, setExcludedContactIds] = useState<string[]>([])
+  const [participantPriceDrafts, setParticipantPriceDrafts] = useState<Record<string, ParticipantPriceDraft>>({})
 
   const members = useMemo(
     () => getEventMembers(occurrence, contacts, participations),
@@ -481,6 +502,7 @@ function EventDetail({
     setContactSearch("")
     setStagedContactIds([])
     setExcludedContactIds([])
+    setParticipantPriceDrafts({})
   }, [occurrence, series])
 
   function saveEvent() {
@@ -535,6 +557,45 @@ function EventDetail({
   function assignPrice(contactId: string, amount: number, currency: string) {
     if (!Number.isFinite(amount)) return
     onSetParticipantPrice({ occurrenceId: occurrence.id, contactId, amountOwed: amount, currency })
+    setParticipantPriceDrafts((prev) => {
+      const next = { ...prev }
+      delete next[contactId]
+      return next
+    })
+  }
+
+  function cancelPriceEdit(contactId: string) {
+    setParticipantPriceDrafts((prev) => {
+      const next = { ...prev }
+      delete next[contactId]
+      return next
+    })
+  }
+
+  function startPriceEdit(contactId: string, participation: EventParticipation | undefined) {
+    const selectedPrice = priceOptions.find(
+      (price) => participation && price.amount === participation.amountOwed && price.currency === participation.currency,
+    )
+    setParticipantPriceDrafts((prev) => ({
+      ...prev,
+      [contactId]: prev[contactId] ?? {
+        priceId: selectedPrice?.id ?? "custom",
+        amount: participation?.amountOwed !== undefined ? String(participation.amountOwed) : "",
+        currency: participation?.currency ?? priceOptions[0]?.currency ?? "EUR",
+        customAmount: selectedPrice ? "" : participation?.amountOwed !== undefined ? String(participation.amountOwed) : "",
+      },
+    }))
+  }
+
+  function settleParticipation(participation: EventParticipation) {
+    const balance = getParticipationBalance(participation)
+    if (balance.remaining <= 0) return
+    onAddPayment(participation.id, {
+      amount: balance.remaining,
+      date: new Date().toISOString().slice(0, 10),
+      label: "Settled",
+      note: `Settled from ${occurrence.name}`,
+    })
   }
 
   return (
@@ -784,7 +845,6 @@ function EventDetail({
           ) : (
             <div className="divide-y divide-border">
               {members.map((contact) => {
-                const cgroups = groups.filter((group) => contact.groupIds.includes(group.id))
                 const hasPaymentParticipation = participations.some(
                   (participation) => participation.occurrenceId === occurrence.id && participation.contactId === contact.id,
                 )
@@ -794,36 +854,79 @@ function EventDetail({
                 const selectedPrice = priceOptions.find(
                   (price) => participation && price.amount === participation.amountOwed && price.currency === participation.currency,
                 )
+                const balance = participation ? getParticipationBalance(participation) : null
+                const priceDraft = participantPriceDrafts[contact.id]
+                const activePriceId = priceDraft?.priceId ?? selectedPrice?.id ?? "custom"
+                const activeAmount = priceDraft?.amount ?? (participation?.amountOwed !== undefined ? String(participation.amountOwed) : "")
+                const activeCurrency = priceDraft?.currency ?? participation?.currency ?? priceOptions[0]?.currency ?? "EUR"
                 return (
-                  <div key={contact.id} className="px-4 py-3 grid grid-cols-[auto_minmax(0,1fr)_minmax(8rem,14rem)_10rem_7rem_auto] items-center gap-4">
+                  <div key={contact.id} className="px-4 py-3 grid grid-cols-[auto_minmax(0,1fr)_8rem_10rem_7rem_7rem_auto] items-center gap-4">
                     <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center text-xs font-semibold flex-shrink-0">
                       {(contact.firstName[0] ?? "") + (contact.lastName[0] ?? "")}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold truncate">{getContactName(contact)}</p>
+                      <button
+                        type="button"
+                        onClick={() => onSelectContact(contact.id)}
+                        className="text-sm font-semibold truncate hover:underline text-left"
+                      >
+                        {getContactName(contact)}
+                      </button>
                       <p className="text-xs text-muted-foreground truncate">
                         {contact.title}
                         {contact.title && contact.company && " · "}
                         {contact.company}
                       </p>
                     </div>
-                    <div className="hidden md:flex flex-wrap gap-1 max-w-[36%] justify-end">
-                      {hasPaymentParticipation && <Badge variant="secondary">Payment record</Badge>}
-                      {cgroups.map((group) => {
-                        const color = groupColorClasses[group.color]
-                        return (
-                          <span key={group.id} className={cn("inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium", color.bg, color.text)}>
-                            <span className={cn("w-1 h-1 rounded-full", color.dot)} />
-                            {group.name}
-                          </span>
-                        )
-                      })}
+                    <div className="text-right">
+                      {balance ? (
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "capitalize",
+                            balance.remaining > 0 && "border-amber-300 bg-amber-50 text-amber-800",
+                            balance.remaining < 0 && "border-emerald-300 bg-emerald-50 text-emerald-800",
+                          )}
+                        >
+                          {balance.remaining < 0 ? "Credit" : balance.status}
+                        </Badge>
+                      ) : hasPaymentParticipation ? (
+                        <Badge variant="secondary">Payment record</Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">No balance</span>
+                      )}
+                      {balance && (
+                        <p className={cn("mt-1 text-xs tabular-nums", balance.remaining > 0 && "text-amber-700", balance.remaining < 0 && "text-emerald-700")}>
+                          {formatMoney(balance.remaining, participation!.currency)}
+                        </p>
+                      )}
                     </div>
                     <select
-                      value={selectedPrice?.id ?? "custom"}
+                      value={activePriceId}
                       onChange={(event) => {
+                        startPriceEdit(contact.id, participation)
                         const price = priceOptions.find((item) => item.id === event.target.value)
-                        if (price) assignPrice(contact.id, price.amount, price.currency)
+                        if (price) {
+                          setParticipantPriceDrafts((prev) => ({
+                            ...prev,
+                            [contact.id]: {
+                              priceId: price.id,
+                              amount: String(price.amount),
+                              currency: price.currency,
+                              customAmount: prev[contact.id]?.customAmount ?? (selectedPrice ? "" : activeAmount),
+                            },
+                          }))
+                          return
+                        }
+                        setParticipantPriceDrafts((prev) => ({
+                          ...prev,
+                          [contact.id]: {
+                            priceId: "custom",
+                            amount: prev[contact.id]?.customAmount || activeAmount,
+                            currency: activeCurrency,
+                            customAmount: prev[contact.id]?.customAmount || activeAmount,
+                          },
+                        }))
                       }}
                       className="h-8 rounded-md border border-input bg-background px-2 text-xs"
                     >
@@ -837,11 +940,40 @@ function EventDetail({
                     <Input
                       type="number"
                       step="0.01"
-                      defaultValue={participation?.amountOwed ?? ""}
-                      onBlur={(event) => assignPrice(contact.id, Number(event.target.value), participation?.currency ?? priceOptions[0]?.currency ?? "EUR")}
+                      value={activeAmount}
+                      onChange={(event) => {
+                        startPriceEdit(contact.id, participation)
+                        setParticipantPriceDrafts((prev) => ({
+                          ...prev,
+                          [contact.id]: {
+                            priceId: "custom",
+                            amount: event.target.value,
+                            currency: activeCurrency,
+                            customAmount: event.target.value,
+                          },
+                        }))
+                      }}
                       className="h-8 text-right"
                       placeholder="Price"
                     />
+                    <div className="flex justify-end gap-1">
+                      {priceDraft ? (
+                        <>
+                          <Button size="sm" className="h-8 w-8 p-0" onClick={() => assignPrice(contact.id, Number(priceDraft.amount), priceDraft.currency)}>
+                            <Check className="w-4 h-4" />
+                            <span className="sr-only">Save price</span>
+                          </Button>
+                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => cancelPriceEdit(contact.id)}>
+                            <X className="w-4 h-4" />
+                            <span className="sr-only">Cancel price edit</span>
+                          </Button>
+                        </>
+                      ) : balance && balance.remaining > 0 ? (
+                        <Button size="sm" variant="outline" className="h-8 px-2" onClick={() => settleParticipation(participation!)}>
+                          Settle
+                        </Button>
+                      ) : null}
+                    </div>
                     <Button size="sm" variant="ghost" onClick={() => removeMember(contact.id)} className="text-muted-foreground hover:text-destructive">
                       Remove
                     </Button>
