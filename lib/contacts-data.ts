@@ -35,6 +35,14 @@ export type CurrencyCode = "EUR" | "USD" | "GBP" | "CHF" | string
 
 export type EventRecurrence = "none" | "yearly" | "monthly"
 
+export type EventPriceOption = {
+  id: string
+  label: string
+  amount: number
+  currency: CurrencyCode
+  notes?: string
+}
+
 export type EventSeries = {
   id: string
   name: string
@@ -42,6 +50,8 @@ export type EventSeries = {
   recurrence: EventRecurrence
   defaultCurrency: CurrencyCode
   defaultAmountOwed?: number
+  priceOptions?: EventPriceOption[]
+  defaultPriceOptionId?: string
   createdAt: number
   updatedAt: number
 }
@@ -809,6 +819,22 @@ export const initialEventSeries: EventSeries[] = [
     recurrence: "yearly",
     defaultCurrency: "EUR",
     defaultAmountOwed: 480,
+    priceOptions: [
+      {
+        id: "price_retreat_standard",
+        label: "Standard",
+        amount: 480,
+        currency: "EUR",
+      },
+      {
+        id: "price_retreat_early",
+        label: "Early booking",
+        amount: 420,
+        currency: "EUR",
+        notes: "Example discounted price.",
+      },
+    ],
+    defaultPriceOptionId: "price_retreat_standard",
     createdAt: now - 40 * day,
     updatedAt: now - 12 * day,
   },

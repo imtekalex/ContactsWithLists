@@ -70,6 +70,7 @@ import {
   EventsView,
   type CreateEventOccurrenceInput,
   type EventParticipantInput,
+  type EventParticipantPriceInput,
   type EventParticipantsInput,
   type UpdateEventOccurrenceInput,
 } from "@/components/events-view"
@@ -766,6 +767,18 @@ export default function Home() {
       recurrence: input.recurrence,
       defaultCurrency: "EUR",
       defaultAmountOwed: input.defaultAmountOwed,
+      priceOptions:
+        input.defaultAmountOwed !== undefined
+          ? [
+              {
+                id: `price_${now}_standard`,
+                label: "Standard",
+                amount: input.defaultAmountOwed,
+                currency: "EUR",
+              },
+            ]
+          : [],
+      defaultPriceOptionId: input.defaultAmountOwed !== undefined ? `price_${now}_standard` : undefined,
       createdAt: now,
       updatedAt: now,
     }
@@ -826,6 +839,55 @@ export default function Home() {
           !(participation.occurrenceId === input.occurrenceId && participation.contactId === input.contactId && participation.payments.length === 0),
       ),
     )
+  }
+
+  function handleSetEventParticipantPrice(input: EventParticipantPriceInput) {
+    const now = Date.now()
+    const occurrence = eventOccurrences.find((item) => item.id === input.occurrenceId)
+    if (!occurrence) return
+
+    setEventOccurrences((prev) =>
+      prev.map((item) => {
+        if (item.id !== input.occurrenceId) return item
+        const ids = new Set(item.contactIds ?? [])
+        ids.add(input.contactId)
+        return { ...item, contactIds: Array.from(ids), updatedAt: now }
+      }),
+    )
+
+    setParticipations((prev) => {
+      const existing = prev.find(
+        (participation) =>
+          participation.occurrenceId === input.occurrenceId && participation.contactId === input.contactId,
+      )
+      if (existing) {
+        return prev.map((participation) =>
+          participation.id === existing.id
+            ? {
+                ...participation,
+                amountOwed: input.amountOwed,
+                currency: input.currency,
+                updatedAt: now,
+              }
+            : participation,
+        )
+      }
+
+      return [
+        {
+          id: `ep${now}`,
+          contactId: input.contactId,
+          occurrenceId: input.occurrenceId,
+          status: "registered",
+          amountOwed: input.amountOwed,
+          currency: input.currency,
+          payments: [],
+          createdAt: now,
+          updatedAt: now,
+        },
+        ...prev,
+      ]
+    })
   }
 
   function handleCreateParticipation(input: CreateParticipationInput) {
@@ -1249,6 +1311,7 @@ export default function Home() {
             onUpdateEvent={handleUpdateEventOccurrence}
             onAddParticipants={handleAddEventParticipants}
             onRemoveParticipant={handleRemoveEventParticipant}
+            onSetParticipantPrice={handleSetEventParticipantPrice}
           />
         )}
 

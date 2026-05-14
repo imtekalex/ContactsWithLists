@@ -184,7 +184,7 @@ export function ParticipationSection({
       occurrenceId: selectedEvent.id,
       eventName: selectedEvent.occurrence.name,
       amountOwed: amount,
-      currency: selectedEvent.series?.defaultCurrency ?? "EUR",
+      currency: selectedEvent.series?.priceOptions?.[0]?.currency ?? selectedEvent.series?.defaultCurrency ?? "EUR",
       notes: participationDraft.notes.trim() || undefined,
       initialPayment,
     })
@@ -296,9 +296,11 @@ export function ParticipationSection({
                     ...participationDraft,
                     occurrenceId: event.target.value,
                     amountOwed:
-                      option?.series?.defaultAmountOwed !== undefined
-                        ? String(option.series.defaultAmountOwed)
-                        : participationDraft.amountOwed,
+                      option?.series?.priceOptions?.[0]?.amount !== undefined
+                        ? String(option.series.priceOptions[0].amount)
+                        : option?.series?.defaultAmountOwed !== undefined
+                          ? String(option.series.defaultAmountOwed)
+                          : participationDraft.amountOwed,
                   })
                   setFormMessage(null)
                 }}

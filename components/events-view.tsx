@@ -26,6 +26,7 @@ import type {
   CustomField,
   EventOccurrence,
   EventParticipation,
+  EventPriceOption,
   EventRecurrence,
   EventSeries,
   Group,
@@ -59,6 +60,13 @@ export type EventParticipantsInput = {
   contactIds: string[]
 }
 
+export type EventParticipantPriceInput = {
+  occurrenceId: string
+  contactId: string
+  amountOwed: number
+  currency: string
+}
+
 type FilterDraft = {
   starredOnly: boolean
   groupIds: string[]
@@ -85,7 +93,10 @@ type Props = {
   onUpdateEvent: (input: UpdateEventOccurrenceInput) => void
   onAddParticipants: (input: EventParticipantsInput) => void
   onRemoveParticipant: (input: EventParticipantInput) => void
+  onSetParticipantPrice: (input: EventParticipantPriceInput) => void
 }
+
+type PriceDraft = { id: string; label: string; amount: string; currency: string; notes: string }
 
 function draftToFilter(draft: FilterDraft): NonNullable<ContactList["filter"]> {
   const filter: NonNullable<ContactList["filter"]> = {}
@@ -106,6 +117,42 @@ function hasFilterCriteria(draft: FilterDraft) {
     draft.groupIds.length > 0 ||
     (draft.advancedQuery.trim().length > 0 && draft.advancedFieldKeys.length > 0)
   )
+}
+
+function priceDraftsFromSeries(series: EventSeries): PriceDraft[] {
+  if (series.priceOptions && series.priceOptions.length > 0) {
+    return series.priceOptions.map((price) => ({
+      id: price.id,
+      label: price.label,
+      amount: String(price.amount),
+      currency: price.currency,
+      notes: price.notes ?? "",
+    }))
+  }
+  if (series.defaultAmountOwed !== undefined) {
+    return [
+      {
+        id: series.defaultPriceOptionId ?? `price_${series.id}_standard`,
+        label: "Standard",
+        amount: String(series.defaultAmountOwed),
+        currency: series.defaultCurrency,
+        notes: "",
+      },
+    ]
+  }
+  return [{ id: `price_${series.id}_standard`, label: "Standard", amount: "", currency: series.defaultCurrency, notes: "" }]
+}
+
+function normalizePrices(prices: PriceDraft[]): EventPriceOption[] {
+  return prices
+    .map((price) => ({
+      id: price.id,
+      label: price.label.trim(),
+      amount: Number(price.amount),
+      currency: price.currency.trim().toUpperCase() || "EUR",
+      notes: price.notes.trim() || undefined,
+    }))
+    .filter((price) => price.label && Number.isFinite(price.amount))
 }
 
 function getYear(occurrence: EventOccurrence) {
@@ -138,6 +185,7 @@ export function EventsView({
   onUpdateEvent,
   onAddParticipants,
   onRemoveParticipant,
+  onSetParticipantPrice,
 }: Props) {
   const [showForm, setShowForm] = useState(false)
   const [activeOccurrenceId, setActiveOccurrenceId] = useState<string | null>(eventOccurrences[0]?.id ?? null)
@@ -227,7 +275,7 @@ export function EventsView({
               </div>
             </div>
             <div>
-              <Label className="text-xs">Default amount for Payments</Label>
+              <Label className="text-xs">Standard price</Label>
               <Input
                 type="number"
                 step="0.01"
@@ -313,6 +361,7 @@ export function EventsView({
             onUpdateEvent={onUpdateEvent}
             onAddParticipants={onAddParticipants}
             onRemoveParticipant={onRemoveParticipant}
+            onSetParticipantPrice={onSetParticipantPrice}
           />
         ) : (
           <div className="h-full flex items-center justify-center text-center px-6">
@@ -343,6 +392,7 @@ function EventDetail({
   onUpdateEvent,
   onAddParticipants,
   onRemoveParticipant,
+  onSetParticipantPrice,
 }: {
   occurrence: EventOccurrence
   series: EventSeries
@@ -354,6 +404,7 @@ function EventDetail({
   onUpdateEvent: (input: UpdateEventOccurrenceInput) => void
   onAddParticipants: (input: EventParticipantsInput) => void
   onRemoveParticipant: (input: EventParticipantInput) => void
+  onSetParticipantPrice: (input: EventParticipantPriceInput) => void
 }) {
   const [editingEvent, setEditingEvent] = useState(false)
   const [editingParticipants, setEditingParticipants] = useState(false)
@@ -364,8 +415,8 @@ function EventDetail({
     notes: occurrence.notes ?? "",
     seriesName: series.name,
     recurrence: series.recurrence,
-    defaultAmountOwed: series.defaultAmountOwed?.toString() ?? "",
   })
+  const [priceDrafts, setPriceDrafts] = useState<PriceDraft[]>(() => priceDraftsFromSeries(series))
   const [filterDraft, setFilterDraft] = useState<FilterDraft>(EMPTY_DRAFT)
   const [contactSearch, setContactSearch] = useState("")
   const [stagedContactIds, setStagedContactIds] = useState<string[]>([])
@@ -409,6 +460,12 @@ function EventDetail({
     return Array.from(merged.values()).sort((a, b) => getContactName(a).localeCompare(getContactName(b)))
   }, [contacts, dynamicPreviewContacts, memberIds, stagedContactIds])
   const includedPreviewContacts = previewContacts.filter((contact) => !excludedContactIds.includes(contact.id))
+  const priceOptions = useMemo(() => {
+    const normalized = series.priceOptions && series.priceOptions.length > 0
+      ? series.priceOptions
+      : normalizePrices(priceDraftsFromSeries(series))
+    return normalized
+  }, [series])
 
   useEffect(() => {
     setEventDraft({
@@ -418,8 +475,8 @@ function EventDetail({
       notes: occurrence.notes ?? "",
       seriesName: series.name,
       recurrence: series.recurrence,
-      defaultAmountOwed: series.defaultAmountOwed?.toString() ?? "",
     })
+    setPriceDrafts(priceDraftsFromSeries(series))
     setFilterDraft(EMPTY_DRAFT)
     setContactSearch("")
     setStagedContactIds([])
@@ -427,7 +484,7 @@ function EventDetail({
   }, [occurrence, series])
 
   function saveEvent() {
-    const amount = eventDraft.defaultAmountOwed ? Number(eventDraft.defaultAmountOwed) : undefined
+    const prices = normalizePrices(priceDrafts)
     onUpdateEvent({
       occurrence: {
         ...occurrence,
@@ -441,7 +498,10 @@ function EventDetail({
         ...series,
         name: eventDraft.seriesName.trim() || series.name,
         recurrence: eventDraft.recurrence,
-        defaultAmountOwed: Number.isFinite(amount) ? amount : undefined,
+        defaultAmountOwed: prices[0]?.amount,
+        defaultCurrency: prices[0]?.currency ?? series.defaultCurrency,
+        priceOptions: prices,
+        defaultPriceOptionId: prices[0]?.id,
         updatedAt: Date.now(),
       },
     })
@@ -461,8 +521,20 @@ function EventDetail({
     setEditingParticipants(false)
   }
 
+  function addDraftPrice() {
+    setPriceDrafts((prev) => [
+      ...prev,
+      { id: `price_${Date.now()}`, label: "Discount", amount: "", currency: series.defaultCurrency, notes: "" },
+    ])
+  }
+
   function removeMember(contactId: string) {
     onRemoveParticipant({ occurrenceId: occurrence.id, contactId })
+  }
+
+  function assignPrice(contactId: string, amount: number, currency: string) {
+    if (!Number.isFinite(amount)) return
+    onSetParticipantPrice({ occurrenceId: occurrence.id, contactId, amountOwed: amount, currency })
   }
 
   return (
@@ -522,9 +594,66 @@ function EventDetail({
                   <option value="monthly">Monthly</option>
                 </select>
               </div>
-              <div>
-                <Label className="text-xs">Default amount for Payments</Label>
-                <Input type="number" step="0.01" value={eventDraft.defaultAmountOwed} onChange={(event) => setEventDraft({ ...eventDraft, defaultAmountOwed: event.target.value })} className="mt-1.5" />
+            </div>
+            <div className="rounded-md border border-border">
+              <div className="px-3 py-2 border-b border-border bg-secondary/30 flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold">Prices</p>
+                  <p className="text-[11px] text-muted-foreground">Define standard, early booking, discounts, or other event prices.</p>
+                </div>
+                <Button size="sm" variant="outline" onClick={addDraftPrice} className="h-8 gap-1.5">
+                  <Plus className="w-3.5 h-3.5" />
+                  Price
+                </Button>
+              </div>
+              <div className="divide-y divide-border">
+                {priceDrafts.map((price, index) => (
+                  <div key={price.id} className="grid grid-cols-[1fr_7rem_5rem_1fr_auto] gap-2 p-3 items-center">
+                    <Input
+                      value={price.label}
+                      onChange={(event) =>
+                        setPriceDrafts((prev) => prev.map((item) => (item.id === price.id ? { ...item, label: event.target.value } : item)))
+                      }
+                      className="h-8"
+                      placeholder="Standard"
+                    />
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={price.amount}
+                      onChange={(event) =>
+                        setPriceDrafts((prev) => prev.map((item) => (item.id === price.id ? { ...item, amount: event.target.value } : item)))
+                      }
+                      className="h-8 text-right"
+                      placeholder="0.00"
+                    />
+                    <Input
+                      value={price.currency}
+                      onChange={(event) =>
+                        setPriceDrafts((prev) => prev.map((item) => (item.id === price.id ? { ...item, currency: event.target.value.toUpperCase() } : item)))
+                      }
+                      className="h-8"
+                    />
+                    <Input
+                      value={price.notes}
+                      onChange={(event) =>
+                        setPriceDrafts((prev) => prev.map((item) => (item.id === price.id ? { ...item, notes: event.target.value } : item)))
+                      }
+                      className="h-8"
+                      placeholder="Optional note"
+                    />
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={priceDrafts.length === 1}
+                      onClick={() => setPriceDrafts((prev) => prev.filter((item) => item.id !== price.id))}
+                      className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span className="sr-only">Remove price {index + 1}</span>
+                    </Button>
+                  </div>
+                ))}
               </div>
             </div>
             <div>
@@ -539,106 +668,103 @@ function EventDetail({
         )}
 
         {editingParticipants && (
-          <Card className="p-5 space-y-5">
-            <div>
-              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Find participants</Label>
-              <p className="text-xs text-muted-foreground mt-1">
-                Use filters and individual search to build a preview. Pressing Add participants saves that preview as a static roster.
-              </p>
-            </div>
-            <DynamicFilterBuilder
-              draft={filterDraft}
-              setDraft={setFilterDraft}
-              groups={groups}
-              customFields={customFields}
-              groupColorClasses={groupColorClasses}
-            />
-            <Separator />
-            <div>
-              <Label className="text-xs">Add people individually</Label>
-              <div className="mt-2 relative">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <Input value={contactSearch} onChange={(event) => setContactSearch(event.target.value)} placeholder="Search contacts..." className="pl-9" />
+          <Card className="p-4 space-y-4">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Add participants</Label>
+                <p className="text-xs text-muted-foreground mt-1">Filter or search, review the preview, then add a static roster.</p>
               </div>
-              <div className="mt-2 rounded-md border border-border divide-y divide-border max-h-64 overflow-y-auto">
-                {availableContacts.length === 0 ? (
-                  <p className="p-3 text-sm text-muted-foreground">No contacts to add.</p>
-                ) : (
-                  availableContacts.map((contact) => (
-                    <div key={contact.id} className="px-3 py-2 flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-xs font-semibold">
-                        {(contact.firstName[0] ?? "") + (contact.lastName[0] ?? "")}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{getContactName(contact)}</p>
-                        <p className="text-xs text-muted-foreground truncate">{contact.title}</p>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          setStagedContactIds((prev) => [...prev, contact.id])
-                          setExcludedContactIds((prev) => prev.filter((id) => id !== contact.id))
-                        }}
-                      >
-                        Add
-                      </Button>
-                    </div>
-                  ))
-                )}
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => setEditingParticipants(false)}>Cancel</Button>
+                <Button size="sm" onClick={addPreviewParticipants} disabled={includedPreviewContacts.length === 0}>
+                  Add participants
+                </Button>
               </div>
             </div>
-            <div>
-              <div className="flex items-center justify-between gap-3">
-                <Label className="text-xs">Preview to add</Label>
-                <span className="text-xs text-muted-foreground">
-                  {includedPreviewContacts.length} included · {excludedContactIds.length} excluded
-                </span>
-              </div>
-              <div className="mt-2 rounded-md border border-border divide-y divide-border max-h-72 overflow-y-auto">
-                {previewContacts.length === 0 ? (
-                  <p className="p-3 text-sm text-muted-foreground">No matching contacts yet.</p>
-                ) : (
-                  previewContacts.map((contact) => {
-                    const excluded = excludedContactIds.includes(contact.id)
-                    const fromManual = stagedContactIds.includes(contact.id)
-                    return (
-                      <label
-                        key={contact.id}
-                        className={cn(
-                          "px-3 py-2 flex items-center gap-3 cursor-pointer",
-                          excluded && "bg-secondary/40 text-muted-foreground",
-                        )}
-                      >
-                        <Checkbox
-                          checked={!excluded}
-                          onCheckedChange={(checked) => {
-                            setExcludedContactIds((prev) =>
-                              checked === true
-                                ? prev.filter((id) => id !== contact.id)
-                                : [...new Set([...prev, contact.id])],
-                            )
-                          }}
-                        />
-                        <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-xs font-semibold">
-                          {(contact.firstName[0] ?? "") + (contact.lastName[0] ?? "")}
+            <div className="grid grid-cols-1 xl:grid-cols-[1fr_1fr] gap-4">
+              <div className="space-y-3">
+                <DynamicFilterBuilder
+                  draft={filterDraft}
+                  setDraft={setFilterDraft}
+                  groups={groups}
+                  customFields={customFields}
+                  groupColorClasses={groupColorClasses}
+                />
+                <div>
+                  <Label className="text-xs">Individual search</Label>
+                  <div className="mt-2 relative">
+                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <Input value={contactSearch} onChange={(event) => setContactSearch(event.target.value)} placeholder="Search contacts..." className="pl-9 h-9" />
+                  </div>
+                  <div className="mt-2 rounded-md border border-border divide-y divide-border max-h-44 overflow-y-auto">
+                    {availableContacts.length === 0 ? (
+                      <p className="p-3 text-sm text-muted-foreground">No contacts to add.</p>
+                    ) : (
+                      availableContacts.map((contact) => (
+                        <div key={contact.id} className="px-3 py-2 flex items-center gap-3">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{getContactName(contact)}</p>
+                            <p className="text-xs text-muted-foreground truncate">{contact.title}</p>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setStagedContactIds((prev) => [...prev, contact.id])
+                              setExcludedContactIds((prev) => prev.filter((id) => id !== contact.id))
+                            }}
+                          >
+                            Add
+                          </Button>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{getContactName(contact)}</p>
-                          <p className="text-xs text-muted-foreground truncate">{contact.title}</p>
-                        </div>
-                        <Badge variant="outline">{fromManual ? "Manual" : "Filter"}</Badge>
-                      </label>
-                    )
-                  })
-                )}
+                      ))
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button size="sm" variant="outline" onClick={() => setEditingParticipants(false)}>Cancel</Button>
-              <Button size="sm" onClick={addPreviewParticipants} disabled={includedPreviewContacts.length === 0}>
-                Add participants
-              </Button>
+              <div>
+                <div className="flex items-center justify-between gap-3">
+                  <Label className="text-xs">Preview</Label>
+                  <span className="text-xs text-muted-foreground">
+                    {includedPreviewContacts.length} included · {excludedContactIds.length} excluded
+                  </span>
+                </div>
+                <div className="mt-2 rounded-md border border-border divide-y divide-border max-h-[26rem] overflow-y-auto">
+                  {previewContacts.length === 0 ? (
+                    <p className="p-3 text-sm text-muted-foreground">No matching contacts yet.</p>
+                  ) : (
+                    previewContacts.map((contact) => {
+                      const excluded = excludedContactIds.includes(contact.id)
+                      const fromManual = stagedContactIds.includes(contact.id)
+                      return (
+                        <label
+                          key={contact.id}
+                          className={cn(
+                            "px-3 py-2 flex items-center gap-3 cursor-pointer",
+                            excluded && "bg-secondary/40 text-muted-foreground",
+                          )}
+                        >
+                          <Checkbox
+                            checked={!excluded}
+                            onCheckedChange={(checked) => {
+                              setExcludedContactIds((prev) =>
+                                checked === true
+                                  ? prev.filter((id) => id !== contact.id)
+                                  : [...new Set([...prev, contact.id])],
+                              )
+                            }}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{getContactName(contact)}</p>
+                            <p className="text-xs text-muted-foreground truncate">{contact.title}</p>
+                          </div>
+                          <Badge variant="outline">{fromManual ? "Manual" : "Filter"}</Badge>
+                        </label>
+                      )
+                    })
+                  )}
+                </div>
+              </div>
             </div>
           </Card>
         )}
@@ -662,8 +788,14 @@ function EventDetail({
                 const hasPaymentParticipation = participations.some(
                   (participation) => participation.occurrenceId === occurrence.id && participation.contactId === contact.id,
                 )
+                const participation = participations.find(
+                  (item) => item.occurrenceId === occurrence.id && item.contactId === contact.id,
+                )
+                const selectedPrice = priceOptions.find(
+                  (price) => participation && price.amount === participation.amountOwed && price.currency === participation.currency,
+                )
                 return (
-                  <div key={contact.id} className="px-4 py-3 flex items-center gap-4">
+                  <div key={contact.id} className="px-4 py-3 grid grid-cols-[auto_minmax(0,1fr)_minmax(8rem,14rem)_10rem_7rem_auto] items-center gap-4">
                     <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center text-xs font-semibold flex-shrink-0">
                       {(contact.firstName[0] ?? "") + (contact.lastName[0] ?? "")}
                     </div>
@@ -687,6 +819,29 @@ function EventDetail({
                         )
                       })}
                     </div>
+                    <select
+                      value={selectedPrice?.id ?? "custom"}
+                      onChange={(event) => {
+                        const price = priceOptions.find((item) => item.id === event.target.value)
+                        if (price) assignPrice(contact.id, price.amount, price.currency)
+                      }}
+                      className="h-8 rounded-md border border-input bg-background px-2 text-xs"
+                    >
+                      <option value="custom">Custom price</option>
+                      {priceOptions.map((price) => (
+                        <option key={price.id} value={price.id}>
+                          {price.label}
+                        </option>
+                      ))}
+                    </select>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      defaultValue={participation?.amountOwed ?? ""}
+                      onBlur={(event) => assignPrice(contact.id, Number(event.target.value), participation?.currency ?? priceOptions[0]?.currency ?? "EUR")}
+                      className="h-8 text-right"
+                      placeholder="Price"
+                    />
                     <Button size="sm" variant="ghost" onClick={() => removeMember(contact.id)} className="text-muted-foreground hover:text-destructive">
                       Remove
                     </Button>
@@ -739,10 +894,9 @@ function DynamicFilterBuilder({
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3 rounded-md border border-border p-3">
       <div>
         <Label className="text-xs">Groups</Label>
-        <p className="text-xs text-muted-foreground mt-0.5">Match any selected group. Leave empty to match all groups.</p>
         <div className="mt-2 flex flex-wrap gap-1.5">
           {groups.map((group) => {
             const color = groupColorClasses[group.color]
@@ -770,11 +924,8 @@ function DynamicFilterBuilder({
         <span className="text-sm">Only starred contacts</span>
       </label>
 
-      <Separator />
-
       <div>
         <Label className="text-xs">Advanced text filter</Label>
-        <p className="text-xs text-muted-foreground mt-0.5">Find contacts where any selected field contains this text.</p>
         <div className="mt-2 relative">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input value={draft.advancedQuery} onChange={(event) => setDraft({ ...draft, advancedQuery: event.target.value })} placeholder="Type any text..." className="pl-9" />
@@ -787,7 +938,7 @@ function DynamicFilterBuilder({
               <button type="button" onClick={() => setDraft({ ...draft, advancedFieldKeys: [] })} className="text-xs text-muted-foreground hover:text-foreground">Clear</button>
             </div>
           </div>
-          <div className="p-3 max-h-48 overflow-y-auto space-y-3">
+          <div className="p-3 max-h-36 overflow-y-auto space-y-3">
             <FieldPills title="Standard fields" options={fieldOptions.filter((field) => field.kind === "standard")} selected={draft.advancedFieldKeys} onToggle={toggleField} />
             {fieldOptions.some((field) => field.kind === "custom") && (
               <>
