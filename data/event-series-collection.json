@@ -2,27 +2,78 @@
   {
     "id": "es_retreat_weekend",
     "name": "Retreat Weekend",
-    "description": "Annual retreat participation and payment tracking.",
+    "description": "Annual retreat with tiered prices and participant-specific payments.",
     "recurrence": "yearly",
     "defaultCurrency": "EUR",
     "defaultAmountOwed": 480,
-    "createdAt": 1758240000000.0,
+    "priceOptions": [
+      {
+        "id": "price_retreat_standard",
+        "label": "Standard",
+        "amount": 480,
+        "currency": "EUR"
+      },
+      {
+        "id": "price_retreat_early",
+        "label": "Early booking",
+        "amount": 420,
+        "currency": "EUR",
+        "notes": "Example discounted price."
+      }
+    ],
+    "defaultPriceOptionId": "price_retreat_standard",
+    "createdAt": 1683936000000,
     "updatedAt": 1760659200000
   },
   {
-    "id": "es_event_a",
-    "name": "Event A",
+    "id": "es_intro_evening",
+    "name": "Intro Evening",
+    "description": "Small one-off evening event used as an example of a settled participation.",
     "recurrence": "none",
     "defaultCurrency": "EUR",
-    "createdAt": 1758672000000.0,
+    "defaultAmountOwed": 65,
+    "priceOptions": [
+      {
+        "id": "price_intro_standard",
+        "label": "Standard",
+        "amount": 65,
+        "currency": "EUR"
+      },
+      {
+        "id": "price_intro_helper",
+        "label": "Helper discount",
+        "amount": 25,
+        "currency": "EUR",
+        "notes": "Reduced price for people helping with setup."
+      }
+    ],
+    "defaultPriceOptionId": "price_intro_standard",
+    "createdAt": 1758672000000,
     "updatedAt": 1759968000000
   },
   {
-    "id": "es_event_c",
-    "name": "Event C",
+    "id": "es_summer_workshop",
+    "name": "Summer Workshop",
+    "description": "Recurring yearly workshop with participants added from contact lists.",
     "recurrence": "yearly",
     "defaultCurrency": "EUR",
-    "createdAt": 1758931200000.0,
+    "defaultAmountOwed": 180,
+    "priceOptions": [
+      {
+        "id": "price_workshop_standard",
+        "label": "Standard",
+        "amount": 180,
+        "currency": "EUR"
+      },
+      {
+        "id": "price_workshop_member",
+        "label": "Member price",
+        "amount": 150,
+        "currency": "EUR"
+      }
+    ],
+    "defaultPriceOptionId": "price_workshop_standard",
+    "createdAt": 1758931200000,
     "updatedAt": 1759968000000
   }
 ]

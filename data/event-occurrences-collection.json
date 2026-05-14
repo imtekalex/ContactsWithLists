@@ -1,27 +1,76 @@
 [
   {
+    "id": "eo_retreat_weekend_2024",
+    "seriesId": "es_retreat_weekend",
+    "name": "Retreat Weekend 2024",
+    "date": "2024-06-15",
+    "location": "Countryside retreat house",
+    "notes": "Past annual retreat. One participant overpaid, creating credit for later.",
+    "contactIds": [
+      "c2",
+      "c7",
+      "c16"
+    ],
+    "createdAt": 1718496000000,
+    "updatedAt": 1719360000000
+  },
+  {
+    "id": "eo_retreat_weekend_2025",
+    "seriesId": "es_retreat_weekend",
+    "name": "Retreat Weekend 2025",
+    "date": "2025-06-14",
+    "location": "Countryside retreat house",
+    "notes": "Past yearly occurrence with a static participant roster.",
+    "contactIds": [
+      "c1",
+      "c2",
+      "c16"
+    ],
+    "createdAt": 1746144000000,
+    "updatedAt": 1747008000000
+  },
+  {
     "id": "eo_retreat_weekend_2026",
     "seriesId": "es_retreat_weekend",
     "name": "Retreat Weekend 2026",
     "date": "2026-06-14",
     "location": "Countryside retreat house",
-    "notes": "Example recurring event occurrence.",
+    "notes": "Upcoming retreat. Mara has two payments recorded and still owes a balance.",
+    "contactIds": [
+      "c1",
+      "c2",
+      "c7",
+      "c16"
+    ],
     "createdAt": 1760659200000,
     "updatedAt": 1760659200000
   },
   {
-    "id": "eo_event_a_2026",
-    "seriesId": "es_event_a",
-    "name": "Event A",
+    "id": "eo_intro_evening_2026",
+    "seriesId": "es_intro_evening",
+    "name": "Intro Evening",
     "date": "2026-04-18",
+    "location": "Berlin studio",
+    "notes": "One-off event with settled and discounted participants.",
+    "contactIds": [
+      "c14",
+      "c16"
+    ],
     "createdAt": 1759968000000,
     "updatedAt": 1759968000000
   },
   {
-    "id": "eo_event_c_2026",
-    "seriesId": "es_event_c",
-    "name": "Event C 2026",
+    "id": "eo_summer_workshop_2026",
+    "seriesId": "es_summer_workshop",
+    "name": "Summer Workshop 2026",
     "date": "2026-09-12",
+    "location": "Community hall",
+    "notes": "Future yearly event with one waitlisted participant.",
+    "contactIds": [
+      "c7",
+      "c12",
+      "c16"
+    ],
     "createdAt": 1760140800000,
     "updatedAt": 1760140800000
   }

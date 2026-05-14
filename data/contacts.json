@@ -135,7 +135,7 @@
       ],
       "customValues": {},
       "createdAt": 1760486400000,
-      "updatedAt": 1778425195348
+      "updatedAt": 1761091200000
     },
     {
       "id": "c4",
@@ -489,6 +489,56 @@
       "customValues": {},
       "createdAt": 1759795200000,
       "updatedAt": 1761436800000
+    },
+    {
+      "id": "c16",
+      "firstName": "Mara",
+      "lastName": "Main",
+      "email": "mara.main@example.com",
+      "phone": "+49 170 555 0199",
+      "company": "Independent",
+      "title": "Gong Specialist",
+      "city": "Berlin",
+      "country": "Germany",
+      "website": "https://example.com/website-a",
+      "notes": "Details:\n- sometimes uses website a\n- has nice clothes\n\nStatus: Offers to assist in SQ. (on list)\nUser def.: 9 VOLTS / (X-OE)",
+      "starred": true,
+      "tags": [
+        "Former Adv. Grp.",
+        "M0 - VOLT x 2+",
+        "SQ"
+      ],
+      "groupIds": [
+        "g1"
+      ],
+      "customValues": {
+        "cf_nickname": {
+          "type": "text",
+          "value": "Main"
+        },
+        "cf_keywords": {
+          "type": "text",
+          "value": "-Former Adv. Grp."
+        },
+        "cf_category": {
+          "type": "text",
+          "value": "M0 - VOLT x 2+"
+        },
+        "cf_contact_status": {
+          "type": "longText",
+          "value": "Offers to assist in SQ. (on list)"
+        },
+        "cf_user_defined": {
+          "type": "text",
+          "value": "9 VOLTS / (X-OE)"
+        },
+        "cf_profession": {
+          "type": "text",
+          "value": "Gong Specialist"
+        }
+      },
+      "createdAt": 1760659200000,
+      "updatedAt": 1761609600000
     }
   ],
   "deleted": [
@@ -564,30 +614,6 @@
     }
   ],
   "activity": [
-    {
-      "action": "update",
-      "entityType": "Contact",
-      "entityName": "Bob Johnson",
-      "description": "Updated contact details",
-      "id": "a1778425195349",
-      "timestamp": 1778425195349
-    },
-    {
-      "action": "update",
-      "entityType": "Contact",
-      "entityName": "Bob JohnsoY2",
-      "description": "Updated contact details",
-      "id": "a1778425081908",
-      "timestamp": 1778425081908
-    },
-    {
-      "action": "update",
-      "entityType": "Contact",
-      "entityName": "Bob JohnsoY",
-      "description": "Updated contact details",
-      "id": "a1778425016723",
-      "timestamp": 1778425016723
-    },
     {
       "id": "a1",
       "action": "create",
@@ -788,6 +814,54 @@
           "label": "Series C+"
         }
       ]
+    },
+    {
+      "id": "cf_nickname",
+      "name": "Nickname",
+      "slug": "nickname",
+      "type": "text",
+      "isGlobal": true,
+      "groupIds": []
+    },
+    {
+      "id": "cf_keywords",
+      "name": "Keywords",
+      "slug": "keywords",
+      "type": "text",
+      "isGlobal": true,
+      "groupIds": []
+    },
+    {
+      "id": "cf_category",
+      "name": "Category",
+      "slug": "category",
+      "type": "text",
+      "isGlobal": true,
+      "groupIds": []
+    },
+    {
+      "id": "cf_contact_status",
+      "name": "Status",
+      "slug": "contact_status",
+      "type": "longText",
+      "isGlobal": true,
+      "groupIds": []
+    },
+    {
+      "id": "cf_user_defined",
+      "name": "User defined",
+      "slug": "user_defined",
+      "type": "text",
+      "isGlobal": true,
+      "groupIds": []
+    },
+    {
+      "id": "cf_profession",
+      "name": "Profession",
+      "slug": "profession",
+      "type": "text",
+      "isGlobal": true,
+      "groupIds": []
     }
   ],
   "lists": [
@@ -874,5 +948,403 @@
       "createdAt": 1760400000000,
       "updatedAt": 1760400000000
     }
-  ]
+  ],
+  "eventSeries": [
+    {
+      "id": "es_retreat_weekend",
+      "name": "Retreat Weekend",
+      "description": "Annual retreat with tiered prices and participant-specific payments.",
+      "recurrence": "yearly",
+      "defaultCurrency": "EUR",
+      "defaultAmountOwed": 480,
+      "priceOptions": [
+        {
+          "id": "price_retreat_standard",
+          "label": "Standard",
+          "amount": 480,
+          "currency": "EUR"
+        },
+        {
+          "id": "price_retreat_early",
+          "label": "Early booking",
+          "amount": 420,
+          "currency": "EUR",
+          "notes": "Example discounted price."
+        }
+      ],
+      "defaultPriceOptionId": "price_retreat_standard",
+      "createdAt": 1683936000000,
+      "updatedAt": 1760659200000
+    },
+    {
+      "id": "es_intro_evening",
+      "name": "Intro Evening",
+      "description": "Small one-off evening event used as an example of a settled participation.",
+      "recurrence": "none",
+      "defaultCurrency": "EUR",
+      "defaultAmountOwed": 65,
+      "priceOptions": [
+        {
+          "id": "price_intro_standard",
+          "label": "Standard",
+          "amount": 65,
+          "currency": "EUR"
+        },
+        {
+          "id": "price_intro_helper",
+          "label": "Helper discount",
+          "amount": 25,
+          "currency": "EUR",
+          "notes": "Reduced price for people helping with setup."
+        }
+      ],
+      "defaultPriceOptionId": "price_intro_standard",
+      "createdAt": 1758672000000,
+      "updatedAt": 1759968000000
+    },
+    {
+      "id": "es_summer_workshop",
+      "name": "Summer Workshop",
+      "description": "Recurring yearly workshop with participants added from contact lists.",
+      "recurrence": "yearly",
+      "defaultCurrency": "EUR",
+      "defaultAmountOwed": 180,
+      "priceOptions": [
+        {
+          "id": "price_workshop_standard",
+          "label": "Standard",
+          "amount": 180,
+          "currency": "EUR"
+        },
+        {
+          "id": "price_workshop_member",
+          "label": "Member price",
+          "amount": 150,
+          "currency": "EUR"
+        }
+      ],
+      "defaultPriceOptionId": "price_workshop_standard",
+      "createdAt": 1758931200000,
+      "updatedAt": 1759968000000
+    }
+  ],
+  "eventOccurrences": [
+    {
+      "id": "eo_retreat_weekend_2024",
+      "seriesId": "es_retreat_weekend",
+      "name": "Retreat Weekend 2024",
+      "date": "2024-06-15",
+      "location": "Countryside retreat house",
+      "notes": "Past annual retreat. One participant overpaid, creating credit for later.",
+      "contactIds": [
+        "c2",
+        "c7",
+        "c16"
+      ],
+      "createdAt": 1718496000000,
+      "updatedAt": 1719360000000
+    },
+    {
+      "id": "eo_retreat_weekend_2025",
+      "seriesId": "es_retreat_weekend",
+      "name": "Retreat Weekend 2025",
+      "date": "2025-06-14",
+      "location": "Countryside retreat house",
+      "notes": "Past yearly occurrence with a static participant roster.",
+      "contactIds": [
+        "c1",
+        "c2",
+        "c16"
+      ],
+      "createdAt": 1746144000000,
+      "updatedAt": 1747008000000
+    },
+    {
+      "id": "eo_retreat_weekend_2026",
+      "seriesId": "es_retreat_weekend",
+      "name": "Retreat Weekend 2026",
+      "date": "2026-06-14",
+      "location": "Countryside retreat house",
+      "notes": "Upcoming retreat. Mara has two payments recorded and still owes a balance.",
+      "contactIds": [
+        "c1",
+        "c2",
+        "c7",
+        "c16"
+      ],
+      "createdAt": 1760659200000,
+      "updatedAt": 1760659200000
+    },
+    {
+      "id": "eo_intro_evening_2026",
+      "seriesId": "es_intro_evening",
+      "name": "Intro Evening",
+      "date": "2026-04-18",
+      "location": "Berlin studio",
+      "notes": "One-off event with settled and discounted participants.",
+      "contactIds": [
+        "c14",
+        "c16"
+      ],
+      "createdAt": 1759968000000,
+      "updatedAt": 1759968000000
+    },
+    {
+      "id": "eo_summer_workshop_2026",
+      "seriesId": "es_summer_workshop",
+      "name": "Summer Workshop 2026",
+      "date": "2026-09-12",
+      "location": "Community hall",
+      "notes": "Future yearly event with one waitlisted participant.",
+      "contactIds": [
+        "c7",
+        "c12",
+        "c16"
+      ],
+      "createdAt": 1760140800000,
+      "updatedAt": 1760140800000
+    }
+  ],
+  "participations": [
+    {
+      "id": "ep_jane_retreat_2024",
+      "contactId": "c2",
+      "occurrenceId": "eo_retreat_weekend_2024",
+      "status": "attended",
+      "amountOwed": 420,
+      "currency": "EUR",
+      "notes": "Used early booking price and accidentally paid too much. The extra 30 EUR should show as credit.",
+      "payments": [
+        {
+          "id": "pay_jane_retreat_2024_deposit",
+          "amount": 200,
+          "date": "2024-04-20",
+          "label": "Deposit",
+          "note": "Paid after early booking confirmation.",
+          "createdAt": 1713312000000
+        },
+        {
+          "id": "pay_jane_retreat_2024_final",
+          "amount": 250,
+          "date": "2024-06-01",
+          "label": "Final payment",
+          "note": "Includes 30 EUR accidental overpayment.",
+          "createdAt": 1717200000000
+        }
+      ],
+      "createdAt": 1713312000000,
+      "updatedAt": 1717200000000
+    },
+    {
+      "id": "ep_david_retreat_2024",
+      "contactId": "c7",
+      "occurrenceId": "eo_retreat_weekend_2024",
+      "status": "cancelled",
+      "amountOwed": 0,
+      "currency": "EUR",
+      "notes": "Cancelled before payment was due.",
+      "payments": [],
+      "createdAt": 1713744000000,
+      "updatedAt": 1716768000000
+    },
+    {
+      "id": "ep_main_retreat_2025",
+      "contactId": "c16",
+      "occurrenceId": "eo_retreat_weekend_2025",
+      "status": "attended",
+      "amountOwed": 480,
+      "currency": "EUR",
+      "notes": "Settled past retreat.",
+      "payments": [
+        {
+          "id": "pay_main_retreat_2025_full",
+          "amount": 480,
+          "date": "2025-06-03",
+          "label": "Bank transfer",
+          "note": "Paid in full before arrival.",
+          "createdAt": 1747008000000
+        }
+      ],
+      "createdAt": 1746144000000,
+      "updatedAt": 1747008000000
+    },
+    {
+      "id": "ep_john_retreat_2025",
+      "contactId": "c1",
+      "occurrenceId": "eo_retreat_weekend_2025",
+      "status": "attended",
+      "amountOwed": 420,
+      "currency": "EUR",
+      "notes": "Early booking price.",
+      "payments": [
+        {
+          "id": "pay_john_retreat_2025_deposit",
+          "amount": 120,
+          "date": "2025-05-02",
+          "label": "Deposit",
+          "createdAt": 1746144000000
+        },
+        {
+          "id": "pay_john_retreat_2025_balance",
+          "amount": 300,
+          "date": "2025-06-10",
+          "label": "Balance",
+          "createdAt": 1746835200000
+        }
+      ],
+      "createdAt": 1746144000000,
+      "updatedAt": 1746835200000
+    },
+    {
+      "id": "ep_main_retreat_2026",
+      "contactId": "c16",
+      "occurrenceId": "eo_retreat_weekend_2026",
+      "status": "registered",
+      "amountOwed": 480,
+      "currency": "EUR",
+      "notes": "Primary example: two partial payments with a remaining balance.",
+      "payments": [
+        {
+          "id": "pay_main_retreat_down",
+          "amount": 100,
+          "date": "2026-05-10",
+          "label": "Down payment",
+          "note": "Cash after registration.",
+          "createdAt": 1761177600000
+        },
+        {
+          "id": "pay_main_retreat_followup",
+          "amount": 100,
+          "date": "2026-05-10",
+          "label": "Follow up payment",
+          "note": "Second small payment.",
+          "createdAt": 1761177600000
+        }
+      ],
+      "createdAt": 1760659200000,
+      "updatedAt": 1761177600000
+    },
+    {
+      "id": "ep_jane_retreat_2026",
+      "contactId": "c2",
+      "occurrenceId": "eo_retreat_weekend_2026",
+      "status": "registered",
+      "amountOwed": 480,
+      "currency": "EUR",
+      "notes": "Future participation. Payment overview should offset Jane's 30 EUR credit from 2024.",
+      "payments": [],
+      "createdAt": 1760832000000,
+      "updatedAt": 1760832000000
+    },
+    {
+      "id": "ep_john_retreat_2026",
+      "contactId": "c1",
+      "occurrenceId": "eo_retreat_weekend_2026",
+      "status": "invited",
+      "amountOwed": 480,
+      "currency": "EUR",
+      "notes": "Invited, no payment yet.",
+      "payments": [],
+      "createdAt": 1760918400000,
+      "updatedAt": 1760918400000
+    },
+    {
+      "id": "ep_main_intro_evening",
+      "contactId": "c16",
+      "occurrenceId": "eo_intro_evening_2026",
+      "status": "attended",
+      "amountOwed": 65,
+      "currency": "EUR",
+      "payments": [
+        {
+          "id": "pay_main_event_a",
+          "amount": 65,
+          "date": "2026-04-18",
+          "label": "Settled",
+          "note": "Paid at the door.",
+          "createdAt": 1759968000000
+        }
+      ],
+      "createdAt": 1759968000000,
+      "updatedAt": 1759968000000
+    },
+    {
+      "id": "ep_olivia_intro_evening",
+      "contactId": "c14",
+      "occurrenceId": "eo_intro_evening_2026",
+      "status": "attended",
+      "amountOwed": 25,
+      "currency": "EUR",
+      "notes": "Helper discount for setup support.",
+      "payments": [
+        {
+          "id": "pay_olivia_intro_evening",
+          "amount": 25,
+          "date": "2026-04-18",
+          "label": "Helper price",
+          "note": "Discounted participation.",
+          "createdAt": 1759968000000
+        }
+      ],
+      "createdAt": 1759968000000,
+      "updatedAt": 1759968000000
+    },
+    {
+      "id": "ep_david_summer_workshop",
+      "contactId": "c7",
+      "occurrenceId": "eo_summer_workshop_2026",
+      "status": "waitlist",
+      "amountOwed": 180,
+      "currency": "EUR",
+      "notes": "Waitlisted, no payment collected yet.",
+      "payments": [],
+      "createdAt": 1760313600000,
+      "updatedAt": 1760313600000
+    },
+    {
+      "id": "ep_jennifer_summer_workshop",
+      "contactId": "c12",
+      "occurrenceId": "eo_summer_workshop_2026",
+      "status": "registered",
+      "amountOwed": 150,
+      "currency": "EUR",
+      "notes": "Member price selected individually in the Events participant list.",
+      "payments": [
+        {
+          "id": "pay_jennifer_summer_workshop_deposit",
+          "amount": 50,
+          "date": "2026-05-12",
+          "label": "Deposit",
+          "note": "Remaining balance due in August.",
+          "createdAt": 1761350400000
+        }
+      ],
+      "createdAt": 1760313600000,
+      "updatedAt": 1761350400000
+    }
+  ],
+  "printPreferences": {
+    "printType": "standard",
+    "addressLayout": "european",
+    "returnAddressPreset": "business",
+    "returnAddresses": {
+      "business": {
+        "company": "",
+        "firstName": "",
+        "lastName": "",
+        "street": "",
+        "city": "",
+        "zip": "",
+        "country": ""
+      },
+      "personal": {
+        "firstName": "",
+        "lastName": "",
+        "street": "",
+        "city": "",
+        "zip": "",
+        "country": ""
+      }
+    }
+  }
 }
