@@ -22,6 +22,7 @@ import type {
   CustomField,
   CustomFieldValue,
   EventOccurrence,
+  EventPriceOption,
   EventSeries,
   Group,
   ParticipationStatus,
@@ -31,6 +32,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ChevronDown, Trash2, Plus } from "lucide-react"
 
 type ColorClass = { dot: string; bg: string; text: string; ring: string }
+
+const CUSTOM_PRICE_ID = "__custom__"
 
 interface Props {
   open: boolean
@@ -71,6 +74,7 @@ const empty = {
 type ParticipationDraft = {
   occurrenceId: string
   status: ParticipationStatus
+  priceOptionId: string
   amountOwed: string
   currency: CurrencyCode
   notes: string
@@ -176,6 +180,7 @@ export function NewContactDialog({
     const newParticipation: ParticipationDraft = {
       occurrenceId: "",
       status: "registered",
+      priceOptionId: "",
       amountOwed: "",
       currency: "EUR",
       notes: "",
@@ -240,29 +245,74 @@ export function NewContactDialog({
     return `${occ.name}${occ.date ? ` (${occ.date})` : ""}`
   }
 
-  function getDefaultCurrency(occurrenceId: string): CurrencyCode {
+  function getSeriesForOccurrence(occurrenceId: string) {
     const occ = eventOccurrences.find(o => o.id === occurrenceId)
-    if (!occ) return "EUR"
-    const series = eventSeries.find(s => s.id === occ.seriesId)
-    const price = getDefaultPriceOption(series)
-    return (price?.currency ?? series?.defaultCurrency ?? "EUR") as CurrencyCode
+    return occ ? eventSeries.find(s => s.id === occ.seriesId) : undefined
   }
 
-  function getDefaultAmount(occurrenceId: string): string {
-    const occ = eventOccurrences.find((o) => o.id === occurrenceId)
-    if (!occ) return ""
-    const series = eventSeries.find((s) => s.id === occ.seriesId)
-    const price = getDefaultPriceOption(series)
-    const amount = price?.amount ?? series?.defaultAmountOwed
-    return amount !== undefined ? String(amount) : ""
+  function getPriceOptionsForOccurrence(occurrenceId: string): EventPriceOption[] {
+    const series = getSeriesForOccurrence(occurrenceId)
+    if (!series) return []
+    if (series.priceOptions && series.priceOptions.length > 0) return series.priceOptions
+    if (series.defaultAmountOwed === undefined) return []
+    return [
+      {
+        id: series.defaultPriceOptionId ?? `price_${series.id}_standard`,
+        label: "Standard",
+        amount: series.defaultAmountOwed,
+        currency: series.defaultCurrency,
+      },
+    ]
   }
 
-  function getDefaultPriceOption(series: EventSeries | undefined) {
-    if (!series?.priceOptions?.length) return undefined
-    return (
-      series.priceOptions.find((option) => option.id === series.defaultPriceOptionId) ??
-      series.priceOptions[0]
+  function getDefaultPriceOption(occurrenceId: string) {
+    const series = getSeriesForOccurrence(occurrenceId)
+    const options = getPriceOptionsForOccurrence(occurrenceId)
+    return options.find((option) => option.id === series?.defaultPriceOptionId) ?? options[0]
+  }
+
+  function updateParticipationEvent(idx: number, occurrenceId: string) {
+    if (!occurrenceId) {
+      updateParticipation(idx, {
+        occurrenceId: "",
+        priceOptionId: "",
+        amountOwed: "",
+        currency: "EUR",
+      })
+      return
+    }
+
+    const series = getSeriesForOccurrence(occurrenceId)
+    const defaultPrice = getDefaultPriceOption(occurrenceId)
+    updateParticipation(idx, {
+      occurrenceId,
+      priceOptionId: defaultPrice?.id ?? CUSTOM_PRICE_ID,
+      amountOwed: defaultPrice ? String(defaultPrice.amount) : "",
+      currency: defaultPrice?.currency ?? series?.defaultCurrency ?? "EUR",
+    })
+  }
+
+  function updateParticipationPriceChoice(idx: number, priceOptionId: string) {
+    const participation = participationDrafts[idx]
+    if (!participation) return
+    if (priceOptionId === CUSTOM_PRICE_ID) {
+      updateParticipation(idx, { priceOptionId: CUSTOM_PRICE_ID })
+      return
+    }
+
+    const price = getPriceOptionsForOccurrence(participation.occurrenceId).find(
+      (option) => option.id === priceOptionId,
     )
+    if (!price) return
+    updateParticipation(idx, {
+      priceOptionId: price.id,
+      amountOwed: String(price.amount),
+      currency: price.currency,
+    })
+  }
+
+  function getPriceOptionLabel(price: EventPriceOption) {
+    return `${price.label} - ${price.amount} ${price.currency}`
   }
 
   function buildParticipationInputs(): NewContactParticipationInput[] | null {
@@ -282,7 +332,7 @@ export function NewContactDialog({
 
       const amountOwed = Number(draft.amountOwed)
       if (!Number.isFinite(amountOwed) || amountOwed < 0) {
-        setFormMessage(`Enter a valid amount owed for participation ${idx + 1}.`)
+        setFormMessage(`Enter a valid price for participation ${idx + 1}.`)
         return null
       }
 
@@ -659,15 +709,7 @@ export function NewContactDialog({
                           <select
                             id={`event-${idx}`}
                             value={p.occurrenceId}
-                            onChange={(e) => {
-                              const defaultAmount = getDefaultAmount(e.target.value)
-                              const newCurrency = getDefaultCurrency(e.target.value)
-                              updateParticipation(idx, {
-                                occurrenceId: e.target.value,
-                                currency: newCurrency,
-                                amountOwed: p.amountOwed.trim() ? p.amountOwed : defaultAmount,
-                              })
-                            }}
+                            onChange={(e) => updateParticipationEvent(idx, e.target.value)}
                             className="w-full mt-1.5 px-2 py-1.5 rounded border border-border bg-background text-sm"
                           >
                             <option value="">Select an event</option>
@@ -696,8 +738,27 @@ export function NewContactDialog({
                           </select>
                         </div>
                         <div>
+                          <Label htmlFor={`price-choice-${idx}`} className="text-xs">
+                            Price Choice
+                          </Label>
+                          <select
+                            id={`price-choice-${idx}`}
+                            value={p.priceOptionId || CUSTOM_PRICE_ID}
+                            onChange={(e) => updateParticipationPriceChoice(idx, e.target.value)}
+                            disabled={!p.occurrenceId}
+                            className="w-full mt-1.5 px-2 py-1.5 rounded border border-border bg-background text-sm disabled:opacity-50"
+                          >
+                            <option value={CUSTOM_PRICE_ID}>Custom price</option>
+                            {getPriceOptionsForOccurrence(p.occurrenceId).map((price) => (
+                              <option key={price.id} value={price.id}>
+                                {getPriceOptionLabel(price)}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
                           <Label htmlFor={`amount-${idx}`} className="text-xs">
-                            Amount Owed
+                            Price amount
                           </Label>
                           <Input
                             id={`amount-${idx}`}
@@ -705,7 +766,13 @@ export function NewContactDialog({
                             step="0.01"
                             min="0"
                             value={p.amountOwed}
-                            onChange={(e) => updateParticipation(idx, { amountOwed: e.target.value })}
+                            onChange={(e) =>
+                              updateParticipation(idx, {
+                                amountOwed: e.target.value,
+                                priceOptionId: CUSTOM_PRICE_ID,
+                              })
+                            }
+                            disabled={!p.occurrenceId}
                             className="mt-1.5"
                           />
                         </div>
@@ -716,8 +783,14 @@ export function NewContactDialog({
                           <select
                             id={`currency-${idx}`}
                             value={p.currency}
-                            onChange={(e) => updateParticipation(idx, { currency: e.target.value as CurrencyCode })}
-                            className="w-full mt-1.5 px-2 py-1.5 rounded border border-border bg-background text-sm"
+                            onChange={(e) =>
+                              updateParticipation(idx, {
+                                currency: e.target.value as CurrencyCode,
+                                priceOptionId: CUSTOM_PRICE_ID,
+                              })
+                            }
+                            disabled={!p.occurrenceId}
+                            className="w-full mt-1.5 px-2 py-1.5 rounded border border-border bg-background text-sm disabled:opacity-50"
                           >
                             <option value="EUR">EUR</option>
                             <option value="USD">USD</option>
