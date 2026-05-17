@@ -449,6 +449,33 @@ export default function Home() {
     })
   }
 
+      // Check for pending participations from new contact dialog
+      const pendingParticipationsStr = typeof window !== 'undefined' ? sessionStorage.getItem('pendingParticipations') : null
+      if (pendingParticipationsStr) {
+        try {
+          const pendingParticipations = JSON.parse(pendingParticipationsStr)
+          pendingParticipations.forEach((p: any) => {
+            const participationId = `ep${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+            const newParticipation: EventParticipation = {
+              id: participationId,
+              contactId: newContact.id,
+              occurrenceId: p.occurrenceId,
+              status: p.status,
+              amountOwed: p.amountOwed,
+              currency: p.currency,
+              notes: p.notes,
+              payments: [],
+              createdAt: now,
+              updatedAt: now,
+            }
+            setParticipations((prev) => [newParticipation, ...prev])
+          })
+          sessionStorage.removeItem('pendingParticipations')
+        } catch (e) {
+          console.error('Error parsing pending participations:', e)
+        }
+      }
+
   function handleUpdate(updated: Contact) {
     const now = Date.now()
     const updatedContact = { ...updated, updatedAt: now }
@@ -476,34 +503,34 @@ export default function Home() {
       action: "delete",
       entityType: "Contact",
       entityName: `${target.firstName} ${target.lastName}`,
+                // Check for pending participations from new contact dialog
+                const pendingParticipationsStr = typeof window !== 'undefined' ? sessionStorage.getItem('pendingParticipations') : null
+                if (pendingParticipationsStr) {
+                  try {
+                    const pendingParticipations = JSON.parse(pendingParticipationsStr)
+                    pendingParticipations.forEach((p: any) => {
+                      const participationId = `ep${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                      const newParticipation: EventParticipation = {
+                        id: participationId,
+                        contactId: newContact.id,
+                        occurrenceId: p.occurrenceId,
+                        status: p.status,
+                        amountOwed: p.amountOwed,
+                        currency: p.currency,
+                        notes: p.notes,
+                        payments: [],
+                        createdAt: now,
+                        updatedAt: now,
+                      }
+                      setParticipations((prev) => [newParticipation, ...prev])
+                    })
+                    sessionStorage.removeItem('pendingParticipations')
+                  } catch (e) {
+                    console.error('Error parsing pending participations:', e)
+                  }
+                }
       description: "Moved to trash",
     })
-  }
-
-  function handleToggleStar(id: string) {
-    const now = Date.now()
-    setContacts((prev) =>
-      prev.map((c) =>
-        c.id === id
-          ? { ...c, starred: !c.starred, updatedAt: now }
-          : c,
-      ),
-    )
-  }
-
-  function handleRestore(id: string) {
-    const target = deleted.find((c) => c.id === id)
-    if (!target) return
-    const now = Date.now()
-    setDeleted((prev) => prev.filter((c) => c.id !== id))
-    setContacts((prev) => [{ ...target, updatedAt: now }, ...prev])
-    logActivity({
-      action: "restore",
-      entityType: "Contact",
-      entityName: `${target.firstName} ${target.lastName}`,
-      description: "Restored from trash",
-    })
-  }
 
   function handlePurge(id: string) {
     setDeleted((prev) => prev.filter((c) => c.id !== id))
@@ -1383,6 +1410,8 @@ export default function Home() {
         groups={groups}
         groupColorClasses={groupColorClasses}
         customFields={customFields}
+          eventOccurrences={eventOccurrences}
+          eventSeries={eventSeries}
         onCreate={handleCreate}
       />
 

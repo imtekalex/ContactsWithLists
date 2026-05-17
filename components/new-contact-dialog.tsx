@@ -16,8 +16,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
-import type { Contact, CustomField, CustomFieldValue, Group } from "@/lib/contacts-data"
+import type { Contact, CustomField, CustomFieldValue, Group, EventOccurrence, EventSeries, CurrencyCode, ParticipationStatus } from "@/lib/contacts-data"
 import { ContactCustomFields } from "@/components/contact-custom-fields"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { ChevronDown, Trash2, Plus } from "lucide-react"
 
 type ColorClass = { dot: string; bg: string; text: string; ring: string }
 
@@ -27,6 +29,8 @@ interface Props {
   groups: Group[]
   groupColorClasses: Record<Group["color"], ColorClass>
   customFields: CustomField[]
+  eventOccurrences?: EventOccurrence[]
+  eventSeries?: EventSeries[]
   onCreate: (contact: Omit<Contact, "id" | "createdAt" | "updatedAt">) => void
 }
 
@@ -52,23 +56,45 @@ const empty = {
   customValues: {} as Record<string, CustomFieldValue>,
 }
 
+type ParticipationDraft = {
+  occurrenceId: string
+  status: ParticipationStatus
+  amountOwed: string
+  currency: CurrencyCode
+  notes: string
+}
+
+type PaymentDraft = {
+  amount: string
+  date: string
+  label: string
+  note: string
+}
+
 export function NewContactDialog({
   open,
   onOpenChange,
   groups,
   groupColorClasses,
   customFields,
+  eventOccurrences = [],
+  eventSeries = [],
   onCreate,
 }: Props) {
   const [form, setForm] = useState(empty)
+  const [participationDrafts, setParticipationDrafts] = useState<ParticipationDraft[]>([])
+  const [paymentDrafts, setPaymentDrafts] = useState<Record<number, PaymentDraft[]>>({})
 
   function reset() {
     setForm(empty)
+    setParticipationDrafts([])
+    setPaymentDrafts({})
   }
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
     if (!form.firstName.trim() && !form.lastName.trim()) return
+    
     onCreate(form)
     reset()
     onOpenChange(false)
@@ -109,6 +135,77 @@ export function NewContactDialog({
     updatedAt: 0,
   }
 
+  function addParticipation() {
+    const newParticipation: ParticipationDraft = {
+      occurrenceId: "",
+      status: "registered",
+      amountOwed: "",
+      currency: "EUR",
+      notes: "",
+    }
+    const newIdx = participationDrafts.length
+    setParticipationDrafts([...participationDrafts, newParticipation])
+    setPaymentDrafts({ ...paymentDrafts, [newIdx]: [] })
+  }
+
+  function removeParticipation(idx: number) {
+    setParticipationDrafts(participationDrafts.filter((_, i) => i !== idx))
+    const newPayments = { ...paymentDrafts }
+    delete newPayments[idx]
+    setPaymentDrafts(newPayments)
+  }
+
+  function updateParticipation(idx: number, updates: Partial<ParticipationDraft>) {
+    const newDrafts = [...participationDrafts]
+    newDrafts[idx] = { ...newDrafts[idx], ...updates }
+    setParticipationDrafts(newDrafts)
+  }
+
+  function addPayment(participationIdx: number) {
+    const newPayment: PaymentDraft = {
+      amount: "",
+      date: "",
+      label: "",
+      note: "",
+    }
+    setPaymentDrafts({
+      ...paymentDrafts,
+      [participationIdx]: [...(paymentDrafts[participationIdx] || []), newPayment],
+    })
+  }
+
+  function updatePayment(participationIdx: number, paymentIdx: number, updates: Partial<PaymentDraft>) {
+    const payments = paymentDrafts[participationIdx] || []
+    const updated = [...payments]
+    updated[paymentIdx] = { ...updated[paymentIdx], ...updates }
+    setPaymentDrafts({
+      ...paymentDrafts,
+      [participationIdx]: updated,
+    })
+  }
+
+  function removePayment(participationIdx: number, paymentIdx: number) {
+    const payments = (paymentDrafts[participationIdx] || []).filter((_, i) => i !== paymentIdx)
+    const newPayments = { ...paymentDrafts, [participationIdx]: payments }
+    if (payments.length === 0) {
+      delete newPayments[participationIdx]
+    }
+    setPaymentDrafts(newPayments)
+  }
+
+  function getOccurrenceName(occurrenceId: string): string {
+    const occ = eventOccurrences.find(o => o.id === occurrenceId)
+    if (!occ) return "Unknown"
+    return `${occ.name}${occ.date ? ` (${occ.date})` : ""}`
+  }
+
+  function getDefaultCurrency(occurrenceId: string): CurrencyCode {
+    const occ = eventOccurrences.find(o => o.id === occurrenceId)
+    if (!occ) return "EUR"
+    const series = eventSeries.find(s => s.id === occ.seriesId)
+    return (series?.defaultCurrency ?? "EUR") as CurrencyCode
+  }
+
   return (
     <Dialog
       open={open}
@@ -124,269 +221,497 @@ export function NewContactDialog({
             <DialogDescription>Add someone new to your network.</DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-6 py-4">
-            <section>
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                Name
-              </h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="firstName" className="text-xs">
-                    First name
-                  </Label>
-                  <Input
-                    id="firstName"
-                    value={form.firstName}
-                    onChange={(e) => setForm({ ...form, firstName: e.target.value })}
-                    className="mt-1.5"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="lastName" className="text-xs">
-                    Last name
-                  </Label>
-                  <Input
-                    id="lastName"
-                    value={form.lastName}
-                    onChange={(e) => setForm({ ...form, lastName: e.target.value })}
-                    className="mt-1.5"
-                  />
-                </div>
-              </div>
-            </section>
+          <div className="space-y-2 py-4">
+            {/* Basic Info Section */}
+            <Collapsible defaultOpen>
+              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 hover:bg-secondary/50 rounded-lg transition-colors">
+                <h3 className="text-sm font-semibold text-foreground">Basic Information</h3>
+                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pt-3 pb-4 px-3 space-y-4">
+                <section>
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                    Name
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="firstName" className="text-xs">
+                        First name
+                      </Label>
+                      <Input
+                        id="firstName"
+                        value={form.firstName}
+                        onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+                        className="mt-1.5"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="lastName" className="text-xs">
+                        Last name
+                      </Label>
+                      <Input
+                        id="lastName"
+                        value={form.lastName}
+                        onChange={(e) => setForm({ ...form, lastName: e.target.value })}
+                        className="mt-1.5"
+                      />
+                    </div>
+                  </div>
+                </section>
 
-            <section>
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                Contact information
-              </h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="phone" className="text-xs">
-                    Phone 1 (primary)
-                  </Label>
-                  <Input
-                    id="phone"
-                    value={form.phone}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                    className="mt-1.5"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="phone2" className="text-xs">
-                    Phone 2 (secondary)
-                  </Label>
-                  <Input
-                    id="phone2"
-                    value={form.phone2}
-                    onChange={(e) => setForm({ ...form, phone2: e.target.value })}
-                    className="mt-1.5"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="email" className="text-xs">
-                    Email 1 (primary)
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={form.email}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
-                    className="mt-1.5"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="email2" className="text-xs">
-                    Email 2 (secondary)
-                  </Label>
-                  <Input
-                    id="email2"
-                    type="email"
-                    value={form.email2}
-                    onChange={(e) => setForm({ ...form, email2: e.target.value })}
-                    className="mt-1.5"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="company" className="text-xs">
-                    Company
-                  </Label>
-                  <Input
-                    id="company"
-                    value={form.company}
-                    onChange={(e) => setForm({ ...form, company: e.target.value })}
-                    className="mt-1.5"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="title" className="text-xs">
-                    Title
-                  </Label>
-                  <Input
-                    id="title"
-                    value={form.title}
-                    onChange={(e) => setForm({ ...form, title: e.target.value })}
-                    className="mt-1.5"
-                  />
-                </div>
-                <div className="col-span-2">
-                  <Label htmlFor="website" className="text-xs">
-                    Website
-                  </Label>
-                  <Input
-                    id="website"
-                    value={form.website}
-                    onChange={(e) => setForm({ ...form, website: e.target.value })}
-                    className="mt-1.5"
-                    placeholder="https://"
-                  />
-                </div>
-              </div>
-            </section>
+                <section>
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                    Contact information
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="phone" className="text-xs">
+                        Phone 1 (primary)
+                      </Label>
+                      <Input
+                        id="phone"
+                        value={form.phone}
+                        onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                        className="mt-1.5"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="phone2" className="text-xs">
+                        Phone 2 (secondary)
+                      </Label>
+                      <Input
+                        id="phone2"
+                        value={form.phone2}
+                        onChange={(e) => setForm({ ...form, phone2: e.target.value })}
+                        className="mt-1.5"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="email" className="text-xs">
+                        Email 1 (primary)
+                      </Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={form.email}
+                        onChange={(e) => setForm({ ...form, email: e.target.value })}
+                        className="mt-1.5"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="email2" className="text-xs">
+                        Email 2 (secondary)
+                      </Label>
+                      <Input
+                        id="email2"
+                        type="email"
+                        value={form.email2}
+                        onChange={(e) => setForm({ ...form, email2: e.target.value })}
+                        className="mt-1.5"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="company" className="text-xs">
+                        Company
+                      </Label>
+                      <Input
+                        id="company"
+                        value={form.company}
+                        onChange={(e) => setForm({ ...form, company: e.target.value })}
+                        className="mt-1.5"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="title" className="text-xs">
+                        Title
+                      </Label>
+                      <Input
+                        id="title"
+                        value={form.title}
+                        onChange={(e) => setForm({ ...form, title: e.target.value })}
+                        className="mt-1.5"
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <Label htmlFor="website" className="text-xs">
+                        Website
+                      </Label>
+                      <Input
+                        id="website"
+                        value={form.website}
+                        onChange={(e) => setForm({ ...form, website: e.target.value })}
+                        className="mt-1.5"
+                        placeholder="https://"
+                      />
+                    </div>
+                  </div>
+                </section>
+              </CollapsibleContent>
+            </Collapsible>
 
-            <section>
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                Address
-              </h3>
-              <div className="space-y-3">
-                <div>
-                  <Label htmlFor="addressLine1" className="text-xs">
-                    Street address line 1
-                  </Label>
-                  <Input
-                    id="addressLine1"
-                    value={form.addressLine1}
-                    onChange={(e) => setForm({ ...form, addressLine1: e.target.value })}
-                    className="mt-1.5"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="addressLine2" className="text-xs">
-                    Street address line 2
-                  </Label>
-                  <Input
-                    id="addressLine2"
-                    value={form.addressLine2}
-                    onChange={(e) => setForm({ ...form, addressLine2: e.target.value })}
-                    className="mt-1.5"
-                    placeholder="Apt, suite, building, etc."
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="city" className="text-xs">
-                    City
-                  </Label>
-                  <Input
-                    id="city"
-                    value={form.city}
-                    onChange={(e) => setForm({ ...form, city: e.target.value })}
-                    className="mt-1.5"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="zip" className="text-xs">
-                    ZIP / Postal code
-                  </Label>
-                  <Input
-                    id="zip"
-                    value={form.zip}
-                    onChange={(e) => setForm({ ...form, zip: e.target.value })}
-                    className="mt-1.5"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="country" className="text-xs">
-                    Country
-                  </Label>
-                  <Input
-                    id="country"
-                    value={form.country}
-                    onChange={(e) => setForm({ ...form, country: e.target.value })}
-                    className="mt-1.5"
-                  />
-                </div>
-              </div>
-            </section>
+            {/* Address Section */}
+            <Collapsible>
+              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 hover:bg-secondary/50 rounded-lg transition-colors">
+                <h3 className="text-sm font-semibold text-foreground">Address</h3>
+                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pt-3 pb-4 px-3">
+                <section className="space-y-3">
+                  <div>
+                    <Label htmlFor="addressLine1" className="text-xs">
+                      Street address line 1
+                    </Label>
+                    <Input
+                      id="addressLine1"
+                      value={form.addressLine1}
+                      onChange={(e) => setForm({ ...form, addressLine1: e.target.value })}
+                      className="mt-1.5"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="addressLine2" className="text-xs">
+                      Street address line 2
+                    </Label>
+                    <Input
+                      id="addressLine2"
+                      value={form.addressLine2}
+                      onChange={(e) => setForm({ ...form, addressLine2: e.target.value })}
+                      className="mt-1.5"
+                      placeholder="Apt, suite, building, etc."
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="city" className="text-xs">
+                      City
+                    </Label>
+                    <Input
+                      id="city"
+                      value={form.city}
+                      onChange={(e) => setForm({ ...form, city: e.target.value })}
+                      className="mt-1.5"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="zip" className="text-xs">
+                      ZIP / Postal code
+                    </Label>
+                    <Input
+                      id="zip"
+                      value={form.zip}
+                      onChange={(e) => setForm({ ...form, zip: e.target.value })}
+                      className="mt-1.5"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="country" className="text-xs">
+                      Country
+                    </Label>
+                    <Input
+                      id="country"
+                      value={form.country}
+                      onChange={(e) => setForm({ ...form, country: e.target.value })}
+                      className="mt-1.5"
+                    />
+                  </div>
+                </section>
+              </CollapsibleContent>
+            </Collapsible>
 
-            <section>
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                Notes
-              </h3>
-              <Textarea
-                id="notes"
-                value={form.notes}
-                onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                className="min-h-[80px]"
-              />
-            </section>
+            {/* Notes Section */}
+            <Collapsible>
+              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 hover:bg-secondary/50 rounded-lg transition-colors">
+                <h3 className="text-sm font-semibold text-foreground">Notes</h3>
+                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pt-3 pb-4 px-3">
+                <section>
+                  <Textarea
+                    id="notes"
+                    value={form.notes}
+                    onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                    className="min-h-[80px]"
+                  />
+                </section>
+              </CollapsibleContent>
+            </Collapsible>
 
-            <section>
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                Groups
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {groups.map((g) => {
-                  const c = groupColorClasses[g.color]
-                  const active = form.groupIds.includes(g.id)
-                  return (
-                    <button
-                      key={g.id}
-                      type="button"
-                      onClick={() => toggleGroup(g.id)}
-                      className={cn(
-                        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors",
-                        active
-                          ? cn(c.bg, c.text, "border-transparent")
-                          : "border-border text-muted-foreground hover:bg-secondary",
+            {/* Groups Section */}
+            <Collapsible>
+              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 hover:bg-secondary/50 rounded-lg transition-colors">
+                <h3 className="text-sm font-semibold text-foreground">Groups & Custom Fields</h3>
+                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pt-3 pb-4 px-3 space-y-4">
+                <section>
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                    Groups
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {groups.map((g) => {
+                      const c = groupColorClasses[g.color]
+                      const active = form.groupIds.includes(g.id)
+                      return (
+                        <button
+                          key={g.id}
+                          type="button"
+                          onClick={() => toggleGroup(g.id)}
+                          className={cn(
+                            "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors",
+                            active
+                              ? cn(c.bg, c.text, "border-transparent")
+                              : "border-border text-muted-foreground hover:bg-secondary",
+                          )}
+                        >
+                          <span className={cn("w-1.5 h-1.5 rounded-full", c.dot)} />
+                          {g.name}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  {customFields.some((f) => !f.isGlobal) && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Some custom fields are scoped to specific groups and will appear
+                      below once you select the matching group.
+                    </p>
+                  )}
+                  <div className="mt-3 flex items-center gap-2">
+                    <Checkbox
+                      id="starred"
+                      checked={form.starred}
+                      onCheckedChange={(v) => setForm({ ...form, starred: v === true })}
+                    />
+                    <Label htmlFor="starred" className="text-sm font-normal cursor-pointer">
+                      Mark as starred
+                    </Label>
+                  </div>
+                </section>
+
+                {customFields.length > 0 && (
+                  <>
+                    <Separator />
+                    <div>
+                      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                        Custom fields
+                      </h3>
+                      <ContactCustomFields
+                        contact={formAsContact}
+                        fields={customFields}
+                        onChange={(fieldId, value) => {
+                          setForm((prev) => {
+                            const next = { ...prev.customValues }
+                            if (value === undefined) delete next[fieldId]
+                            else next[fieldId] = value
+                            return { ...prev, customValues: next }
+                          })
+                        }}
+                      />
+                    </div>
+                  </>
+                )}
+              </CollapsibleContent>
+            </Collapsible>
+
+            {/* Participation Section */}
+            {eventOccurrences && eventOccurrences.length > 0 && (
+              <Collapsible>
+                <CollapsibleTrigger className="flex items-center justify-between w-full p-3 hover:bg-secondary/50 rounded-lg transition-colors">
+                  <h3 className="text-sm font-semibold text-foreground">Participation & Events {participationDrafts.length > 0 && `(${participationDrafts.length})`}</h3>
+                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                </CollapsibleTrigger>
+                <CollapsibleContent className="pt-3 pb-4 px-3 space-y-4">
+                  {participationDrafts.map((p, idx) => (
+                    <div key={idx} className="p-3 border border-border rounded-lg space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs font-semibold text-muted-foreground">Participation {idx + 1}</div>
+                        <button
+                          type="button"
+                          onClick={() => removeParticipation(idx)}
+                          className="text-muted-foreground hover:text-destructive transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label htmlFor={`event-${idx}`} className="text-xs">
+                            Event
+                          </Label>
+                          <select
+                            id={`event-${idx}`}
+                            value={p.occurrenceId}
+                            onChange={(e) => {
+                              const newCurrency = getDefaultCurrency(e.target.value)
+                              updateParticipation(idx, { occurrenceId: e.target.value, currency: newCurrency })
+                            }}
+                            className="w-full mt-1.5 px-2 py-1.5 rounded border border-border bg-background text-sm"
+                          >
+                            <option value="">Select an event</option>
+                            {eventOccurrences.map((o) => (
+                              <option key={o.id} value={o.id}>
+                                {getOccurrenceName(o.id)}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <Label htmlFor={`status-${idx}`} className="text-xs">
+                            Status
+                          </Label>
+                          <select
+                            id={`status-${idx}`}
+                            value={p.status}
+                            onChange={(e) => updateParticipation(idx, { status: e.target.value as ParticipationStatus })}
+                            className="w-full mt-1.5 px-2 py-1.5 rounded border border-border bg-background text-sm"
+                          >
+                            <option value="invited">Invited</option>
+                            <option value="registered">Registered</option>
+                            <option value="attended">Attended</option>
+                            <option value="cancelled">Cancelled</option>
+                            <option value="waitlist">Waitlist</option>
+                          </select>
+                        </div>
+                        <div>
+                          <Label htmlFor={`amount-${idx}`} className="text-xs">
+                            Amount Owed
+                          </Label>
+                          <Input
+                            id={`amount-${idx}`}
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={p.amountOwed}
+                            onChange={(e) => updateParticipation(idx, { amountOwed: e.target.value })}
+                            className="mt-1.5"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor={`currency-${idx}`} className="text-xs">
+                            Currency
+                          </Label>
+                          <select
+                            id={`currency-${idx}`}
+                            value={p.currency}
+                            onChange={(e) => updateParticipation(idx, { currency: e.target.value as CurrencyCode })}
+                            className="w-full mt-1.5 px-2 py-1.5 rounded border border-border bg-background text-sm"
+                          >
+                            <option value="EUR">EUR</option>
+                            <option value="USD">USD</option>
+                            <option value="GBP">GBP</option>
+                            <option value="CHF">CHF</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label htmlFor={`notes-${idx}`} className="text-xs">
+                          Notes (optional)
+                        </Label>
+                        <Textarea
+                          id={`notes-${idx}`}
+                          value={p.notes}
+                          onChange={(e) => updateParticipation(idx, { notes: e.target.value })}
+                          className="mt-1.5 min-h-[50px]"
+                          placeholder="Optional notes about this participation"
+                        />
+                      </div>
+
+                      {/* Payments for this participation */}
+                      {(paymentDrafts[idx] || []).length > 0 && (
+                        <div className="pt-2 border-t border-border space-y-2">
+                          <div className="text-xs font-semibold text-muted-foreground">Payments ({paymentDrafts[idx]?.length || 0})</div>
+                          {(paymentDrafts[idx] || []).map((payment, pidx) => (
+                            <div key={pidx} className="p-2 bg-secondary/30 rounded space-y-2">
+                              <div className="grid grid-cols-3 gap-2">
+                                <div>
+                                  <Label htmlFor={`pay-amount-${idx}-${pidx}`} className="text-xs">
+                                    Amount
+                                  </Label>
+                                  <Input
+                                    id={`pay-amount-${idx}-${pidx}`}
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    value={payment.amount}
+                                    onChange={(e) => updatePayment(idx, pidx, { amount: e.target.value })}
+                                    className="mt-1 text-xs h-8"
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor={`pay-date-${idx}-${pidx}`} className="text-xs">
+                                    Date
+                                  </Label>
+                                  <Input
+                                    id={`pay-date-${idx}-${pidx}`}
+                                    type="date"
+                                    value={payment.date}
+                                    onChange={(e) => updatePayment(idx, pidx, { date: e.target.value })}
+                                    className="mt-1 text-xs h-8"
+                                  />
+                                </div>
+                                <div className="flex items-end justify-between gap-1">
+                                  <div className="flex-1">
+                                    <Label htmlFor={`pay-label-${idx}-${pidx}`} className="text-xs">
+                                      Label
+                                    </Label>
+                                    <Input
+                                      id={`pay-label-${idx}-${pidx}`}
+                                      value={payment.label}
+                                      onChange={(e) => updatePayment(idx, pidx, { label: e.target.value })}
+                                      className="mt-1 text-xs h-8"
+                                      placeholder="e.g., Down payment"
+                                    />
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => removePayment(idx, pidx)}
+                                    className="text-muted-foreground hover:text-destructive transition-colors"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </div>
+                              <div>
+                                <Label htmlFor={`pay-note-${idx}-${pidx}`} className="text-xs">
+                                  Note (optional)
+                                </Label>
+                                <Input
+                                  id={`pay-note-${idx}-${pidx}`}
+                                  value={payment.note}
+                                  onChange={(e) => updatePayment(idx, pidx, { note: e.target.value })}
+                                  className="mt-1 text-xs h-8"
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       )}
-                    >
-                      <span className={cn("w-1.5 h-1.5 rounded-full", c.dot)} />
-                      {g.name}
-                    </button>
-                  )
-                })}
-              </div>
-              {customFields.some((f) => !f.isGlobal) && (
-                <p className="text-xs text-muted-foreground mt-2">
-                  Some custom fields are scoped to specific groups and will appear
-                  below once you select the matching group.
-                </p>
-              )}
-              <div className="mt-3 flex items-center gap-2">
-                <Checkbox
-                  id="starred"
-                  checked={form.starred}
-                  onCheckedChange={(v) => setForm({ ...form, starred: v === true })}
-                />
-                <Label htmlFor="starred" className="text-sm font-normal cursor-pointer">
-                  Mark as starred
-                </Label>
-              </div>
-            </section>
-          </div>
 
-          {customFields.length > 0 && (
-            <>
-              <Separator />
-              <div className="py-4">
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                  Custom fields
-                </h3>
-                <ContactCustomFields
-                  contact={formAsContact}
-                  fields={customFields}
-                  onChange={(fieldId, value) => {
-                    setForm((prev) => {
-                      const next = { ...prev.customValues }
-                      if (value === undefined) delete next[fieldId]
-                      else next[fieldId] = value
-                      return { ...prev, customValues: next }
-                    })
-                  }}
-                />
-              </div>
-            </>
-          )}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => addPayment(idx)}
+                        className="w-full gap-2"
+                      >
+                        <Plus className="w-3 h-3" /> Add Payment
+                      </Button>
+                    </div>
+                  ))}
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={addParticipation}
+                    className="w-full gap-2"
+                  >
+                    <Plus className="w-4 h-4" /> Add Event
+                  </Button>
+                </CollapsibleContent>
+              </Collapsible>
+            )}
+          </div>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
@@ -398,4 +723,4 @@ export function NewContactDialog({
       </DialogContent>
     </Dialog>
   )
-}
+  }
