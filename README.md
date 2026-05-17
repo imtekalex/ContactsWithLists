@@ -106,5 +106,3 @@ git add .gitignore README.md app components hooks lib public data components.jso
 git commit -m "Add contacts with lists app"
 git push
 ```
-
-test
