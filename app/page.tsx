@@ -52,7 +52,7 @@ import {
   saveContactsCollection,
   type PrintPreferences,
 } from "@/lib/contacts-store"
-import { NewContactDialog } from "@/components/new-contact-dialog"
+import { NewContactDialog, type NewContactParticipationInput } from "@/components/new-contact-dialog"
 import { ContactDetail } from "@/components/contact-detail"
 import { ListsView } from "@/components/lists-view"
 import { PrintDialog } from "@/components/print-dialog"
@@ -431,7 +431,10 @@ export default function Home() {
     return new Date(timestamp).toISOString().slice(0, 10)
   }
 
-  function handleCreate(contact: Omit<Contact, "id" | "createdAt" | "updatedAt">) {
+  function handleCreate(
+    contact: Omit<Contact, "id" | "createdAt" | "updatedAt">,
+    participationInputs: NewContactParticipationInput[] = [],
+  ) {
     const now = Date.now()
     const newContact: Contact = {
       ...contact,
@@ -447,34 +450,31 @@ export default function Home() {
       entityName: `${newContact.firstName} ${newContact.lastName}`,
       description: `Created contact${newContact.company ? ` at ${newContact.company}` : ""}`,
     })
-  }
 
-      // Check for pending participations from new contact dialog
-      const pendingParticipationsStr = typeof window !== 'undefined' ? sessionStorage.getItem('pendingParticipations') : null
-      if (pendingParticipationsStr) {
-        try {
-          const pendingParticipations = JSON.parse(pendingParticipationsStr)
-          pendingParticipations.forEach((p: any) => {
-            const participationId = `ep${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-            const newParticipation: EventParticipation = {
-              id: participationId,
-              contactId: newContact.id,
-              occurrenceId: p.occurrenceId,
-              status: p.status,
-              amountOwed: p.amountOwed,
-              currency: p.currency,
-              notes: p.notes,
-              payments: [],
-              createdAt: now,
-              updatedAt: now,
-            }
-            setParticipations((prev) => [newParticipation, ...prev])
-          })
-          sessionStorage.removeItem('pendingParticipations')
-        } catch (e) {
-          console.error('Error parsing pending participations:', e)
-        }
-      }
+    if (participationInputs.length > 0) {
+      const newParticipations: EventParticipation[] = participationInputs.map((input, participationIndex) => ({
+        id: `ep${now}_${participationIndex}`,
+        contactId: newContact.id,
+        occurrenceId: input.occurrenceId,
+        status: input.status,
+        amountOwed: input.amountOwed,
+        currency: input.currency,
+        notes: input.notes,
+        payments: input.payments.map((payment, paymentIndex) => ({
+          id: `pay${now}_${participationIndex}_${paymentIndex}`,
+          amount: payment.amount,
+          date: payment.date,
+          label: payment.label,
+          note: payment.note,
+          createdAt: now,
+        })),
+        createdAt: now,
+        updatedAt: now,
+      }))
+
+      setParticipations((prev) => [...newParticipations, ...prev])
+    }
+  }
 
   function handleUpdate(updated: Contact) {
     const now = Date.now()
@@ -503,34 +503,43 @@ export default function Home() {
       action: "delete",
       entityType: "Contact",
       entityName: `${target.firstName} ${target.lastName}`,
-                // Check for pending participations from new contact dialog
-                const pendingParticipationsStr = typeof window !== 'undefined' ? sessionStorage.getItem('pendingParticipations') : null
-                if (pendingParticipationsStr) {
-                  try {
-                    const pendingParticipations = JSON.parse(pendingParticipationsStr)
-                    pendingParticipations.forEach((p: any) => {
-                      const participationId = `ep${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-                      const newParticipation: EventParticipation = {
-                        id: participationId,
-                        contactId: newContact.id,
-                        occurrenceId: p.occurrenceId,
-                        status: p.status,
-                        amountOwed: p.amountOwed,
-                        currency: p.currency,
-                        notes: p.notes,
-                        payments: [],
-                        createdAt: now,
-                        updatedAt: now,
-                      }
-                      setParticipations((prev) => [newParticipation, ...prev])
-                    })
-                    sessionStorage.removeItem('pendingParticipations')
-                  } catch (e) {
-                    console.error('Error parsing pending participations:', e)
-                  }
-                }
       description: "Moved to trash",
     })
+  }
+
+  function handleToggleStar(id: string) {
+    const target = contacts.find((c) => c.id === id)
+    if (!target) return
+    const now = Date.now()
+    const starred = !target.starred
+    setContacts((prev) =>
+      prev.map((contact) =>
+        contact.id === id ? { ...contact, starred, updatedAt: now } : contact,
+      ),
+    )
+    logActivity({
+      action: "update",
+      entityType: "Contact",
+      entityName: `${target.firstName} ${target.lastName}`,
+      description: starred ? "Marked as starred" : "Removed star",
+    })
+  }
+
+  function handleRestore(id: string) {
+    const target = deleted.find((c) => c.id === id)
+    if (!target) return
+    const restored = { ...target, updatedAt: Date.now() }
+    setDeleted((prev) => prev.filter((c) => c.id !== id))
+    setContacts((prev) => [restored, ...prev])
+    setSelectedId(id)
+    setView("contacts")
+    logActivity({
+      action: "restore",
+      entityType: "Contact",
+      entityName: `${target.firstName} ${target.lastName}`,
+      description: "Restored from trash",
+    })
+  }
 
   function handlePurge(id: string) {
     setDeleted((prev) => prev.filter((c) => c.id !== id))

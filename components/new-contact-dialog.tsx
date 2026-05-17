@@ -16,7 +16,16 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
-import type { Contact, CustomField, CustomFieldValue, Group, EventOccurrence, EventSeries, CurrencyCode, ParticipationStatus } from "@/lib/contacts-data"
+import type {
+  Contact,
+  CurrencyCode,
+  CustomField,
+  CustomFieldValue,
+  EventOccurrence,
+  EventSeries,
+  Group,
+  ParticipationStatus,
+} from "@/lib/contacts-data"
 import { ContactCustomFields } from "@/components/contact-custom-fields"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { ChevronDown, Trash2, Plus } from "lucide-react"
@@ -31,7 +40,10 @@ interface Props {
   customFields: CustomField[]
   eventOccurrences?: EventOccurrence[]
   eventSeries?: EventSeries[]
-  onCreate: (contact: Omit<Contact, "id" | "createdAt" | "updatedAt">) => void
+  onCreate: (
+    contact: Omit<Contact, "id" | "createdAt" | "updatedAt">,
+    participations: NewContactParticipationInput[],
+  ) => void
 }
 
 const empty = {
@@ -71,6 +83,26 @@ type PaymentDraft = {
   note: string
 }
 
+export type NewContactPaymentInput = {
+  amount: number
+  date?: string
+  label?: string
+  note?: string
+}
+
+export type NewContactParticipationInput = {
+  occurrenceId: string
+  status: ParticipationStatus
+  amountOwed: number
+  currency: CurrencyCode
+  notes?: string
+  payments: NewContactPaymentInput[]
+}
+
+function getTodayIso() {
+  return new Date().toISOString().slice(0, 10)
+}
+
 export function NewContactDialog({
   open,
   onOpenChange,
@@ -83,19 +115,24 @@ export function NewContactDialog({
 }: Props) {
   const [form, setForm] = useState(empty)
   const [participationDrafts, setParticipationDrafts] = useState<ParticipationDraft[]>([])
-  const [paymentDrafts, setPaymentDrafts] = useState<Record<number, PaymentDraft[]>>({})
+  const [paymentDrafts, setPaymentDrafts] = useState<PaymentDraft[][]>([])
+  const [formMessage, setFormMessage] = useState<string | null>(null)
 
   function reset() {
     setForm(empty)
     setParticipationDrafts([])
-    setPaymentDrafts({})
+    setPaymentDrafts([])
+    setFormMessage(null)
   }
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
     if (!form.firstName.trim() && !form.lastName.trim()) return
-    
-    onCreate(form)
+
+    const participations = buildParticipationInputs()
+    if (!participations) return
+
+    onCreate(form, participations)
     reset()
     onOpenChange(false)
   }
@@ -143,54 +180,58 @@ export function NewContactDialog({
       currency: "EUR",
       notes: "",
     }
-    const newIdx = participationDrafts.length
     setParticipationDrafts([...participationDrafts, newParticipation])
-    setPaymentDrafts({ ...paymentDrafts, [newIdx]: [] })
+    setPaymentDrafts([...paymentDrafts, []])
+    setFormMessage(null)
   }
 
   function removeParticipation(idx: number) {
     setParticipationDrafts(participationDrafts.filter((_, i) => i !== idx))
-    const newPayments = { ...paymentDrafts }
-    delete newPayments[idx]
-    setPaymentDrafts(newPayments)
+    setPaymentDrafts(paymentDrafts.filter((_, i) => i !== idx))
+    setFormMessage(null)
   }
 
   function updateParticipation(idx: number, updates: Partial<ParticipationDraft>) {
     const newDrafts = [...participationDrafts]
     newDrafts[idx] = { ...newDrafts[idx], ...updates }
     setParticipationDrafts(newDrafts)
+    setFormMessage(null)
   }
 
   function addPayment(participationIdx: number) {
     const newPayment: PaymentDraft = {
       amount: "",
-      date: "",
+      date: getTodayIso(),
       label: "",
       note: "",
     }
-    setPaymentDrafts({
-      ...paymentDrafts,
-      [participationIdx]: [...(paymentDrafts[participationIdx] || []), newPayment],
-    })
+    setPaymentDrafts(
+      paymentDrafts.map((payments, idx) =>
+        idx === participationIdx ? [...payments, newPayment] : payments,
+      ),
+    )
+    setFormMessage(null)
   }
 
   function updatePayment(participationIdx: number, paymentIdx: number, updates: Partial<PaymentDraft>) {
-    const payments = paymentDrafts[participationIdx] || []
-    const updated = [...payments]
-    updated[paymentIdx] = { ...updated[paymentIdx], ...updates }
-    setPaymentDrafts({
-      ...paymentDrafts,
-      [participationIdx]: updated,
-    })
+    setPaymentDrafts(
+      paymentDrafts.map((payments, idx) => {
+        if (idx !== participationIdx) return payments
+        return payments.map((payment, pidx) =>
+          pidx === paymentIdx ? { ...payment, ...updates } : payment,
+        )
+      }),
+    )
+    setFormMessage(null)
   }
 
   function removePayment(participationIdx: number, paymentIdx: number) {
-    const payments = (paymentDrafts[participationIdx] || []).filter((_, i) => i !== paymentIdx)
-    const newPayments = { ...paymentDrafts, [participationIdx]: payments }
-    if (payments.length === 0) {
-      delete newPayments[participationIdx]
-    }
-    setPaymentDrafts(newPayments)
+    setPaymentDrafts(
+      paymentDrafts.map((payments, idx) =>
+        idx === participationIdx ? payments.filter((_, i) => i !== paymentIdx) : payments,
+      ),
+    )
+    setFormMessage(null)
   }
 
   function getOccurrenceName(occurrenceId: string): string {
@@ -203,7 +244,84 @@ export function NewContactDialog({
     const occ = eventOccurrences.find(o => o.id === occurrenceId)
     if (!occ) return "EUR"
     const series = eventSeries.find(s => s.id === occ.seriesId)
-    return (series?.defaultCurrency ?? "EUR") as CurrencyCode
+    const price = getDefaultPriceOption(series)
+    return (price?.currency ?? series?.defaultCurrency ?? "EUR") as CurrencyCode
+  }
+
+  function getDefaultAmount(occurrenceId: string): string {
+    const occ = eventOccurrences.find((o) => o.id === occurrenceId)
+    if (!occ) return ""
+    const series = eventSeries.find((s) => s.id === occ.seriesId)
+    const price = getDefaultPriceOption(series)
+    const amount = price?.amount ?? series?.defaultAmountOwed
+    return amount !== undefined ? String(amount) : ""
+  }
+
+  function getDefaultPriceOption(series: EventSeries | undefined) {
+    if (!series?.priceOptions?.length) return undefined
+    return (
+      series.priceOptions.find((option) => option.id === series.defaultPriceOptionId) ??
+      series.priceOptions[0]
+    )
+  }
+
+  function buildParticipationInputs(): NewContactParticipationInput[] | null {
+    const seenOccurrenceIds = new Set<string>()
+    const inputs: NewContactParticipationInput[] = []
+
+    for (const [idx, draft] of participationDrafts.entries()) {
+      if (!draft.occurrenceId) {
+        setFormMessage(`Choose an event for participation ${idx + 1}.`)
+        return null
+      }
+      if (seenOccurrenceIds.has(draft.occurrenceId)) {
+        setFormMessage(`Participation ${idx + 1} uses an event that is already selected.`)
+        return null
+      }
+      seenOccurrenceIds.add(draft.occurrenceId)
+
+      const amountOwed = Number(draft.amountOwed)
+      if (!Number.isFinite(amountOwed) || amountOwed < 0) {
+        setFormMessage(`Enter a valid amount owed for participation ${idx + 1}.`)
+        return null
+      }
+
+      const payments: NewContactPaymentInput[] = []
+      for (const [paymentIdx, paymentDraft] of (paymentDrafts[idx] ?? []).entries()) {
+        const hasPaymentData = Boolean(
+          paymentDraft.amount.trim() ||
+            paymentDraft.date.trim() ||
+            paymentDraft.label.trim() ||
+            paymentDraft.note.trim(),
+        )
+        if (!hasPaymentData) continue
+
+        const amount = Number(paymentDraft.amount)
+        if (!Number.isFinite(amount) || amount <= 0) {
+          setFormMessage(`Enter a valid payment amount for payment ${paymentIdx + 1} in participation ${idx + 1}.`)
+          return null
+        }
+
+        payments.push({
+          amount,
+          date: paymentDraft.date || undefined,
+          label: paymentDraft.label.trim() || undefined,
+          note: paymentDraft.note.trim() || undefined,
+        })
+      }
+
+      inputs.push({
+        occurrenceId: draft.occurrenceId,
+        status: draft.status,
+        amountOwed,
+        currency: draft.currency,
+        notes: draft.notes.trim() || undefined,
+        payments,
+      })
+    }
+
+    setFormMessage(null)
+    return inputs
   }
 
   return (
@@ -542,8 +660,13 @@ export function NewContactDialog({
                             id={`event-${idx}`}
                             value={p.occurrenceId}
                             onChange={(e) => {
+                              const defaultAmount = getDefaultAmount(e.target.value)
                               const newCurrency = getDefaultCurrency(e.target.value)
-                              updateParticipation(idx, { occurrenceId: e.target.value, currency: newCurrency })
+                              updateParticipation(idx, {
+                                occurrenceId: e.target.value,
+                                currency: newCurrency,
+                                amountOwed: p.amountOwed.trim() ? p.amountOwed : defaultAmount,
+                              })
                             }}
                             className="w-full mt-1.5 px-2 py-1.5 rounded border border-border bg-background text-sm"
                           >
@@ -708,6 +831,9 @@ export function NewContactDialog({
                   >
                     <Plus className="w-4 h-4" /> Add Event
                   </Button>
+                  {formMessage && (
+                    <p className="text-xs text-destructive">{formMessage}</p>
+                  )}
                 </CollapsibleContent>
               </Collapsible>
             )}
