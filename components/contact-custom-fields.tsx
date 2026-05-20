@@ -53,7 +53,7 @@ export function ContactCustomFields({ contact, fields, onChange, readOnly }: Pro
   return (
     <div className="space-y-5">
       {visible.length > 0 && (
-        <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+        <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
           {visible.map((f) => (
             <CustomFieldRow
               key={f.id}
@@ -125,8 +125,8 @@ function CustomFieldRow({
     case "boolean": {
       const v = value && value.type === "boolean" ? value.value : false
       return (
-        <div className="flex items-center justify-between rounded-md border border-border px-3 py-2">
-          <Label className="text-sm">{field.name}</Label>
+        <div className="flex h-9 items-center justify-between gap-3 border-b border-border">
+          <Label className="text-xs text-muted-foreground">{field.name}</Label>
           <Switch checked={v} onCheckedChange={(c) => onChange({ type: "boolean", value: c })} />
         </div>
       )

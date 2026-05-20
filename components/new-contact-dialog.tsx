@@ -28,8 +28,19 @@ import type {
   ParticipationStatus,
 } from "@/lib/contacts-data"
 import { ContactCustomFields } from "@/components/contact-custom-fields"
+import { ContactPhotoPicker } from "@/components/contact-avatar"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { ChevronDown, Trash2, Plus } from "lucide-react"
+import {
+  CalendarDays,
+  ChevronDown,
+  MapPin,
+  NotebookText,
+  Plus,
+  Tag,
+  Trash2,
+  UserRound,
+  Users,
+} from "lucide-react"
 
 type ColorClass = { dot: string; bg: string; text: string; ring: string }
 
@@ -50,20 +61,35 @@ interface Props {
 }
 
 const empty = {
+  photoUrl: "",
+  namePrefix: "",
   firstName: "",
+  middleName: "",
   lastName: "",
+  nameSuffix: "",
+  phoneticFirstName: "",
+  phoneticMiddleName: "",
+  phoneticLastName: "",
+  nickname: "",
+  fileAs: "",
   email: "",
   email2: "",
   phone: "",
   phone2: "",
   company: "",
   title: "",
+  department: "",
   addressLine1: "",
   addressLine2: "",
   city: "",
   zip: "",
   country: "",
   website: "",
+  birthday: "",
+  significantDate: "",
+  significantDateLabel: "",
+  relatedPerson: "",
+  relationLabel: "",
   notes: "",
   starred: false,
   tags: [] as string[],
@@ -107,6 +133,11 @@ function getTodayIso() {
   return new Date().toISOString().slice(0, 10)
 }
 
+function dateStringToParts(value: string) {
+  const [year, month, day] = value.split("-")
+  return { month: month ?? "", day: day ?? "", year: year || undefined }
+}
+
 export function NewContactDialog({
   open,
   onOpenChange,
@@ -136,7 +167,8 @@ export function NewContactDialog({
     const participations = buildParticipationInputs()
     if (!participations) return
 
-    onCreate(form, participations)
+    const { id: _id, createdAt: _createdAt, updatedAt: _updatedAt, ...contactInput } = formAsContact
+    onCreate(contactInput, participations)
     reset()
     onOpenChange(false)
   }
@@ -153,20 +185,75 @@ export function NewContactDialog({
   // visibility and orphan handling using the same rules as the detail view.
   const formAsContact: Contact = {
     id: "__new__",
+    photoUrl: form.photoUrl || undefined,
+    namePrefix: form.namePrefix || undefined,
     firstName: form.firstName,
+    middleName: form.middleName || undefined,
     lastName: form.lastName,
+    nameSuffix: form.nameSuffix || undefined,
+    phoneticFirstName: form.phoneticFirstName || undefined,
+    phoneticMiddleName: form.phoneticMiddleName || undefined,
+    phoneticLastName: form.phoneticLastName || undefined,
+    nickname: form.nickname || undefined,
+    fileAs: form.fileAs || undefined,
     email: form.email,
     email2: form.email2 || undefined,
+    emails: [
+      { id: "email_primary", label: "Work", value: form.email },
+      { id: "email_secondary", label: "Private", value: form.email2 },
+    ].filter((item) => item.value.trim()),
     phone: form.phone,
     phone2: form.phone2 || undefined,
+    phones: [
+      { id: "phone_primary", label: "Mobile", value: form.phone },
+      { id: "phone_secondary", label: "Work", value: form.phone2 },
+    ].filter((item) => item.value.trim()),
     company: form.company,
     title: form.title,
+    department: form.department || undefined,
     addressLine1: form.addressLine1 || undefined,
     addressLine2: form.addressLine2 || undefined,
     city: form.city,
     zip: form.zip || undefined,
     country: form.country,
+    addresses:
+      form.addressLine1 || form.addressLine2 || form.city || form.zip || form.country
+        ? [
+            {
+              id: "address_primary",
+              label: "Home",
+              addressLine1: form.addressLine1 || undefined,
+              addressLine2: form.addressLine2 || undefined,
+              city: form.city || undefined,
+              zip: form.zip || undefined,
+              country: form.country || undefined,
+            },
+          ]
+        : [],
     website: form.website,
+    birthday: form.birthday || undefined,
+    significantDate: form.significantDate || undefined,
+    significantDateLabel: form.significantDateLabel || undefined,
+    significantDates: form.significantDate
+      ? [
+          {
+            id: "date_primary",
+            label: form.significantDateLabel || "Anniversary",
+            ...dateStringToParts(form.significantDate),
+          },
+        ]
+      : [],
+    relatedPerson: form.relatedPerson || undefined,
+    relationLabel: form.relationLabel || undefined,
+    relatedPeople: form.relatedPerson
+      ? [
+          {
+            id: "related_primary",
+            label: form.relationLabel || "Related",
+            name: form.relatedPerson,
+          },
+        ]
+      : [],
     notes: form.notes,
     starred: form.starred,
     tags: form.tags,
@@ -382,7 +469,7 @@ export function NewContactDialog({
         if (!o) reset()
       }}
     >
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <form onSubmit={submit}>
           <DialogHeader>
             <DialogTitle>New contact</DialogTitle>
@@ -390,10 +477,22 @@ export function NewContactDialog({
           </DialogHeader>
 
           <div className="space-y-2 py-4">
+            <div className="rounded-xl bg-secondary/30 p-4">
+              <ContactPhotoPicker
+                firstName={form.firstName}
+                lastName={form.lastName}
+                photoUrl={form.photoUrl || undefined}
+                onChange={(photoUrl) => setForm({ ...form, photoUrl: photoUrl ?? "" })}
+              />
+            </div>
+
             {/* Basic Info Section */}
             <Collapsible defaultOpen>
               <CollapsibleTrigger className="flex items-center justify-between w-full p-3 hover:bg-secondary/50 rounded-lg transition-colors">
-                <h3 className="text-sm font-semibold text-foreground">Basic Information</h3>
+                <span className="flex items-center gap-3 text-sm font-semibold text-foreground">
+                  <UserRound className="w-4 h-4 text-muted-foreground" />
+                  Identity & contact
+                </span>
                 <ChevronDown className="w-4 h-4 text-muted-foreground" />
               </CollapsibleTrigger>
               <CollapsibleContent className="pt-3 pb-4 px-3 space-y-4">
@@ -401,7 +500,18 @@ export function NewContactDialog({
                   <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
                     Name
                   </h3>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                      <Label htmlFor="namePrefix" className="text-xs">
+                        Prefix
+                      </Label>
+                      <Input
+                        id="namePrefix"
+                        value={form.namePrefix}
+                        onChange={(e) => setForm({ ...form, namePrefix: e.target.value })}
+                        className="mt-1.5"
+                      />
+                    </div>
                     <div>
                       <Label htmlFor="firstName" className="text-xs">
                         First name
@@ -415,6 +525,17 @@ export function NewContactDialog({
                       />
                     </div>
                     <div>
+                      <Label htmlFor="middleName" className="text-xs">
+                        Middle name
+                      </Label>
+                      <Input
+                        id="middleName"
+                        value={form.middleName}
+                        onChange={(e) => setForm({ ...form, middleName: e.target.value })}
+                        className="mt-1.5"
+                      />
+                    </div>
+                    <div>
                       <Label htmlFor="lastName" className="text-xs">
                         Last name
                       </Label>
@@ -425,6 +546,72 @@ export function NewContactDialog({
                         className="mt-1.5"
                       />
                     </div>
+                    <div>
+                      <Label htmlFor="nameSuffix" className="text-xs">
+                        Suffix
+                      </Label>
+                      <Input
+                        id="nameSuffix"
+                        value={form.nameSuffix}
+                        onChange={(e) => setForm({ ...form, nameSuffix: e.target.value })}
+                        className="mt-1.5"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="nickname" className="text-xs">
+                        Nickname
+                      </Label>
+                      <Input
+                        id="nickname"
+                        value={form.nickname}
+                        onChange={(e) => setForm({ ...form, nickname: e.target.value })}
+                        className="mt-1.5"
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <Label htmlFor="fileAs" className="text-xs">
+                        File as
+                      </Label>
+                      <Input
+                        id="fileAs"
+                        value={form.fileAs}
+                        onChange={(e) => setForm({ ...form, fileAs: e.target.value })}
+                        className="mt-1.5"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="phoneticFirstName" className="text-xs">
+                        Phonetic first
+                      </Label>
+                      <Input
+                        id="phoneticFirstName"
+                        value={form.phoneticFirstName}
+                        onChange={(e) => setForm({ ...form, phoneticFirstName: e.target.value })}
+                        className="mt-1.5"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="phoneticMiddleName" className="text-xs">
+                        Phonetic middle
+                      </Label>
+                      <Input
+                        id="phoneticMiddleName"
+                        value={form.phoneticMiddleName}
+                        onChange={(e) => setForm({ ...form, phoneticMiddleName: e.target.value })}
+                        className="mt-1.5"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="phoneticLastName" className="text-xs">
+                        Phonetic last
+                      </Label>
+                      <Input
+                        id="phoneticLastName"
+                        value={form.phoneticLastName}
+                        onChange={(e) => setForm({ ...form, phoneticLastName: e.target.value })}
+                        className="mt-1.5"
+                      />
+                    </div>
                   </div>
                 </section>
 
@@ -432,7 +619,7 @@ export function NewContactDialog({
                   <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
                     Contact information
                   </h3>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                       <Label htmlFor="phone" className="text-xs">
                         Phone 1 (primary)
@@ -492,7 +679,7 @@ export function NewContactDialog({
                     </div>
                     <div>
                       <Label htmlFor="title" className="text-xs">
-                        Title
+                        Job title
                       </Label>
                       <Input
                         id="title"
@@ -501,7 +688,18 @@ export function NewContactDialog({
                         className="mt-1.5"
                       />
                     </div>
-                    <div className="col-span-2">
+                    <div>
+                      <Label htmlFor="department" className="text-xs">
+                        Department
+                      </Label>
+                      <Input
+                        id="department"
+                        value={form.department}
+                        onChange={(e) => setForm({ ...form, department: e.target.value })}
+                        className="mt-1.5"
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
                       <Label htmlFor="website" className="text-xs">
                         Website
                       </Label>
@@ -521,7 +719,10 @@ export function NewContactDialog({
             {/* Address Section */}
             <Collapsible>
               <CollapsibleTrigger className="flex items-center justify-between w-full p-3 hover:bg-secondary/50 rounded-lg transition-colors">
-                <h3 className="text-sm font-semibold text-foreground">Address</h3>
+                <span className="flex items-center gap-3 text-sm font-semibold text-foreground">
+                  <MapPin className="w-4 h-4 text-muted-foreground" />
+                  Address
+                </span>
                 <ChevronDown className="w-4 h-4 text-muted-foreground" />
               </CollapsibleTrigger>
               <CollapsibleContent className="pt-3 pb-4 px-3">
@@ -586,10 +787,85 @@ export function NewContactDialog({
               </CollapsibleContent>
             </Collapsible>
 
+            {/* Dates Section */}
+            <Collapsible defaultOpen>
+              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 hover:bg-secondary/50 rounded-lg transition-colors">
+                <span className="flex items-center gap-3 text-sm font-semibold text-foreground">
+                  <CalendarDays className="w-4 h-4 text-muted-foreground" />
+                  Dates & relationships
+                </span>
+                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pt-3 pb-4 px-3">
+                <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <Label htmlFor="birthday" className="text-xs">
+                      Birthday
+                    </Label>
+                    <Input
+                      id="birthday"
+                      type="date"
+                      value={form.birthday}
+                      onChange={(e) => setForm({ ...form, birthday: e.target.value })}
+                      className="mt-1.5"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="significantDate" className="text-xs">
+                      Significant date
+                    </Label>
+                    <Input
+                      id="significantDate"
+                      type="date"
+                      value={form.significantDate}
+                      onChange={(e) => setForm({ ...form, significantDate: e.target.value })}
+                      className="mt-1.5"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="significantDateLabel" className="text-xs">
+                      Date label
+                    </Label>
+                    <Input
+                      id="significantDateLabel"
+                      value={form.significantDateLabel}
+                      onChange={(e) => setForm({ ...form, significantDateLabel: e.target.value })}
+                      className="mt-1.5"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="relatedPerson" className="text-xs">
+                      Related person
+                    </Label>
+                    <Input
+                      id="relatedPerson"
+                      value={form.relatedPerson}
+                      onChange={(e) => setForm({ ...form, relatedPerson: e.target.value })}
+                      className="mt-1.5"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="relationLabel" className="text-xs">
+                      Relationship
+                    </Label>
+                    <Input
+                      id="relationLabel"
+                      value={form.relationLabel}
+                      onChange={(e) => setForm({ ...form, relationLabel: e.target.value })}
+                      className="mt-1.5"
+                    />
+                  </div>
+                </section>
+              </CollapsibleContent>
+            </Collapsible>
+
             {/* Notes Section */}
             <Collapsible>
               <CollapsibleTrigger className="flex items-center justify-between w-full p-3 hover:bg-secondary/50 rounded-lg transition-colors">
-                <h3 className="text-sm font-semibold text-foreground">Notes</h3>
+                <span className="flex items-center gap-3 text-sm font-semibold text-foreground">
+                  <NotebookText className="w-4 h-4 text-muted-foreground" />
+                  Notes
+                </span>
                 <ChevronDown className="w-4 h-4 text-muted-foreground" />
               </CollapsibleTrigger>
               <CollapsibleContent className="pt-3 pb-4 px-3">
@@ -607,7 +883,10 @@ export function NewContactDialog({
             {/* Groups Section */}
             <Collapsible>
               <CollapsibleTrigger className="flex items-center justify-between w-full p-3 hover:bg-secondary/50 rounded-lg transition-colors">
-                <h3 className="text-sm font-semibold text-foreground">Groups & Custom Fields</h3>
+                <span className="flex items-center gap-3 text-sm font-semibold text-foreground">
+                  <Tag className="w-4 h-4 text-muted-foreground" />
+                  Groups & custom fields
+                </span>
                 <ChevronDown className="w-4 h-4 text-muted-foreground" />
               </CollapsibleTrigger>
               <CollapsibleContent className="pt-3 pb-4 px-3 space-y-4">
@@ -684,7 +963,10 @@ export function NewContactDialog({
             {eventOccurrences && eventOccurrences.length > 0 && (
               <Collapsible>
                 <CollapsibleTrigger className="flex items-center justify-between w-full p-3 hover:bg-secondary/50 rounded-lg transition-colors">
-                  <h3 className="text-sm font-semibold text-foreground">Participation & Events {participationDrafts.length > 0 && `(${participationDrafts.length})`}</h3>
+                  <span className="flex items-center gap-3 text-sm font-semibold text-foreground">
+                    <Users className="w-4 h-4 text-muted-foreground" />
+                    Participation & events {participationDrafts.length > 0 && `(${participationDrafts.length})`}
+                  </span>
                   <ChevronDown className="w-4 h-4 text-muted-foreground" />
                 </CollapsibleTrigger>
                 <CollapsibleContent className="pt-3 pb-4 px-3 space-y-4">

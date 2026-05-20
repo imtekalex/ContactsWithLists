@@ -75,6 +75,7 @@ import {
   type UpdateEventOccurrenceInput,
 } from "@/components/events-view"
 import { PaymentsView } from "@/components/payments-view"
+import { ContactAvatar } from "@/components/contact-avatar"
 
 type View = "contacts" | "lists" | "events" | "payments" | "trash" | "analytics" | "settings"
 
@@ -1276,7 +1277,7 @@ export default function Home() {
                               onClick={() => setSelectedId(c.id)}
                               className="flex-1 flex items-start gap-3 min-w-0 text-left"
                             >
-                              <Avatar firstName={c.firstName} lastName={c.lastName} />
+                              <ContactAvatar firstName={c.firstName} lastName={c.lastName} photoUrl={c.photoUrl} />
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-1.5">
                                   <p className="text-sm font-semibold truncate">
@@ -1302,8 +1303,9 @@ export default function Home() {
               {selected ? (
                 <ContactDetail
                   contact={selected}
-                  groups={groups.filter((g) => selected.groupIds.includes(g.id))}
+                  groups={groups}
                   groupColorClasses={groupColorClasses}
+                  tagSuggestions={Array.from(new Set(contacts.flatMap((contact) => contact.tags))).sort((a, b) => a.localeCompare(b))}
                   customFields={customFields}
                   eventSeries={eventSeries}
                   eventOccurrences={eventOccurrences}
@@ -1542,27 +1544,6 @@ function NavItem({
   )
 }
 
-function Avatar({ firstName, lastName }: { firstName: string; lastName: string }) {
-  const initials = `${firstName[0] ?? ""}${lastName[0] ?? ""}`.toUpperCase()
-  // pick stable color from name hash
-  const palette = [
-    "bg-blue-100 text-blue-700",
-    "bg-emerald-100 text-emerald-700",
-    "bg-violet-100 text-violet-700",
-    "bg-amber-100 text-amber-700",
-    "bg-rose-100 text-rose-700",
-    "bg-cyan-100 text-cyan-700",
-  ]
-  let hash = 0
-  for (const ch of firstName + lastName) hash = (hash * 31 + ch.charCodeAt(0)) | 0
-  const color = palette[Math.abs(hash) % palette.length]
-  return (
-    <div className={cn("w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0", color)}>
-      {initials}
-    </div>
-  )
-}
-
 function EmptyState({
   icon: Icon,
   title,
@@ -1613,7 +1594,7 @@ function TrashView({
           <div className="space-y-2">
             {deleted.map((c) => (
               <Card key={c.id} className="p-4 flex items-center gap-4">
-                <Avatar firstName={c.firstName} lastName={c.lastName} />
+                <ContactAvatar firstName={c.firstName} lastName={c.lastName} photoUrl={c.photoUrl} />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold truncate">
                     {c.firstName} {c.lastName}
@@ -1730,38 +1711,60 @@ function SettingsView({
 }) {
   function exportCSV() {
     const headers = [
+      "Prefix",
       "First Name",
+      "Middle Name",
       "Last Name",
+      "Suffix",
+      "Nickname",
+      "File As",
       "Email 1",
       "Email 2",
       "Phone 1",
       "Phone 2",
       "Company",
-      "Title",
+      "Job Title",
+      "Department",
       "Address Line 1",
       "Address Line 2",
       "City",
       "ZIP",
       "Country",
       "Website",
+      "Birthday",
+      "Significant Date",
+      "Significant Date Label",
+      "Related Person",
+      "Relationship",
       "Notes",
     ]
     const rows = contacts.map((c) =>
       [
+        c.namePrefix ?? "",
         c.firstName,
+        c.middleName ?? "",
         c.lastName,
+        c.nameSuffix ?? "",
+        c.nickname ?? "",
+        c.fileAs ?? "",
         c.email,
         c.email2 ?? "",
         c.phone,
         c.phone2 ?? "",
         c.company,
         c.title,
+        c.department ?? "",
         c.addressLine1 ?? "",
         c.addressLine2 ?? "",
         c.city,
         c.zip ?? "",
         c.country,
         c.website,
+        c.birthday ?? "",
+        c.significantDate ?? "",
+        c.significantDateLabel ?? "",
+        c.relatedPerson ?? "",
+        c.relationLabel ?? "",
         c.notes,
       ]
         .map((v) => `"${(v ?? "").toString().replace(/"/g, '""')}"`)

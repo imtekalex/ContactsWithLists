@@ -42,10 +42,16 @@ import {
 import type { PrintPreferences } from "@/lib/contacts-store"
 
 type FieldKey =
+  | "namePrefix"
   | "firstName"
+  | "middleName"
   | "lastName"
+  | "nameSuffix"
+  | "nickname"
+  | "fileAs"
   | "company"
   | "title"
+  | "department"
   | "email"
   | "email2"
   | "phone"
@@ -56,6 +62,11 @@ type FieldKey =
   | "zip"
   | "country"
   | "website"
+  | "birthday"
+  | "significantDate"
+  | "significantDateLabel"
+  | "relatedPerson"
+  | "relationLabel"
   | "notes"
   | "groups"
   | `cf:${string}`
@@ -72,10 +83,16 @@ interface PrintDialogProps {
 }
 
 const CORE_FIELDS: { key: FieldKey; label: string }[] = [
+  { key: "namePrefix", label: "Prefix" },
   { key: "firstName", label: "First name" },
+  { key: "middleName", label: "Middle name" },
   { key: "lastName", label: "Last name" },
+  { key: "nameSuffix", label: "Suffix" },
+  { key: "nickname", label: "Nickname" },
+  { key: "fileAs", label: "File as" },
   { key: "company", label: "Company" },
-  { key: "title", label: "Title" },
+  { key: "title", label: "Job title" },
+  { key: "department", label: "Department" },
   { key: "email", label: "Email 1" },
   { key: "email2", label: "Email 2" },
   { key: "phone", label: "Phone 1" },
@@ -86,6 +103,11 @@ const CORE_FIELDS: { key: FieldKey; label: string }[] = [
   { key: "zip", label: "ZIP" },
   { key: "country", label: "Country" },
   { key: "website", label: "Website" },
+  { key: "birthday", label: "Birthday" },
+  { key: "significantDate", label: "Significant date" },
+  { key: "significantDateLabel", label: "Significant date label" },
+  { key: "relatedPerson", label: "Related person" },
+  { key: "relationLabel", label: "Relationship" },
   { key: "groups", label: "Groups" },
   { key: "notes", label: "Notes" },
 ]
@@ -374,6 +396,11 @@ export function PrintDialog({
     if (key === "groups") {
       return c.groupIds.map((id) => groupById[id]?.name).filter(Boolean).join(", ")
     }
+    if (key === "email") return (c.emails ?? []).map((item) => `${item.label}: ${item.value}`).join(", ") || c.email
+    if (key === "phone") return (c.phones ?? []).map((item) => `${item.label}: ${item.value}`).join(", ") || c.phone
+    if (key === "addressLine1") return getAddressLines(c).join(", ")
+    if (key === "significantDate") return (c.significantDates ?? []).map(formatContactDate).join(", ")
+    if (key === "relatedPerson") return (c.relatedPeople ?? []).map((item) => `${item.label}: ${item.name}`).join(", ")
     return (c[key as keyof Contact] as string) ?? ""
   }
 
@@ -382,11 +409,12 @@ export function PrintDialog({
     const name = [c.firstName, c.lastName].filter(Boolean).join(" ")
     if (name) lines.push(name)
     if (c.company) lines.push(c.company)
-    if (c.addressLine1) lines.push(c.addressLine1)
-    if (c.addressLine2) lines.push(c.addressLine2)
-    const cityZip = [c.city, c.zip].filter(Boolean).join(" ")
+    const address = c.addresses?.[0]
+    if (address?.addressLine1 || c.addressLine1) lines.push(address?.addressLine1 ?? c.addressLine1 ?? "")
+    if (address?.addressLine2 || c.addressLine2) lines.push(address?.addressLine2 ?? c.addressLine2 ?? "")
+    const cityZip = [address?.city ?? c.city, address?.zip ?? c.zip].filter(Boolean).join(" ")
     if (cityZip) lines.push(cityZip)
-    if (c.country) lines.push(c.country)
+    if (address?.country || c.country) lines.push(address?.country ?? c.country)
     return lines
   }
 
@@ -408,16 +436,17 @@ export function PrintDialog({
     const name = [c.firstName, c.lastName].filter(Boolean).join(" ")
     if (name) lines.push(name)
     if (c.company) lines.push(c.company)
-    if (c.addressLine1) lines.push(c.addressLine1)
-    if (c.addressLine2) lines.push(c.addressLine2)
+    const address = c.addresses?.[0]
+    if (address?.addressLine1 || c.addressLine1) lines.push(address?.addressLine1 ?? c.addressLine1 ?? "")
+    if (address?.addressLine2 || c.addressLine2) lines.push(address?.addressLine2 ?? c.addressLine2 ?? "")
     if (addressLayout === "european") {
-      const cityZip = [c.city, c.zip].filter(Boolean).join(" ")
+      const cityZip = [address?.city ?? c.city, address?.zip ?? c.zip].filter(Boolean).join(" ")
       if (cityZip) lines.push(cityZip)
-      if (c.country) lines.push(c.country)
+      if (address?.country || c.country) lines.push(address?.country ?? c.country)
     } else {
-      const cityZip = [c.city, c.zip].filter(Boolean).join(", ")
+      const cityZip = [address?.city ?? c.city, address?.zip ?? c.zip].filter(Boolean).join(", ")
       if (cityZip) lines.push(cityZip)
-      if (c.country) lines.push(c.country)
+      if (address?.country || c.country) lines.push(address?.country ?? c.country)
     }
     return lines
   }
@@ -429,6 +458,11 @@ export function PrintDialog({
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#39;")
+  }
+
+  function formatContactDate(value: NonNullable<Contact["significantDates"]>[number]) {
+    const date = [value.month, value.day, value.year].filter(Boolean).join("/")
+    return [value.label, date].filter(Boolean).join(": ")
   }
 
   // Build printable HTML — relies on browser CSS page-breaks for pagination

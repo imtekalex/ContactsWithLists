@@ -76,7 +76,10 @@ export function getParticipationLabel(
 
 export function getContactName(contact: Contact | undefined) {
   if (!contact) return "Unknown contact"
-  return `${contact.firstName} ${contact.lastName}`.trim() || "Unnamed contact"
+  return [contact.namePrefix, contact.firstName, contact.middleName, contact.lastName, contact.nameSuffix]
+    .filter(Boolean)
+    .join(" ")
+    .trim() || contact.nickname || "Unnamed contact"
 }
 
 export function formatMoney(amount: number, currency: CurrencyCode) {

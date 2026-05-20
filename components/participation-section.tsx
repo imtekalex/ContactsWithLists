@@ -1,11 +1,12 @@
 "use client"
 
 import { useMemo, useRef, useState } from "react"
-import { CalendarDays, Check, CreditCard, Pencil, Plus, Trash2, X } from "lucide-react"
+import { CalendarDays, Check, ChevronDown, CreditCard, Pencil, Plus, Trash2, X } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -269,40 +270,71 @@ export function ParticipationSection({
   const summaryEntries = Object.entries(balanceSummary)
   const paymentGridClass =
     "grid min-w-[46rem] grid-cols-[7rem_minmax(8rem,1fr)_minmax(10rem,1.2fr)_8rem_5rem] gap-3"
+  const outstandingLabel =
+    summaryEntries.length > 0
+      ? summaryEntries.map(([currency, summary]) => formatMoney(summary.remaining, currency)).join(" / ")
+      : "0"
 
   return (
-    <section className="space-y-3">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Participation & payments
-          </h3>
-          <p className="text-xs text-muted-foreground mt-1">
-            Event history, payment records, and unsettled balances for this contact.
-          </p>
-        </div>
-        {canEdit && (
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={eventOptions.length === 0}
-            onClick={() => {
-              setShowParticipationForm((value) => !value)
-              setFormMessage(null)
-            }}
-            className="gap-1.5"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Add participation
-          </Button>
-        )}
-      </div>
+    <Card className="overflow-hidden rounded-lg border-border bg-card p-0 shadow-sm lg:col-span-2">
+      <Collapsible defaultOpen={contactParticipations.length > 0}>
+        <CollapsibleTrigger className="flex w-full items-center justify-between gap-3 rounded-lg px-4 py-3 text-left transition-colors hover:bg-secondary/40 [&[data-state=open]_.payments-chevron]:rotate-180">
+          <span className="flex items-center gap-3">
+            <span className="flex h-8 w-8 items-center justify-center rounded-md bg-secondary">
+              <CreditCard className="h-4 w-4 text-muted-foreground" />
+            </span>
+            <span>
+              <span className="block text-sm font-semibold">Participation & payments</span>
+              <span className="block text-xs text-muted-foreground">
+                {contactParticipations.length} participation{contactParticipations.length === 1 ? "" : "s"}
+              </span>
+            </span>
+          </span>
+          <span className="flex items-center gap-3">
+            <span className="text-right">
+              <span className="block text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                Outstanding
+              </span>
+              <span
+                className={cn(
+                  "block text-sm font-semibold tabular-nums",
+                  summaryEntries.some(([, summary]) => summary.remaining > 0) && "text-red-800",
+                  summaryEntries.every(([, summary]) => summary.remaining <= 0) &&
+                    summaryEntries.some(([, summary]) => summary.remaining < 0) &&
+                    "text-emerald-700",
+                )}
+              >
+                {outstandingLabel}
+              </span>
+            </span>
+            <ChevronDown className="payments-chevron h-4 w-4 text-muted-foreground transition-transform" />
+          </span>
+        </CollapsibleTrigger>
+
+        <CollapsibleContent className="space-y-4 px-4 pb-4 pt-1">
+          <div className="flex justify-end">
+            {canEdit && (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={eventOptions.length === 0}
+                onClick={() => {
+                  setShowParticipationForm((value) => !value)
+                  setFormMessage(null)
+                }}
+                className="gap-1.5"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Add participation
+              </Button>
+            )}
+          </div>
 
       {canEdit && showParticipationForm && (
-        <Card className="p-4 space-y-3">
+        <Card className="space-y-3 rounded-lg border-border bg-slate-50/70 p-4 shadow-none">
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
-              <Label className="text-xs">Event</Label>
+              <Label className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Event</Label>
               <select
                 value={participationDraft.occurrenceId}
                 onChange={(event) => {
@@ -319,7 +351,7 @@ export function ParticipationSection({
                   })
                   setFormMessage(null)
                 }}
-                className="mt-1.5 h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                className="mt-0.5 h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
               >
                 <option value="">Select event</option>
                 {eventOptions.map((option) => (
@@ -330,25 +362,25 @@ export function ParticipationSection({
               </select>
             </div>
             <div>
-              <Label className="text-xs">Amount owed</Label>
+              <Label className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Amount owed</Label>
               <Input
                 type="number"
                 min="0"
                 step="0.01"
                 value={participationDraft.amountOwed}
                 onChange={(event) => setParticipationDraft({ ...participationDraft, amountOwed: event.target.value })}
-                className="mt-1.5"
+                className="mt-0.5"
               />
             </div>
           </div>
           {selectedEventOption?.series?.description && (
             <p className="text-xs text-muted-foreground">{selectedEventOption.series.description}</p>
           )}
-          <div className="rounded-md border border-border p-3 space-y-3">
+          <div className="rounded-md border border-border bg-card p-3 space-y-3">
             <p className="text-xs font-medium text-muted-foreground">Optional down payment</p>
             <div className="grid grid-cols-4 gap-2">
               <div>
-                <Label className="text-xs">Amount</Label>
+                <Label className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Amount</Label>
                 <Input
                   type="number"
                   min="0"
@@ -357,48 +389,48 @@ export function ParticipationSection({
                   onChange={(event) =>
                     setParticipationDraft({ ...participationDraft, downPaymentAmount: event.target.value })
                   }
-                  className="mt-1.5"
+                  className="mt-0.5"
                 />
               </div>
               <div>
-                <Label className="text-xs">Date</Label>
+                <Label className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Date</Label>
                 <Input
                   type="date"
                   value={participationDraft.downPaymentDate}
                   onChange={(event) =>
                     setParticipationDraft({ ...participationDraft, downPaymentDate: event.target.value })
                   }
-                  className="mt-1.5"
+                  className="mt-0.5"
                 />
               </div>
               <div>
-                <Label className="text-xs">Label</Label>
+                <Label className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Label</Label>
                 <Input
                   value={participationDraft.downPaymentLabel}
                   onChange={(event) =>
                     setParticipationDraft({ ...participationDraft, downPaymentLabel: event.target.value })
                   }
-                  className="mt-1.5"
+                  className="mt-0.5"
                 />
               </div>
               <div>
-                <Label className="text-xs">Note</Label>
+                <Label className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Note</Label>
                 <Input
                   value={participationDraft.downPaymentNote}
                   onChange={(event) =>
                     setParticipationDraft({ ...participationDraft, downPaymentNote: event.target.value })
                   }
-                  className="mt-1.5"
+                  className="mt-0.5"
                 />
               </div>
             </div>
           </div>
           <div>
-            <Label className="text-xs">Participation notes</Label>
+            <Label className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Participation notes</Label>
             <Textarea
               value={participationDraft.notes}
               onChange={(event) => setParticipationDraft({ ...participationDraft, notes: event.target.value })}
-              className="mt-1.5 min-h-16"
+              className="mt-0.5 min-h-16"
             />
           </div>
           {formMessage && <p className="text-sm text-destructive">{formMessage}</p>}
@@ -421,7 +453,7 @@ export function ParticipationSection({
       )}
 
       {contactParticipations.length > 0 && (
-        <Card className="p-4">
+        <Card className="rounded-lg border-border bg-slate-50/70 p-4 shadow-none">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-xs text-muted-foreground">Total outstanding</p>
@@ -431,7 +463,7 @@ export function ParticipationSection({
                     key={currency}
                     className={cn(
                       "text-xl font-semibold tabular-nums",
-                      summary.remaining > 0 && "text-amber-700",
+                      summary.remaining > 0 && "text-red-800",
                       summary.remaining < 0 && "text-emerald-700",
                     )}
                   >
@@ -479,7 +511,7 @@ export function ParticipationSection({
               >
                 <Card
                   className={cn(
-                    "p-4 space-y-3 transition-shadow",
+                    "rounded-lg border-border p-4 space-y-3 shadow-sm transition-shadow",
                     highlightedParticipationId === participation.id && "ring-2 ring-primary ring-offset-2",
                   )}
                 >
@@ -497,7 +529,7 @@ export function ParticipationSection({
                           variant={balance.status === "paid" ? "secondary" : "outline"}
                           className={cn(
                             "capitalize",
-                            balance.remaining > 0 && "border-amber-300 bg-amber-50 text-amber-800",
+                            balance.remaining > 0 && "border-red-200 bg-red-50 text-red-800",
                             balance.remaining < 0 && "border-emerald-300 bg-emerald-50 text-emerald-800",
                           )}
                         >
@@ -513,7 +545,7 @@ export function ParticipationSection({
                         <span className="text-muted-foreground">Owes </span>
                         <span
                           className={cn(
-                            balance.remaining > 0 && "font-semibold text-amber-700",
+                            balance.remaining > 0 && "font-semibold text-red-800",
                             balance.remaining === 0 && "text-muted-foreground",
                             balance.remaining < 0 && "font-semibold text-emerald-700",
                           )}
@@ -537,7 +569,8 @@ export function ParticipationSection({
                     </div>
                   </div>
 
-                  <div className="rounded-md border border-border overflow-x-auto text-sm">
+                  <div className="overflow-hidden rounded-md border border-border bg-card text-sm">
+                    <div className="overflow-x-auto">
                     <div className={cn(paymentGridClass, "px-3 py-2 bg-secondary/50 text-xs font-medium text-muted-foreground")}>
                       <span>Date</span>
                       <span>Label</span>
@@ -770,13 +803,14 @@ export function ParticipationSection({
                       <span
                         className={cn(
                           "font-semibold tabular-nums text-right",
-                          balance.remaining > 0 && "text-amber-700",
+                          balance.remaining > 0 && "text-red-800",
                           balance.remaining < 0 && "text-emerald-700",
                         )}
                       >
                         {formatMoney(balance.remaining, participation.currency)}
                       </span>
                       <span />
+                    </div>
                     </div>
                   </div>
                 </Card>
@@ -785,6 +819,8 @@ export function ParticipationSection({
           })}
         </div>
       )}
-    </section>
+        </CollapsibleContent>
+      </Collapsible>
+    </Card>
   )
 }

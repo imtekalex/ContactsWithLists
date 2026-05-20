@@ -1,17 +1,29 @@
 export type Contact = {
   id: string
+  photoUrl?: string
+  namePrefix?: string
   firstName: string
+  middleName?: string
   lastName: string
+  nameSuffix?: string
+  phoneticFirstName?: string
+  phoneticMiddleName?: string
+  phoneticLastName?: string
+  nickname?: string
+  fileAs?: string
   /** Primary email ("Email 1") */
   email: string
   /** Optional secondary email ("Email 2") */
   email2?: string
+  emails?: ContactLabeledValue[]
   /** Primary phone ("Phone 1") */
   phone: string
   /** Optional secondary phone ("Phone 2") */
   phone2?: string
+  phones?: ContactLabeledValue[]
   company: string
   title: string
+  department?: string
   /** Optional first line of street address */
   addressLine1?: string
   /** Optional second line of street address (apt, suite, etc.) */
@@ -20,7 +32,15 @@ export type Contact = {
   /** Optional ZIP / postal code */
   zip?: string
   country: string
+  addresses?: ContactAddress[]
   website: string
+  birthday?: string
+  significantDate?: string
+  significantDateLabel?: string
+  significantDates?: ContactDate[]
+  relatedPerson?: string
+  relationLabel?: string
+  relatedPeople?: ContactRelatedPerson[]
   notes: string
   starred: boolean
   tags: string[]
@@ -29,6 +49,36 @@ export type Contact = {
   customValues: Record<string, CustomFieldValue>
   createdAt: number
   updatedAt: number
+}
+
+export type ContactLabeledValue = {
+  id: string
+  label: string
+  value: string
+}
+
+export type ContactAddress = {
+  id: string
+  label: string
+  addressLine1?: string
+  addressLine2?: string
+  city?: string
+  zip?: string
+  country?: string
+}
+
+export type ContactDate = {
+  id: string
+  label: string
+  month: string
+  day: string
+  year?: string
+}
+
+export type ContactRelatedPerson = {
+  id: string
+  label: string
+  name: string
 }
 
 export type CurrencyCode = "EUR" | "USD" | "GBP" | "CHF" | string
@@ -215,6 +265,7 @@ export const initialContacts: Contact[] = [
     phone2: "+1 (555) 123-4568",
     company: "Acme Corp",
     title: "Product Manager",
+    birthday: "1985-04-12",
     addressLine1: "375 Mission Street",
     addressLine2: "Suite 4200",
     city: "San Francisco",
@@ -229,7 +280,6 @@ export const initialContacts: Contact[] = [
       cf_status: { type: "dropdown", value: "opt_active" },
       cf_source: { type: "dropdown", value: "opt_event" },
       cf_interests: { type: "multiSelect", value: ["opt_design", "opt_tech"] },
-      cf_birthday: { type: "date", value: "1985-04-12" },
       cf_member: { type: "text", value: "ACM-00231" },
       cf_vip: { type: "boolean", value: true },
       cf_budget: { type: "number", value: 250000 },
@@ -539,6 +589,7 @@ export const initialContacts: Contact[] = [
     phone: "+49 170 555 0199",
     company: "Independent",
     title: "Gong Specialist",
+    nickname: "Main",
     city: "Berlin",
     country: "Germany",
     website: "https://example.com/website-a",
@@ -548,7 +599,6 @@ export const initialContacts: Contact[] = [
     tags: ["Former Adv. Grp.", "M0 - VOLT x 2+", "SQ"],
     groupIds: ["g1"],
     customValues: {
-      cf_nickname: { type: "text", value: "Main" },
       cf_keywords: { type: "text", value: "-Former Adv. Grp." },
       cf_category: { type: "text", value: "M0 - VOLT x 2+" },
       cf_contact_status: { type: "longText", value: "Offers to assist in SQ. (on list)" },
@@ -711,14 +761,6 @@ export const initialCustomFields: CustomField[] = [
     ],
   },
   {
-    id: "cf_birthday",
-    name: "Birthday",
-    slug: "birthday",
-    type: "date",
-    isGlobal: true,
-    groupIds: [],
-  },
-  {
     id: "cf_member",
     name: "Member Number",
     slug: "member_number",
@@ -758,14 +800,6 @@ export const initialCustomFields: CustomField[] = [
       { id: "opt_stage_b", label: "Series B" },
       { id: "opt_stage_c", label: "Series C+" },
     ],
-  },
-  {
-    id: "cf_nickname",
-    name: "Nickname",
-    slug: "nickname",
-    type: "text",
-    isGlobal: true,
-    groupIds: [],
   },
   {
     id: "cf_keywords",
@@ -1254,7 +1288,18 @@ export function resolveListMembers(
     }
     if (f.search) {
       const q = f.search.toLowerCase()
-      const hay = `${c.firstName} ${c.lastName} ${c.email} ${c.company} ${c.title}`.toLowerCase()
+      const hay = [
+        c.firstName,
+        c.middleName,
+        c.lastName,
+        c.nickname,
+        c.email,
+        c.email2,
+        ...(c.emails ?? []).flatMap((item) => [item.label, item.value]),
+        c.company,
+        c.title,
+        c.department,
+      ].filter(Boolean).join(" ").toLowerCase()
       if (!hay.includes(q)) return false
     }
     if (f.customField) {
@@ -1280,10 +1325,19 @@ export function resolveListMembers(
 
 /** Standard contact fields that can be searched / filtered against. */
 export const STANDARD_SEARCHABLE_FIELDS: { key: keyof Contact; label: string }[] = [
+  { key: "namePrefix", label: "Prefix" },
   { key: "firstName", label: "First name" },
+  { key: "middleName", label: "Middle name" },
   { key: "lastName", label: "Last name" },
+  { key: "nameSuffix", label: "Suffix" },
+  { key: "nickname", label: "Nickname" },
+  { key: "fileAs", label: "File as" },
+  { key: "phoneticFirstName", label: "Phonetic first" },
+  { key: "phoneticMiddleName", label: "Phonetic middle" },
+  { key: "phoneticLastName", label: "Phonetic last" },
   { key: "company", label: "Company" },
   { key: "title", label: "Title" },
+  { key: "department", label: "Department" },
   { key: "email", label: "Email 1" },
   { key: "email2", label: "Email 2" },
   { key: "phone", label: "Phone 1" },
@@ -1294,6 +1348,11 @@ export const STANDARD_SEARCHABLE_FIELDS: { key: keyof Contact; label: string }[]
   { key: "zip", label: "ZIP / Postal code" },
   { key: "country", label: "Country" },
   { key: "website", label: "Website" },
+  { key: "birthday", label: "Birthday" },
+  { key: "significantDate", label: "Significant date" },
+  { key: "significantDateLabel", label: "Significant date label" },
+  { key: "relatedPerson", label: "Related person" },
+  { key: "relationLabel", label: "Relationship" },
   { key: "notes", label: "Notes" },
 ]
 
@@ -1313,6 +1372,21 @@ export function getContactFieldText(
     return formatCustomValue(contact.customValues[id], field)
   }
   if (fieldKey === "tags") return contact.tags.join(" ")
+  if (fieldKey === "email") return (contact.emails ?? []).map((item) => `${item.label} ${item.value}`).join(" ") || contact.email
+  if (fieldKey === "phone") return (contact.phones ?? []).map((item) => `${item.label} ${item.value}`).join(" ") || contact.phone
+  if (fieldKey === "addressLine1") {
+    return (
+      (contact.addresses ?? [])
+        .map((item) => [item.label, item.addressLine1, item.addressLine2, item.city, item.zip, item.country].filter(Boolean).join(" "))
+        .join(" ") || contact.addressLine1 || ""
+    )
+  }
+  if (fieldKey === "significantDate") {
+    return (contact.significantDates ?? []).map((item) => `${item.label} ${item.month} ${item.day} ${item.year ?? ""}`).join(" ")
+  }
+  if (fieldKey === "relatedPerson") {
+    return (contact.relatedPeople ?? []).map((item) => `${item.label} ${item.name}`).join(" ")
+  }
   const v = (contact as unknown as Record<string, unknown>)[fieldKey]
   return typeof v === "string" ? v : ""
 }
