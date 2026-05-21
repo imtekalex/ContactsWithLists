@@ -398,6 +398,7 @@ export function PrintDialog({
     }
     if (key === "email") return (c.emails ?? []).map((item) => `${item.label}: ${item.value}`).join(", ") || c.email
     if (key === "phone") return (c.phones ?? []).map((item) => `${item.label}: ${item.value}`).join(", ") || c.phone
+    if (key === "website") return (c.websites ?? []).map((item) => `${item.label}: ${item.value}`).join(", ") || c.website
     if (key === "addressLine1") return getAddressLines(c).join(", ")
     if (key === "significantDate") return (c.significantDates ?? []).map(formatContactDate).join(", ")
     if (key === "relatedPerson") return (c.relatedPeople ?? []).map((item) => `${item.label}: ${item.name}`).join(", ")

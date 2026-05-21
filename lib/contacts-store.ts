@@ -90,6 +90,9 @@ function normalizeContact(contact: Contact): Contact {
     { id: "phone_primary", label: "Mobile", value: contact.phone },
     { id: "phone_secondary", label: "Work", value: contact.phone2 ?? "" },
   ])
+  const websites = normalizeLabeledValues(contact.websites, [
+    { id: "website_primary", label: "Website", value: contact.website },
+  ])
   const addresses =
     contact.addresses && contact.addresses.length > 0
       ? contact.addresses.filter(hasAddressValue)
@@ -145,6 +148,8 @@ function normalizeContact(contact: Contact): Contact {
     phones,
     phone: phones[0]?.value ?? "",
     phone2: phones[1]?.value || undefined,
+    websites,
+    website: websites[0]?.value ?? "",
     addresses,
     addressLine1: primaryAddress?.addressLine1,
     addressLine2: primaryAddress?.addressLine2,
@@ -162,7 +167,7 @@ function normalizeContact(contact: Contact): Contact {
 }
 
 function normalizeLabeledValues(
-  existing: Contact["emails"] | Contact["phones"] | undefined,
+  existing: Contact["emails"] | Contact["phones"] | Contact["websites"] | undefined,
   fallback: NonNullable<Contact["emails"]>,
 ) {
   const source = existing && existing.length > 0 ? existing : fallback

@@ -526,7 +526,7 @@ function Metric({ label, value, tone }: { label: string; value: string; tone?: "
   return (
     <div>
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className={cn("font-semibold tabular-nums mt-0.5", tone === "due" && "text-amber-700", tone === "credit" && "text-emerald-700")}>{value}</p>
+      <p className={cn("font-semibold tabular-nums mt-0.5", tone === "due" && "text-red-800", tone === "credit" && "text-emerald-700")}>{value}</p>
     </div>
   )
 }
@@ -579,7 +579,7 @@ function ParticipationPaymentBlock({
               variant={balance.status === "paid" ? "secondary" : "outline"}
               className={cn(
                 "capitalize",
-                balance.remaining > 0 && "border-amber-300 bg-amber-50 text-amber-800",
+                balance.remaining > 0 && "border-red-200 bg-red-50 text-red-800",
                 balance.remaining < 0 && "border-emerald-300 bg-emerald-50 text-emerald-800",
               )}
             >

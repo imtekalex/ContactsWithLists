@@ -884,7 +884,7 @@ function EventDetail({
                           variant="outline"
                           className={cn(
                             "capitalize",
-                            balance.remaining > 0 && "border-amber-300 bg-amber-50 text-amber-800",
+                            balance.remaining > 0 && "border-red-200 bg-red-50 text-red-800",
                             balance.remaining < 0 && "border-emerald-300 bg-emerald-50 text-emerald-800",
                           )}
                         >
@@ -896,7 +896,7 @@ function EventDetail({
                         <span className="text-xs text-muted-foreground">No balance</span>
                       )}
                       {balance && (
-                        <p className={cn("mt-1 text-xs tabular-nums", balance.remaining > 0 && "text-amber-700", balance.remaining < 0 && "text-emerald-700")}>
+                        <p className={cn("mt-1 text-xs tabular-nums", balance.remaining > 0 && "text-red-800", balance.remaining < 0 && "text-emerald-700")}>
                           {formatMoney(balance.remaining, participation!.currency)}
                         </p>
                       )}

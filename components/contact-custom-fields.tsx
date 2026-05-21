@@ -53,7 +53,7 @@ export function ContactCustomFields({ contact, fields, onChange, readOnly }: Pro
   return (
     <div className="space-y-5">
       {visible.length > 0 && (
-        <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
+        <div className="space-y-1.5">
           {visible.map((f) => (
             <CustomFieldRow
               key={f.id}
@@ -125,8 +125,8 @@ function CustomFieldRow({
     case "boolean": {
       const v = value && value.type === "boolean" ? value.value : false
       return (
-        <div className="flex h-9 items-center justify-between gap-3 border-b border-border">
-          <Label className="text-xs text-muted-foreground">{field.name}</Label>
+        <div className="grid grid-cols-1 gap-1 sm:grid-cols-[9rem_minmax(0,1fr)] sm:items-center">
+          <Label className="text-sm font-medium text-muted-foreground">{field.name}</Label>
           <Switch checked={v} onCheckedChange={(c) => onChange({ type: "boolean", value: c })} />
         </div>
       )
@@ -134,8 +134,8 @@ function CustomFieldRow({
     case "longText": {
       const v = value && value.type === "longText" ? value.value : ""
       return (
-        <div className="col-span-2">
-          <Label className="text-xs">{field.name}</Label>
+        <div className="grid grid-cols-1 gap-1 sm:grid-cols-[9rem_minmax(0,1fr)] sm:items-start">
+          <Label className="pt-1 text-sm font-medium text-muted-foreground">{field.name}</Label>
           <Textarea
             value={v}
             onChange={(e) =>
@@ -145,7 +145,7 @@ function CustomFieldRow({
                   : undefined,
               )
             }
-            className="mt-1.5 min-h-[80px]"
+            className="min-h-[80px] rounded-md border-0 bg-transparent px-1 shadow-none hover:bg-secondary/50 focus-visible:bg-background focus-visible:ring-1 focus-visible:ring-ring"
           />
         </div>
       )
@@ -153,8 +153,8 @@ function CustomFieldRow({
     case "number": {
       const v = value && value.type === "number" ? String(value.value) : ""
       return (
-        <div>
-          <Label className="text-xs">{field.name}</Label>
+        <div className="grid grid-cols-1 gap-1 sm:grid-cols-[9rem_minmax(0,1fr)] sm:items-center">
+          <Label className="text-sm font-medium text-muted-foreground">{field.name}</Label>
           <Input
             type="number"
             value={v}
@@ -166,7 +166,7 @@ function CustomFieldRow({
                   : { type: "number", value: Number(n) },
               )
             }}
-            className="mt-1.5"
+            className="h-7 max-w-80 rounded-md border-0 bg-transparent px-1 shadow-none hover:bg-secondary/50 focus-visible:bg-background focus-visible:ring-1 focus-visible:ring-ring"
           />
         </div>
       )
@@ -174,8 +174,8 @@ function CustomFieldRow({
     case "date": {
       const v = value && value.type === "date" ? value.value : ""
       return (
-        <div>
-          <Label className="text-xs">{field.name}</Label>
+        <div className="grid grid-cols-1 gap-1 sm:grid-cols-[9rem_minmax(0,1fr)] sm:items-center">
+          <Label className="text-sm font-medium text-muted-foreground">{field.name}</Label>
           <Input
             type="date"
             value={v}
@@ -186,7 +186,7 @@ function CustomFieldRow({
                   : undefined,
               )
             }
-            className="mt-1.5"
+            className="h-7 max-w-80 rounded-md border-0 bg-transparent px-1 shadow-none hover:bg-secondary/50 focus-visible:bg-background focus-visible:ring-1 focus-visible:ring-ring"
           />
         </div>
       )
@@ -194,8 +194,8 @@ function CustomFieldRow({
     case "dropdown": {
       const v = value && value.type === "dropdown" ? value.value : ""
       return (
-        <div>
-          <Label className="text-xs">{field.name}</Label>
+        <div className="grid grid-cols-1 gap-1 sm:grid-cols-[9rem_minmax(0,1fr)] sm:items-center">
+          <Label className="text-sm font-medium text-muted-foreground">{field.name}</Label>
           <select
             value={v}
             onChange={(e) =>
@@ -205,7 +205,7 @@ function CustomFieldRow({
                   : undefined,
               )
             }
-            className="mt-1.5 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            className="h-7 max-w-80 rounded-md border-0 bg-transparent px-1 text-sm shadow-none hover:bg-secondary/50 focus-visible:bg-background focus-visible:ring-1 focus-visible:ring-ring"
           >
             <option value="">—</option>
             {field.options?.map((o) => (
@@ -218,9 +218,9 @@ function CustomFieldRow({
     case "multiSelect": {
       const arr = value && value.type === "multiSelect" ? value.value : []
       return (
-        <div className="col-span-2">
-          <Label className="text-xs">{field.name}</Label>
-          <div className="mt-1.5 flex flex-wrap gap-1.5">
+        <div className="grid grid-cols-1 gap-1 sm:grid-cols-[9rem_minmax(0,1fr)] sm:items-start">
+          <Label className="pt-1 text-sm font-medium text-muted-foreground">{field.name}</Label>
+          <div className="flex flex-wrap gap-1.5">
             {field.options?.map((o) => {
               const active = arr.includes(o.id)
               return (
@@ -262,8 +262,8 @@ function CustomFieldRow({
       const inputType =
         field.type === "email" ? "email" : field.type === "url" ? "url" : field.type === "phone" ? "tel" : "text"
       return (
-        <div>
-          <Label className="text-xs">{field.name}</Label>
+        <div className="grid grid-cols-1 gap-1 sm:grid-cols-[9rem_minmax(0,1fr)] sm:items-center">
+          <Label className="text-sm font-medium text-muted-foreground">{field.name}</Label>
           <Input
             type={inputType}
             value={v}
@@ -277,7 +277,7 @@ function CustomFieldRow({
                   : undefined,
               )
             }
-            className="mt-1.5"
+            className="h-7 max-w-80 rounded-md border-0 bg-transparent px-1 shadow-none hover:bg-secondary/50 focus-visible:bg-background focus-visible:ring-1 focus-visible:ring-ring"
           />
         </div>
       )

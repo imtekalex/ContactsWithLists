@@ -231,6 +231,7 @@ export function NewContactDialog({
           ]
         : [],
     website: form.website,
+    websites: form.website ? [{ id: "website_primary", label: "Website", value: form.website }] : [],
     birthday: form.birthday || undefined,
     significantDate: form.significantDate || undefined,
     significantDateLabel: form.significantDateLabel || undefined,

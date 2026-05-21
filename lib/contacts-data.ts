@@ -34,6 +34,7 @@ export type Contact = {
   country: string
   addresses?: ContactAddress[]
   website: string
+  websites?: ContactLabeledValue[]
   birthday?: string
   significantDate?: string
   significantDateLabel?: string
@@ -1296,6 +1297,8 @@ export function resolveListMembers(
         c.email,
         c.email2,
         ...(c.emails ?? []).flatMap((item) => [item.label, item.value]),
+        c.website,
+        ...(c.websites ?? []).flatMap((item) => [item.label, item.value]),
         c.company,
         c.title,
         c.department,
@@ -1374,6 +1377,7 @@ export function getContactFieldText(
   if (fieldKey === "tags") return contact.tags.join(" ")
   if (fieldKey === "email") return (contact.emails ?? []).map((item) => `${item.label} ${item.value}`).join(" ") || contact.email
   if (fieldKey === "phone") return (contact.phones ?? []).map((item) => `${item.label} ${item.value}`).join(" ") || contact.phone
+  if (fieldKey === "website") return (contact.websites ?? []).map((item) => `${item.label} ${item.value}`).join(" ") || contact.website
   if (fieldKey === "addressLine1") {
     return (
       (contact.addresses ?? [])

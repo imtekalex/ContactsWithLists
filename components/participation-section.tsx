@@ -1,12 +1,10 @@
 "use client"
 
 import { useMemo, useRef, useState } from "react"
-import { CalendarDays, Check, ChevronDown, CreditCard, Pencil, Plus, Trash2, X } from "lucide-react"
+import { CalendarDays, Check, CreditCard, Pencil, Plus, Trash2, X } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -276,43 +274,31 @@ export function ParticipationSection({
       : "0"
 
   return (
-    <Card className="overflow-hidden rounded-lg border-border bg-card p-0 shadow-sm lg:col-span-2">
-      <Collapsible defaultOpen={contactParticipations.length > 0}>
-        <CollapsibleTrigger className="flex w-full items-center justify-between gap-3 rounded-lg px-4 py-3 text-left transition-colors hover:bg-secondary/40 [&[data-state=open]_.payments-chevron]:rotate-180">
-          <span className="flex items-center gap-3">
-            <span className="flex h-8 w-8 items-center justify-center rounded-md bg-secondary">
-              <CreditCard className="h-4 w-4 text-muted-foreground" />
+    <section className="mx-auto max-w-5xl space-y-4">
+      <div className="flex flex-wrap items-start justify-between gap-3 border-t border-border pt-5">
+        <div>
+          <h3 className="text-sm font-semibold">Participation & payments</h3>
+          <p className="text-xs text-muted-foreground">
+            {contactParticipations.length} participation{contactParticipations.length === 1 ? "" : "s"}
+          </p>
+        </div>
+        <div className="flex items-start gap-4">
+          <div className="text-right">
+            <span className="block text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              Outstanding
             </span>
-            <span>
-              <span className="block text-sm font-semibold">Participation & payments</span>
-              <span className="block text-xs text-muted-foreground">
-                {contactParticipations.length} participation{contactParticipations.length === 1 ? "" : "s"}
-              </span>
+            <span
+              className={cn(
+                "block text-sm font-semibold tabular-nums",
+                summaryEntries.some(([, summary]) => summary.remaining > 0) && "text-red-800",
+                summaryEntries.every(([, summary]) => summary.remaining <= 0) &&
+                  summaryEntries.some(([, summary]) => summary.remaining < 0) &&
+                  "text-emerald-700",
+              )}
+            >
+              {outstandingLabel}
             </span>
-          </span>
-          <span className="flex items-center gap-3">
-            <span className="text-right">
-              <span className="block text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                Outstanding
-              </span>
-              <span
-                className={cn(
-                  "block text-sm font-semibold tabular-nums",
-                  summaryEntries.some(([, summary]) => summary.remaining > 0) && "text-red-800",
-                  summaryEntries.every(([, summary]) => summary.remaining <= 0) &&
-                    summaryEntries.some(([, summary]) => summary.remaining < 0) &&
-                    "text-emerald-700",
-                )}
-              >
-                {outstandingLabel}
-              </span>
-            </span>
-            <ChevronDown className="payments-chevron h-4 w-4 text-muted-foreground transition-transform" />
-          </span>
-        </CollapsibleTrigger>
-
-        <CollapsibleContent className="space-y-4 px-4 pb-4 pt-1">
-          <div className="flex justify-end">
+          </div>
             {canEdit && (
               <Button
                 size="sm"
@@ -328,10 +314,11 @@ export function ParticipationSection({
                 Add participation
               </Button>
             )}
-          </div>
+        </div>
+      </div>
 
       {canEdit && showParticipationForm && (
-        <Card className="space-y-3 rounded-lg border-border bg-slate-50/70 p-4 shadow-none">
+        <div className="space-y-3 rounded-lg bg-slate-100/70 p-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
               <Label className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Event</Label>
@@ -376,7 +363,7 @@ export function ParticipationSection({
           {selectedEventOption?.series?.description && (
             <p className="text-xs text-muted-foreground">{selectedEventOption.series.description}</p>
           )}
-          <div className="rounded-md border border-border bg-card p-3 space-y-3">
+          <div className="rounded-md bg-background/80 p-3 space-y-3">
             <p className="text-xs font-medium text-muted-foreground">Optional down payment</p>
             <div className="grid grid-cols-4 gap-2">
               <div>
@@ -449,11 +436,11 @@ export function ParticipationSection({
               Add participation
             </Button>
           </div>
-        </Card>
+        </div>
       )}
 
       {contactParticipations.length > 0 && (
-        <Card className="rounded-lg border-border bg-slate-50/70 p-4 shadow-none">
+        <div className="rounded-lg bg-slate-100/70 p-4">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-xs text-muted-foreground">Total outstanding</p>
@@ -487,14 +474,14 @@ export function ParticipationSection({
               </div>
             </div>
           </div>
-        </Card>
+        </div>
       )}
 
       {contactParticipations.length === 0 ? (
-        <Card className="p-5 text-center">
+        <div className="p-5 text-center">
           <CalendarDays className="w-6 h-6 mx-auto text-muted-foreground mb-2" />
           <p className="text-sm text-muted-foreground">No event participation yet.</p>
-        </Card>
+        </div>
       ) : (
         <div className="space-y-3">
           {contactParticipations.map((participation) => {
@@ -509,9 +496,9 @@ export function ParticipationSection({
                   participationNodes.current[participation.id] = node
                 }}
               >
-                <Card
+                <div
                   className={cn(
-                    "rounded-lg border-border p-4 space-y-3 shadow-sm transition-shadow",
+                    "space-y-3 rounded-lg bg-background/70 p-4 transition-shadow",
                     highlightedParticipationId === participation.id && "ring-2 ring-primary ring-offset-2",
                   )}
                 >
@@ -569,7 +556,7 @@ export function ParticipationSection({
                     </div>
                   </div>
 
-                  <div className="overflow-hidden rounded-md border border-border bg-card text-sm">
+                  <div className="overflow-hidden rounded-md bg-card text-sm">
                     <div className="overflow-x-auto">
                     <div className={cn(paymentGridClass, "px-3 py-2 bg-secondary/50 text-xs font-medium text-muted-foreground")}>
                       <span>Date</span>
@@ -783,16 +770,20 @@ export function ParticipationSection({
                     )}
 
                     {canEdit && activePaymentForm !== participation.id && (
-                      <div className="border-t border-border px-3 py-2">
+                      <div className={cn(paymentGridClass, "px-3 py-2 border-t border-border items-center")}>
+                        <span />
+                        <span />
+                        <span />
                         <Button
                           size="sm"
                           variant="ghost"
                           onClick={() => startAddingPayment(participation.id)}
-                          className="h-8 gap-1.5"
+                          className="h-8 justify-self-end gap-1.5 px-2"
                         >
                           <CreditCard className="w-3.5 h-3.5" />
                           Add payment
                         </Button>
+                        <span />
                       </div>
                     )}
 
@@ -813,14 +804,12 @@ export function ParticipationSection({
                     </div>
                     </div>
                   </div>
-                </Card>
+                </div>
               </div>
             )
           })}
         </div>
       )}
-        </CollapsibleContent>
-      </Collapsible>
-    </Card>
+    </section>
   )
 }
