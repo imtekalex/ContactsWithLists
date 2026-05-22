@@ -30,6 +30,7 @@ export type ReturnAddress = {
   lastName: string
   street: string
   city: string
+  state?: string
   zip: string
   country: string
 }
@@ -104,6 +105,7 @@ function normalizeContact(contact: Contact): Contact {
               addressLine1: contact.addressLine1,
               addressLine2: contact.addressLine2,
               city: contact.city,
+              state: contact.state,
               zip: contact.zip,
               country: contact.country,
             },
@@ -154,6 +156,7 @@ function normalizeContact(contact: Contact): Contact {
     addressLine1: primaryAddress?.addressLine1,
     addressLine2: primaryAddress?.addressLine2,
     city: primaryAddress?.city ?? "",
+    state: primaryAddress?.state ?? "",
     zip: primaryAddress?.zip,
     country: primaryAddress?.country ?? "",
     significantDates,
@@ -175,11 +178,11 @@ function normalizeLabeledValues(
 }
 
 function hasAddress(contact: Contact) {
-  return Boolean(contact.addressLine1 || contact.addressLine2 || contact.city || contact.zip || contact.country)
+  return Boolean(contact.addressLine1 || contact.addressLine2 || contact.city || contact.state || contact.zip || contact.country)
 }
 
 function hasAddressValue(item: NonNullable<Contact["addresses"]>[number]) {
-  return Boolean(item.addressLine1 || item.addressLine2 || item.city || item.zip || item.country)
+  return Boolean(item.addressLine1 || item.addressLine2 || item.city || item.state || item.zip || item.country)
 }
 
 function hasDateValue(item: NonNullable<Contact["significantDates"]>[number]) {
@@ -221,6 +224,7 @@ export function createDefaultContactsState(): ContactsState {
           lastName: "",
           street: "",
           city: "",
+          state: "",
           zip: "",
           country: "",
         },
@@ -229,6 +233,7 @@ export function createDefaultContactsState(): ContactsState {
           lastName: "",
           street: "",
           city: "",
+          state: "",
           zip: "",
           country: "",
         },

@@ -540,6 +540,7 @@ function AddressRows({
               </div>
               <div className="grid max-w-[42rem] grid-cols-1 gap-2 md:grid-cols-[minmax(8rem,1fr)_minmax(7rem,0.8fr)_minmax(8rem,1fr)]">
                 <CompactInput ariaLabel={`City ${index + 1}`} placeholder="City" value={item.city ?? ""} onChange={(city) => onChange(replaceAt(rows, index, { ...item, city }))} />
+                <CompactInput ariaLabel={`State ${index + 1}`} placeholder="State" value={item.state ?? ""} onChange={(state) => onChange(replaceAt(rows, index, { ...item, state }))} />
                 <CompactInput ariaLabel={`ZIP or postal code ${index + 1}`} placeholder="ZIP / postal code" value={item.zip ?? ""} onChange={(zip) => onChange(replaceAt(rows, index, { ...item, zip }))} />
                 <CompactInput ariaLabel={`Country ${index + 1}`} placeholder="Country" value={item.country ?? ""} onChange={(country) => onChange(replaceAt(rows, index, { ...item, country }))} />
               </div>
@@ -569,8 +570,9 @@ function AddressRows({
             )}
           </div>
           <FieldInput label="Address line 2" value={item.addressLine2 ?? ""} onChange={(addressLine2) => onChange(replaceAt(rows, index, { ...item, addressLine2 }))} />
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
             <FieldInput label="City" value={item.city ?? ""} onChange={(city) => onChange(replaceAt(rows, index, { ...item, city }))} />
+            <FieldInput label="State" value={item.state ?? ""} onChange={(state) => onChange(replaceAt(rows, index, { ...item, state }))} />
             <FieldInput label="ZIP / Postal code" value={item.zip ?? ""} onChange={(zip) => onChange(replaceAt(rows, index, { ...item, zip }))} />
             <FieldInput label="Country" value={item.country ?? ""} onChange={(country) => onChange(replaceAt(rows, index, { ...item, country }))} />
           </div>
@@ -1030,7 +1032,7 @@ function syncLegacyFields(contact: Contact): Contact {
 }
 
 function hasAddressValue(item: ContactAddress) {
-  return Boolean(item.addressLine1 || item.addressLine2 || item.city || item.zip || item.country)
+  return Boolean(item.addressLine1 || item.addressLine2 || item.city || item.state || item.zip || item.country)
 }
 
 function hasDateValue(item: ContactDate) {
@@ -1048,6 +1050,7 @@ function newAddress(contact?: Contact): ContactAddress {
     addressLine1: contact?.addressLine1 ?? "",
     addressLine2: contact?.addressLine2 ?? "",
     city: contact?.city ?? "",
+    state: contact?.state ?? "",
     zip: contact?.zip ?? "",
     country: contact?.country ?? "",
   }

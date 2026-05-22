@@ -29,6 +29,8 @@ export type Contact = {
   /** Optional second line of street address (apt, suite, etc.) */
   addressLine2?: string
   city: string
+  /** Optional state / region */
+  state?: string
   /** Optional ZIP / postal code */
   zip?: string
   country: string
@@ -64,6 +66,7 @@ export type ContactAddress = {
   addressLine1?: string
   addressLine2?: string
   city?: string
+  state?: string
   zip?: string
   country?: string
 }
@@ -1348,6 +1351,7 @@ export const STANDARD_SEARCHABLE_FIELDS: { key: keyof Contact; label: string }[]
   { key: "addressLine1", label: "Address line 1" },
   { key: "addressLine2", label: "Address line 2" },
   { key: "city", label: "City" },
+  { key: "state", label: "State" },
   { key: "zip", label: "ZIP / Postal code" },
   { key: "country", label: "Country" },
   { key: "website", label: "Website" },

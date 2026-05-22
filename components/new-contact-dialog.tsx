@@ -82,6 +82,7 @@ const empty = {
   addressLine1: "",
   addressLine2: "",
   city: "",
+  state: "",
   zip: "",
   country: "",
   website: "",
@@ -214,10 +215,11 @@ export function NewContactDialog({
     addressLine1: form.addressLine1 || undefined,
     addressLine2: form.addressLine2 || undefined,
     city: form.city,
+    state: form.state || undefined,
     zip: form.zip || undefined,
     country: form.country,
     addresses:
-      form.addressLine1 || form.addressLine2 || form.city || form.zip || form.country
+      form.addressLine1 || form.addressLine2 || form.city || form.state || form.zip || form.country
         ? [
             {
               id: "address_primary",
@@ -225,6 +227,7 @@ export function NewContactDialog({
               addressLine1: form.addressLine1 || undefined,
               addressLine2: form.addressLine2 || undefined,
               city: form.city || undefined,
+              state: form.state || undefined,
               zip: form.zip || undefined,
               country: form.country || undefined,
             },
@@ -759,6 +762,17 @@ export function NewContactDialog({
                       id="city"
                       value={form.city}
                       onChange={(e) => setForm({ ...form, city: e.target.value })}
+                      className="mt-1.5"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="state" className="text-xs">
+                      State
+                    </Label>
+                    <Input
+                      id="state"
+                      value={form.state}
+                      onChange={(e) => setForm({ ...form, state: e.target.value })}
                       className="mt-1.5"
                     />
                   </div>

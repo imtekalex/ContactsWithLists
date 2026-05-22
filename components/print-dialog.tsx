@@ -59,6 +59,7 @@ type FieldKey =
   | "addressLine1"
   | "addressLine2"
   | "city"
+  | "state"
   | "zip"
   | "country"
   | "website"
@@ -100,6 +101,7 @@ const CORE_FIELDS: { key: FieldKey; label: string }[] = [
   { key: "addressLine1", label: "Address line 1" },
   { key: "addressLine2", label: "Address line 2" },
   { key: "city", label: "City" },
+  { key: "state", label: "State" },
   { key: "zip", label: "ZIP" },
   { key: "country", label: "Country" },
   { key: "website", label: "Website" },
@@ -413,8 +415,8 @@ export function PrintDialog({
     const address = c.addresses?.[0]
     if (address?.addressLine1 || c.addressLine1) lines.push(address?.addressLine1 ?? c.addressLine1 ?? "")
     if (address?.addressLine2 || c.addressLine2) lines.push(address?.addressLine2 ?? c.addressLine2 ?? "")
-    const cityZip = [address?.city ?? c.city, address?.zip ?? c.zip].filter(Boolean).join(" ")
-    if (cityZip) lines.push(cityZip)
+    const cityStateZip = [address?.city ?? c.city, address?.state ?? c.state, address?.zip ?? c.zip].filter(Boolean).join(" ")
+    if (cityStateZip) lines.push(cityStateZip)
     if (address?.country || c.country) lines.push(address?.country ?? c.country)
     return lines
   }
@@ -426,7 +428,7 @@ export function PrintDialog({
     const name = [returnAddress.firstName, returnAddress.lastName].filter(Boolean).join(" ")
     if (name) lines.push(name)
     if (returnAddress.street) lines.push(returnAddress.street)
-    const location = [returnAddress.city, returnAddress.zip].filter(Boolean).join(" ")
+    const location = [returnAddress.city, returnAddress.state, returnAddress.zip].filter(Boolean).join(" ")
     if (location) lines.push(location)
     if (returnAddress.country) lines.push(returnAddress.country)
     return lines
@@ -441,12 +443,14 @@ export function PrintDialog({
     if (address?.addressLine1 || c.addressLine1) lines.push(address?.addressLine1 ?? c.addressLine1 ?? "")
     if (address?.addressLine2 || c.addressLine2) lines.push(address?.addressLine2 ?? c.addressLine2 ?? "")
     if (addressLayout === "european") {
-      const cityZip = [address?.city ?? c.city, address?.zip ?? c.zip].filter(Boolean).join(" ")
-      if (cityZip) lines.push(cityZip)
+      const cityStateZip = [address?.city ?? c.city, address?.state ?? c.state, address?.zip ?? c.zip].filter(Boolean).join(" ")
+      if (cityStateZip) lines.push(cityStateZip)
       if (address?.country || c.country) lines.push(address?.country ?? c.country)
     } else {
-      const cityZip = [address?.city ?? c.city, address?.zip ?? c.zip].filter(Boolean).join(", ")
-      if (cityZip) lines.push(cityZip)
+      const cityState = [address?.city ?? c.city, address?.state ?? c.state].filter(Boolean).join(", ")
+      const zip = address?.zip ?? c.zip
+      const cityStateZip = [cityState, zip].filter(Boolean).join(" ")
+      if (cityStateZip) lines.push(cityStateZip)
       if (address?.country || c.country) lines.push(address?.country ?? c.country)
     }
     return lines
