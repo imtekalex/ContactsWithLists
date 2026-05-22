@@ -30,8 +30,17 @@ import { Separator } from "@/components/ui/separator"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Spinner } from "@/components/ui/spinner"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 import {
+  STANDARD_SEARCHABLE_FIELDS,
   matchesGlobalSearch,
   resolveListMembers,
   type Contact,
@@ -146,6 +155,12 @@ export default function Home() {
 
   // Add-to-list dialog
   const [addToListOpen, setAddToListOpen] = useState(false)
+  const [bulkEditOpen, setBulkEditOpen] = useState(false)
+  const [bulkCategory, setBulkCategory] = useState("")
+  const [bulkKeywordAdd, setBulkKeywordAdd] = useState("")
+  const [bulkKeywordRemove, setBulkKeywordRemove] = useState("")
+  const [bulkFieldKey, setBulkFieldKey] = useState("firstName")
+  const [bulkFieldValue, setBulkFieldValue] = useState("")
 
   // Toast-style banner for bulk action confirmations
   const [banner, setBanner] = useState<string | null>(null)
@@ -409,6 +424,120 @@ export default function Home() {
     () => contacts.filter((c) => selectedIds.has(c.id)),
     [contacts, selectedIds],
   )
+
+  const bulkFieldOptions = useMemo(
+    () => [
+      ...STANDARD_SEARCHABLE_FIELDS.map((f) => ({ key: f.key, label: f.label })),
+      { key: "tags", label: "Keywords" },
+      ...customFields.map((field) => ({ key: `cf:${field.id}`, label: field.name })),
+    ],
+    [customFields],
+  )
+
+  const categorySuggestions = useMemo(() => {
+    const cf = customFields.find(
+      (f) => f.id === "cf_category" || f.slug === "category" || f.name.toLowerCase() === "category",
+    )
+    if (cf?.options && cf.options.length > 0) return cf.options.map((o) => o.label)
+
+    // Fallback: use existing contact values for cf_category
+    return uniqueStrings(
+      contacts
+        .map((contact) => {
+          const value = contact.customValues?.cf_category
+          return value?.type === "text" ? value.value : ""
+        })
+        .filter(Boolean),
+    )
+  }, [customFields, contacts])
+
+  const keywordSuggestions = useMemo(() => {
+    const cf = customFields.find(
+      (f) => f.id === "cf_keywords" || f.slug === "keywords" || f.name.toLowerCase() === "keywords",
+    )
+    if (cf?.options && cf.options.length > 0) return cf.options.map((o) => o.label)
+
+    // Fallback: combine tags and any text values stored in cf_keywords
+    const fromTags = contacts.flatMap((contact) => contact.tags)
+    const fromCf = contacts
+      .map((contact) => {
+        const v = contact.customValues?.cf_keywords
+        return v?.type === "text" ? v.value : ""
+      })
+      .filter(Boolean)
+    return uniqueStrings([...fromTags, ...fromCf])
+  }, [customFields, contacts])
+
+  function uniqueStrings(items: string[]) {
+    return Array.from(new Set(items.map((item) => item.trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b))
+  }
+
+  function applyBulkEdit() {
+    if (selectedIds.size === 0) return
+    const category = bulkCategory.trim()
+    const keywordAdd = bulkKeywordAdd.trim()
+    const keywordRemove = bulkKeywordRemove.trim()
+    const fieldKey = bulkFieldKey
+    const fieldValue = bulkFieldValue
+
+    setContacts((prev) =>
+      prev.map((contact) => {
+        if (!selectedIds.has(contact.id)) return contact
+        let next = { ...contact }
+
+        if (category) {
+          next = {
+            ...next,
+            customValues: {
+              ...next.customValues,
+              cf_category: { type: "text", value: category },
+            },
+          }
+        }
+
+        if (keywordAdd) {
+          next = {
+            ...next,
+            tags: uniqueStrings([...next.tags, keywordAdd]),
+          }
+        }
+
+        if (keywordRemove) {
+          next = {
+            ...next,
+            tags: next.tags.filter((tag) => tag.toLowerCase() !== keywordRemove.toLowerCase()),
+          }
+        }
+
+        if (fieldKey && fieldValue !== "") {
+          if (fieldKey === "tags") {
+            next = { ...next, tags: uniqueStrings(fieldValue.split(/[,;]+/)) }
+          } else if (fieldKey.startsWith("cf:")) {
+            const fieldId = fieldKey.slice(3)
+            next = {
+              ...next,
+              customValues: {
+                ...next.customValues,
+                [fieldId]: { type: "text", value: fieldValue },
+              },
+            }
+          } else {
+            next = { ...next, [fieldKey]: fieldValue } as Contact
+          }
+        }
+
+        return next
+      }),
+    )
+
+    setBulkEditOpen(false)
+    setBulkCategory("")
+    setBulkKeywordAdd("")
+    setBulkKeywordRemove("")
+    setBulkFieldValue("")
+
+    showBanner(`Updated ${selectedIds.size} selected contact${selectedIds.size === 1 ? "" : "s"}`)
+  }
 
   if (!storageReady) {
     return (
@@ -1185,6 +1314,7 @@ export default function Home() {
                   }
                   onCopyEmails={() => copyEmailsFor(selectedContacts)}
                   onAddToList={() => setAddToListOpen(true)}
+                  onBulkEdit={() => setBulkEditOpen(true)}
                   onDelete={bulkDelete}
                 />
               ) : (
@@ -1437,6 +1567,26 @@ export default function Home() {
         onUpdatePrintPreferences={setPrintPreferences}
       />
 
+      <BulkEditDialog
+        open={bulkEditOpen}
+        onOpenChange={setBulkEditOpen}
+        selectedCount={selectedIds.size}
+        category={bulkCategory}
+        onCategoryChange={setBulkCategory}
+        keywordAdd={bulkKeywordAdd}
+        onKeywordAddChange={setBulkKeywordAdd}
+        keywordRemove={bulkKeywordRemove}
+        onKeywordRemoveChange={setBulkKeywordRemove}
+        categorySuggestions={categorySuggestions}
+        keywordSuggestions={keywordSuggestions}
+        fieldKey={bulkFieldKey}
+        onFieldKeyChange={setBulkFieldKey}
+        fieldValue={bulkFieldValue}
+        onFieldValueChange={setBulkFieldValue}
+        onApply={applyBulkEdit}
+        fieldOptions={bulkFieldOptions}
+      />
+
       <AddToListDialog
         open={addToListOpen}
         onOpenChange={setAddToListOpen}
@@ -1456,6 +1606,7 @@ function BulkActionToolbar({
   onPrint,
   onCopyEmails,
   onAddToList,
+  onBulkEdit,
   onDelete,
 }: {
   count: number
@@ -1464,6 +1615,7 @@ function BulkActionToolbar({
   onPrint: () => void
   onCopyEmails: () => void
   onAddToList: () => void
+  onBulkEdit: () => void
   onDelete: () => void
 }) {
   return (
@@ -1498,6 +1650,10 @@ function BulkActionToolbar({
           <ListPlus className="w-3.5 h-3.5" />
           Add to list
         </Button>
+        <Button size="sm" variant="outline" onClick={onBulkEdit} className="h-8 gap-1.5 justify-start">
+          <CheckSquare className="w-3.5 h-3.5" />
+          Bulk edit
+        </Button>
         <Button
           size="sm"
           variant="outline"
@@ -1509,6 +1665,150 @@ function BulkActionToolbar({
         </Button>
       </div>
     </div>
+  )
+}
+
+function BulkEditDialog({
+  open,
+  onOpenChange,
+  selectedCount,
+  category,
+  onCategoryChange,
+  keywordAdd,
+  onKeywordAddChange,
+  keywordRemove,
+  onKeywordRemoveChange,
+  categorySuggestions,
+  keywordSuggestions,
+  fieldKey,
+  onFieldKeyChange,
+  fieldValue,
+  onFieldValueChange,
+  onApply,
+  fieldOptions,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  selectedCount: number
+  category: string
+  onCategoryChange: (value: string) => void
+  keywordAdd: string
+  onKeywordAddChange: (value: string) => void
+  keywordRemove: string
+  onKeywordRemoveChange: (value: string) => void
+  categorySuggestions: string[]
+  keywordSuggestions: string[]
+  fieldKey: string
+  onFieldKeyChange: (value: string) => void
+  fieldValue: string
+  onFieldValueChange: (value: string) => void
+  onApply: () => void
+  fieldOptions: Array<{ key: string; label: string }>
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl">
+        <DialogHeader>
+          <DialogTitle>Bulk edit selected contacts</DialogTitle>
+          <DialogDescription>
+            Change Category, add or remove a Keyword, or update any single field for all selected contacts.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-6 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="bulkCategory" className="text-xs">
+              Category
+            </Label>
+            <Input
+              id="bulkCategory"
+              value={category}
+              onChange={(e) => onCategoryChange(e.target.value)}
+              list="bulkCategorySuggestions"
+              placeholder="Set category for selected contacts"
+            />
+            <datalist id="bulkCategorySuggestions">
+              {categorySuggestions.map((suggestion) => (
+                <option key={suggestion} value={suggestion} />
+              ))}
+            </datalist>
+          </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="bulkKeywordAdd" className="text-xs">
+                Add keyword
+              </Label>
+              <Input
+                id="bulkKeywordAdd"
+                value={keywordAdd}
+                onChange={(e) => onKeywordAddChange(e.target.value)}
+                list="bulkKeywordSuggestions"
+                placeholder="Add keyword to selected contacts"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bulkKeywordRemove" className="text-xs">
+                Remove keyword
+              </Label>
+              <Input
+                id="bulkKeywordRemove"
+                value={keywordRemove}
+                onChange={(e) => onKeywordRemoveChange(e.target.value)}
+                list="bulkKeywordSuggestions"
+                placeholder="Remove keyword from selected contacts"
+              />
+            </div>
+          </div>
+          <datalist id="bulkKeywordSuggestions">
+            {keywordSuggestions.map((suggestion) => (
+              <option key={suggestion} value={suggestion} />
+            ))}
+          </datalist>
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_1.3fr]">
+              <div className="space-y-2">
+                <Label htmlFor="bulkFieldKey" className="text-xs">
+                  Field
+                </Label>
+                <select
+                  id="bulkFieldKey"
+                  value={fieldKey}
+                  onChange={(e) => onFieldKeyChange(e.target.value)}
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/10"
+                >
+                  {fieldOptions.map((option) => (
+                    <option key={option.key} value={option.key}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bulkFieldValue" className="text-xs">
+                  Field value
+                </Label>
+                <Input
+                  id="bulkFieldValue"
+                  value={fieldValue}
+                  onChange={(e) => onFieldValueChange(e.target.value)}
+                  placeholder="Value to set for selected field"
+                />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Select a field and enter the new contents here to apply it to all selected contacts.
+            </p>
+          </div>
+        </div>
+        <DialogFooter className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button onClick={onApply}>
+            Apply to {selectedCount} contact{selectedCount === 1 ? "" : "s"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 
