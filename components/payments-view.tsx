@@ -84,6 +84,93 @@ function compareRows(a: PaymentRow, b: PaymentRow) {
   return (b.label.date ?? "0000-00-00").localeCompare(a.label.date ?? "0000-00-00")
 }
 
+const eventToneKeys = ["sky", "emerald", "amber", "violet", "rose", "cyan", "fuchsia", "lime", "indigo", "orange", "teal", "pink"] as const
+
+type EventToneKey = (typeof eventToneKeys)[number]
+
+const eventToneClasses: Record<EventToneKey, { headerBg: string; iconBg: string; rowHeaderBg: string; cardBg: string }> = {
+  sky: {
+    headerBg: "bg-sky-50/80",
+    iconBg: "bg-sky-100 border border-sky-200 text-sky-700",
+    rowHeaderBg: "bg-sky-100/70",
+    cardBg: "bg-sky-50/80 ring-1 ring-sky-100 border border-sky-100/70 rounded-2xl",
+  },
+  emerald: {
+    headerBg: "bg-emerald-50/80",
+    iconBg: "bg-emerald-100 border border-emerald-200 text-emerald-700",
+    rowHeaderBg: "bg-emerald-100/70",
+    cardBg: "bg-emerald-50/80 ring-1 ring-emerald-100 border border-emerald-100/70 rounded-2xl",
+  },
+  amber: {
+    headerBg: "bg-amber-50/80",
+    iconBg: "bg-amber-100 border border-amber-200 text-amber-700",
+    rowHeaderBg: "bg-amber-100/70",
+    cardBg: "bg-amber-50/80 ring-1 ring-amber-100 border border-amber-100/70 rounded-2xl",
+  },
+  violet: {
+    headerBg: "bg-violet-50/80",
+    iconBg: "bg-violet-100 border border-violet-200 text-violet-700",
+    rowHeaderBg: "bg-violet-100/70",
+    cardBg: "bg-violet-50/80 ring-1 ring-violet-100 border border-violet-100/70 rounded-2xl",
+  },
+  rose: {
+    headerBg: "bg-rose-50/80",
+    iconBg: "bg-rose-100 border border-rose-200 text-rose-700",
+    rowHeaderBg: "bg-rose-100/70",
+    cardBg: "bg-rose-50/80 ring-1 ring-rose-100 border border-rose-100/70 rounded-2xl",
+  },
+  cyan: {
+    headerBg: "bg-cyan-50/80",
+    iconBg: "bg-cyan-100 border border-cyan-200 text-cyan-700",
+    rowHeaderBg: "bg-cyan-100/70",
+    cardBg: "bg-cyan-50/80 ring-1 ring-cyan-100 border border-cyan-100/70 rounded-2xl",
+  },
+  fuchsia: {
+    headerBg: "bg-fuchsia-50/80",
+    iconBg: "bg-fuchsia-100 border border-fuchsia-200 text-fuchsia-700",
+    rowHeaderBg: "bg-fuchsia-100/70",
+    cardBg: "bg-fuchsia-50/80 ring-1 ring-fuchsia-100 border border-fuchsia-100/70 rounded-2xl",
+  },
+  lime: {
+    headerBg: "bg-lime-50/80",
+    iconBg: "bg-lime-100 border border-lime-200 text-lime-700",
+    rowHeaderBg: "bg-lime-100/70",
+    cardBg: "bg-lime-50/80 ring-1 ring-lime-100 border border-lime-100/70 rounded-2xl",
+  },
+  indigo: {
+    headerBg: "bg-indigo-50/80",
+    iconBg: "bg-indigo-100 border border-indigo-200 text-indigo-700",
+    rowHeaderBg: "bg-indigo-100/70",
+    cardBg: "bg-indigo-50/80 ring-1 ring-indigo-100 border border-indigo-100/70 rounded-2xl",
+  },
+  orange: {
+    headerBg: "bg-orange-50/80",
+    iconBg: "bg-orange-100 border border-orange-200 text-orange-700",
+    rowHeaderBg: "bg-orange-100/70",
+    cardBg: "bg-orange-50/80 ring-1 ring-orange-100 border border-orange-100/70 rounded-2xl",
+  },
+  teal: {
+    headerBg: "bg-teal-50/80",
+    iconBg: "bg-teal-100 border border-teal-200 text-teal-700",
+    rowHeaderBg: "bg-teal-100/70",
+    cardBg: "bg-teal-50/80 ring-1 ring-teal-100 border border-teal-100/70 rounded-2xl",
+  },
+  pink: {
+    headerBg: "bg-pink-50/80",
+    iconBg: "bg-pink-100 border border-pink-200 text-pink-700",
+    rowHeaderBg: "bg-pink-100/70",
+    cardBg: "bg-pink-50/80 ring-1 ring-pink-100 border border-pink-100/70 rounded-2xl",
+  },
+}
+
+function getEventToneKey(occurrenceId: string): EventToneKey {
+  let hash = 0
+  for (let i = 0; i < occurrenceId.length; i += 1) {
+    hash = ((hash << 5) - hash + occurrenceId.charCodeAt(i)) >>> 0
+  }
+  return eventToneKeys[hash % eventToneKeys.length]
+}
+
 export function PaymentsView({
   contacts,
   eventSeries,
@@ -426,6 +513,8 @@ function EventPaymentGroup({
         title={group.occurrence?.name ?? "Unknown event"}
         subtitle={`${group.occurrence?.date ?? "No date"} · ${group.series?.name ?? "Standalone event"}`}
         summary={group.summary}
+        variant="event"
+        tone={getEventToneKey(group.occurrenceId)}
         onTitleClick={group.occurrence ? () => controls.onSelectEvent(group.occurrence!.id) : undefined}
       />
       <div className="divide-y divide-border">
@@ -436,6 +525,8 @@ function EventPaymentGroup({
             title={getContactName(row.contact)}
             subtitle={row.label.eventName}
             contactId={row.contact?.id}
+            variant="event"
+            tone={getEventToneKey(group.occurrenceId)}
             {...controls}
           />
         ))}
@@ -488,6 +579,8 @@ function GroupHeader({
   summary,
   showCreditOffset = false,
   onTitleClick,
+  variant,
+  tone,
 }: {
   icon: React.ComponentType<{ className?: string }>
   title: string
@@ -495,12 +588,26 @@ function GroupHeader({
   summary: MoneySummary
   showCreditOffset?: boolean
   onTitleClick?: () => void
+  variant?: "event" | "person"
+  tone?: EventToneKey
 }) {
+  const toneClasses = tone ? eventToneClasses[tone] : undefined
+
   return (
-    <div className="px-5 py-4 bg-secondary/40 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
+    <div
+      className={cn(
+        "px-5 py-4 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4",
+        toneClasses?.headerBg ?? "bg-secondary/40",
+      )}
+    >
       <div className="flex items-center gap-3 min-w-0">
-        <div className="w-9 h-9 rounded-md bg-background border border-border flex items-center justify-center flex-shrink-0">
-          <Icon className="w-4 h-4 text-muted-foreground" />
+        <div
+          className={cn(
+            "w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0",
+            toneClasses?.iconBg ?? "bg-background border border-border text-muted-foreground",
+          )}
+        >
+          <Icon className="w-4 h-4" />
         </div>
         <div className="min-w-0">
           {onTitleClick ? (
@@ -536,6 +643,8 @@ function ParticipationPaymentBlock({
   title,
   subtitle,
   contactId,
+  variant,
+  tone,
   paymentDrafts,
   addingForParticipationId,
   editingPaymentId,
@@ -553,14 +662,21 @@ function ParticipationPaymentBlock({
   title: string
   subtitle: string
   contactId: string | undefined
+  variant?: "event" | "person"
+  tone?: EventToneKey
 } & GroupControls) {
   const { participation, balance } = row
   const newPaymentDraft = paymentDrafts[participation.id] ?? emptyPaymentDraft()
   const paymentGridClass =
     "grid min-w-[52rem] grid-cols-[7rem_minmax(8rem,1fr)_minmax(10rem,1.2fr)_8rem_5rem] gap-3"
+  const toneClasses = tone ? eventToneClasses[tone] : undefined
+  const containerClass = cn(
+    "px-5 py-4 space-y-3",
+    toneClasses?.cardBg,
+  )
 
   return (
-    <div className="px-5 py-4 space-y-3">
+    <div className={containerClass}>
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
@@ -600,7 +716,13 @@ function ParticipationPaymentBlock({
       </div>
 
       <div className="rounded-md border border-border overflow-x-auto text-sm">
-        <div className={cn(paymentGridClass, "px-3 py-2 bg-secondary/50 text-xs font-medium text-muted-foreground")}>
+        <div
+          className={cn(
+            paymentGridClass,
+            "px-3 py-2 text-xs font-medium text-muted-foreground",
+            toneClasses?.rowHeaderBg ?? "bg-secondary/50",
+          )}
+        >
           <span>Date</span>
           <span>Label</span>
           <span>Note</span>

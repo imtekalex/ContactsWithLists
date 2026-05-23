@@ -472,6 +472,33 @@ export default function Home() {
     return Array.from(new Set(items.map((item) => item.trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b))
   }
 
+  function findCustomFieldById(fieldId: string) {
+    return customFields.find(
+      (field) => field.id === fieldId || field.slug === fieldId || field.name.toLowerCase() === fieldId,
+    )
+  }
+
+  function optionValueForField(field: CustomField | undefined, value: string) {
+    if (!field) return value
+
+    if (field.type === "dropdown") {
+      const option = field.options?.find((o) => o.label === value || o.id === value)
+      return option ? option.id : value
+    }
+
+    if (field.type === "multiSelect") {
+      const values = value.toLowerCase().split(/[,;]+/).map((v) => v.trim())
+      const valueIds = (field.options ?? [])
+        .map((option) => ({ id: option.id, label: option.label.toLowerCase() }))
+        .filter((option) => values.includes(option.label))
+        .map((option) => option.id)
+        .filter(Boolean)
+      return valueIds.length > 0 ? valueIds : [value]
+    }
+
+    return value
+  }
+
   function applyBulkEdit() {
     if (selectedIds.size === 0) return
     const category = bulkCategory.trim()
@@ -479,6 +506,8 @@ export default function Home() {
     const keywordRemove = bulkKeywordRemove.trim()
     const fieldKey = bulkFieldKey
     const fieldValue = bulkFieldValue
+    const categoryField = findCustomFieldById("cf_category")
+    const keywordField = findCustomFieldById("cf_keywords")
 
     setContacts((prev) =>
       prev.map((contact) => {
@@ -486,26 +515,95 @@ export default function Home() {
         let next = { ...contact }
 
         if (category) {
+          const rawValue = optionValueForField(categoryField, category)
           next = {
             ...next,
             customValues: {
               ...next.customValues,
-              cf_category: { type: "text", value: category },
+              cf_category:
+                categoryField?.type === "dropdown"
+                  ? { type: "dropdown", value: String(rawValue) }
+                  : { type: "text", value: String(rawValue) },
             },
           }
         }
 
         if (keywordAdd) {
-          next = {
-            ...next,
-            tags: uniqueStrings([...next.tags, keywordAdd]),
+          if (keywordField?.type === "dropdown") {
+            const keywordId = optionValueForField(keywordField, keywordAdd)
+            next = {
+              ...next,
+              customValues: {
+                ...next.customValues,
+                cf_keywords: { type: "dropdown", value: String(keywordId) },
+              },
+            }
+          } else if (keywordField?.type === "multiSelect") {
+            const keywordId = optionValueForField(keywordField, keywordAdd)
+            const existing =
+              next.customValues.cf_keywords && next.customValues.cf_keywords.type === "multiSelect"
+                ? next.customValues.cf_keywords.value
+                : []
+            next = {
+              ...next,
+              customValues: {
+                ...next.customValues,
+                cf_keywords: {
+                  type: "multiSelect",
+                  value: uniqueStrings([...existing, ...(Array.isArray(keywordId) ? keywordId : [keywordId])]),
+                },
+              },
+            }
+          } else if (keywordField) {
+            next = {
+              ...next,
+              customValues: {
+                ...next.customValues,
+                cf_keywords: { type: "text", value: keywordAdd },
+              },
+            }
+          } else {
+            next = {
+              ...next,
+              tags: uniqueStrings([...next.tags, keywordAdd]),
+            }
           }
         }
 
         if (keywordRemove) {
-          next = {
-            ...next,
-            tags: next.tags.filter((tag) => tag.toLowerCase() !== keywordRemove.toLowerCase()),
+          if (keywordField?.type === "dropdown") {
+            const keywordId = optionValueForField(keywordField, keywordRemove)
+            if (next.customValues.cf_keywords?.type === "dropdown" && next.customValues.cf_keywords.value === keywordId) {
+              const { cf_keywords, ...rest } = next.customValues
+              next = { ...next, customValues: rest }
+            }
+          } else if (keywordField?.type === "multiSelect") {
+            const keywordId = optionValueForField(keywordField, keywordRemove)
+            const removeIds = Array.isArray(keywordId) ? keywordId : [keywordId]
+            const existing =
+              next.customValues.cf_keywords && next.customValues.cf_keywords.type === "multiSelect"
+                ? next.customValues.cf_keywords.value
+                : []
+            next = {
+              ...next,
+              customValues: {
+                ...next.customValues,
+                cf_keywords: {
+                  type: "multiSelect",
+                  value: existing.filter((id) => !removeIds.includes(id)),
+                },
+              },
+            }
+          } else if (keywordField) {
+            if (next.customValues.cf_keywords?.type === "text" && next.customValues.cf_keywords.value === keywordRemove) {
+              const { cf_keywords, ...rest } = next.customValues
+              next = { ...next, customValues: rest }
+            }
+          } else {
+            next = {
+              ...next,
+              tags: next.tags.filter((tag) => tag.toLowerCase() !== keywordRemove.toLowerCase()),
+            }
           }
         }
 
@@ -514,11 +612,19 @@ export default function Home() {
             next = { ...next, tags: uniqueStrings(fieldValue.split(/[,;]+/)) }
           } else if (fieldKey.startsWith("cf:")) {
             const fieldId = fieldKey.slice(3)
+            const field = findCustomFieldById(fieldId)
+            const rawValue = optionValueForField(field, fieldValue)
+            const customValue =
+              field?.type === "dropdown"
+                ? { type: "dropdown", value: String(rawValue) }
+                : field?.type === "multiSelect"
+                ? { type: "multiSelect", value: Array.isArray(rawValue) ? rawValue : [String(rawValue)] }
+                : { type: "text", value: String(rawValue) }
             next = {
               ...next,
               customValues: {
                 ...next.customValues,
-                [fieldId]: { type: "text", value: fieldValue },
+                [fieldId]: customValue,
               },
             }
           } else {
