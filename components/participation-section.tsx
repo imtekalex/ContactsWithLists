@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type {
   Contact,
   CurrencyCode,
@@ -126,6 +127,7 @@ export function ParticipationSection({
   const [participationDraft, setParticipationDraft] = useState({
     occurrenceId: "",
     amountOwed: "",
+    selectedPriceOptionId: "",
     notes: "",
     downPaymentAmount: "",
     downPaymentDate: getTodayIso(),
@@ -144,6 +146,7 @@ export function ParticipationSection({
     setParticipationDraft({
       occurrenceId: "",
       amountOwed: "",
+      selectedPriceOptionId: "",
       notes: "",
       downPaymentAmount: "",
       downPaymentDate: getTodayIso(),
@@ -198,7 +201,8 @@ export function ParticipationSection({
       occurrenceId: selectedEvent.id,
       eventName: selectedEvent.occurrence.name,
       amountOwed: amount,
-      currency: selectedEvent.series?.priceOptions?.[0]?.currency ?? selectedEvent.series?.defaultCurrency ?? "EUR",
+      currency:
+        selectedPriceOption?.currency ?? selectedEvent.series?.priceOptions?.[0]?.currency ?? selectedEvent.series?.defaultCurrency ?? "EUR",
       notes: participationDraft.notes.trim() || undefined,
       initialPayment,
     })
@@ -265,6 +269,9 @@ export function ParticipationSection({
   }
 
   const selectedEventOption = eventOptions.find((item) => item.id === participationDraft.occurrenceId)
+  const selectedPriceOption = selectedEventOption?.series?.priceOptions?.find(
+    (price) => price.id === participationDraft.selectedPriceOptionId,
+  )
   const summaryEntries = Object.entries(balanceSummary)
   const paymentGridClass =
     "grid min-w-[46rem] grid-cols-[7rem_minmax(8rem,1fr)_minmax(10rem,1.2fr)_8rem_5rem] gap-3"
@@ -355,9 +362,43 @@ export function ParticipationSection({
                 min="0"
                 step="0.01"
                 value={participationDraft.amountOwed}
-                onChange={(event) => setParticipationDraft({ ...participationDraft, amountOwed: event.target.value })}
+                onChange={(event) =>
+                  setParticipationDraft({ ...participationDraft, amountOwed: event.target.value, selectedPriceOptionId: "" })
+                }
                 className="mt-0.5"
               />
+              {selectedEventOption?.series?.priceOptions?.length ? (
+                <div className="mt-3">
+                  <Label className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                    Selected fee rate
+                  </Label>
+                  <Select
+                    value={participationDraft.selectedPriceOptionId || "custom"}
+                    onValueChange={(value) => {
+                      const selectedPrice = selectedEventOption?.series?.priceOptions?.find((price) => price.id === value)
+                      setParticipationDraft({
+                        ...participationDraft,
+                        selectedPriceOptionId: value === "custom" ? "custom" : value,
+                        amountOwed: selectedPrice ? String(selectedPrice.amount) : participationDraft.amountOwed,
+                      })
+                    }}
+                  >
+                    <SelectTrigger className="mt-0.5 w-full">
+                      <SelectValue placeholder="Choose fee rate" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="custom">
+                        Custom amount
+                      </SelectItem>
+                      {selectedEventOption.series.priceOptions.map((price) => (
+                        <SelectItem key={price.id} value={price.id}>
+                          {price.label} · {formatMoney(price.amount, price.currency)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : null}
             </div>
           </div>
           {selectedEventOption?.series?.description && (
