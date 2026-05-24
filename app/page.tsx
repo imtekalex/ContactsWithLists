@@ -1549,7 +1549,6 @@ export default function Home() {
                   contact={selected}
                   groups={groups}
                   groupColorClasses={groupColorClasses}
-                  tagSuggestions={Array.from(new Set(contacts.flatMap((contact) => contact.tags))).sort((a, b) => a.localeCompare(b))}
                   customFields={customFields}
                   eventSeries={eventSeries}
                   eventOccurrences={eventOccurrences}

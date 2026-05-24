@@ -12,7 +12,6 @@ import {
   Plus,
   Star,
   SlidersHorizontal,
-  Tag,
   Trash2,
   UserRound,
   Users,
@@ -51,7 +50,6 @@ interface Props {
   contact: Contact
   groups: Group[]
   groupColorClasses: Record<Group["color"], ColorClass>
-  tagSuggestions: string[]
   customFields: CustomField[]
   eventSeries: EventSeries[]
   eventOccurrences: EventOccurrence[]
@@ -71,7 +69,6 @@ export function ContactDetail({
   contact,
   groups,
   groupColorClasses,
-  tagSuggestions,
   customFields,
   eventSeries,
   eventOccurrences,
@@ -121,8 +118,12 @@ export function ContactDetail({
   }
 
   const name = displayName(draft)
-  const subtitle = [draft.title, draft.department, draft.company].filter(Boolean).join(" - ")
-  const birthdayParts = draft.birthday ? dateStringToParts(draft.birthday) : newDateWithLabel("Birthday")
+  const subtitle = [draft.title, draft.company].filter(Boolean).join(" - ")
+  const lastModifiedLabel = new Date(draft.updatedAt).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  })
   const labelSuggestions = buildLabelSuggestions(draft)
   const shouldShowCustomFields = showCustomFields || hasCustomValuesToShow(draft, customFields)
   const visibleNameFields = getVisibleNameFields(draft, showAllNameFields)
@@ -132,12 +133,13 @@ export function ContactDetail({
       <div className="space-y-4 px-4 py-5 md:px-8">
         <section className="mx-auto max-w-6xl">
           <div className="space-y-5">
-            <div className="flex flex-col gap-5 md:flex-row md:items-start">
+            {/* Header with large photo */}
+            <div className="flex flex-col gap-6 md:flex-row md:items-start md:gap-8">
               <ContactPhotoPicker
                 firstName={draft.firstName}
                 lastName={draft.lastName}
                 photoUrl={draft.photoUrl}
-                size="lg"
+                size="xl"
                 onChange={(photoUrl) => updateDraft({ ...draft, photoUrl })}
               />
               <div className="flex min-w-0 flex-1 flex-wrap items-start justify-between gap-3">
@@ -152,7 +154,6 @@ export function ContactDetail({
                       <Star className={cn("h-5 w-5", contact.starred && "fill-amber-400 text-amber-400")} />
                     </button>
                   </div>
-                  <p className="truncate text-sm text-muted-foreground">{subtitle || "Add company, title, or department below"}</p>
                 </div>
                 <div className="flex flex-shrink-0 gap-2">
                   <Button size="sm" onClick={save} disabled={!dirty}>
@@ -174,9 +175,11 @@ export function ContactDetail({
               </div>
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            {/* Section 1: Name, Title, Company, Groups */}
+            <div className="space-y-1.5 rounded-lg bg-background/50 p-3">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Name & Organization</h3>
+              <div className="space-y-1">
+                <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
                   {visibleNameFields.map((field) => (
                     <CompactInput
                       key={field.key}
@@ -186,30 +189,25 @@ export function ContactDetail({
                     />
                   ))}
                 </div>
-                <div className="mt-2">
-                  <Button type="button" variant="secondary" size="sm" className="h-8 rounded-full gap-2 px-4" onClick={() => setShowAllNameFields((value) => !value)}>
-                    {showAllNameFields ? <Minus className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-                    {showAllNameFields ? "Hide unused name fields" : "Show all name fields"}
-                  </Button>
-                </div>
-                <div className="mt-2 grid grid-cols-1 gap-3 md:grid-cols-3">
+                <Button type="button" variant="ghost" size="sm" className="h-4 gap-0.5 px-0.5 text-[10px]" onClick={() => setShowAllNameFields((value) => !value)}>
+                  {showAllNameFields ? <Minus className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
+                  <span className="text-[10px]">{showAllNameFields ? "Hide" : "Show"}</span>
+                </Button>
+                <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                   <CompactInput label="Title" value={draft.title} onChange={(value) => updateDraft({ ...draft, title: value })} />
                   <CompactInput label="Company" value={draft.company} onChange={(value) => updateDraft({ ...draft, company: value })} />
-                  <CompactInput label="Department" value={draft.department ?? ""} onChange={(value) => updateDraft({ ...draft, department: value })} />
+                </div>
+                <div className="grid grid-cols-1 gap-2">
+                  <div>
+                    <span className="text-xs font-medium uppercase text-muted-foreground">Last Modified</span>
+                    <p className="text-sm font-medium">{lastModifiedLabel}</p>
+                  </div>
                 </div>
               </div>
-
-              <RecordRow label="Tags" icon={Tag}>
-                <TagEditor
-                  tags={draft.tags}
-                  suggestions={tagSuggestions}
-                  onChange={(tags) => updateDraft({ ...draft, tags })}
-                />
-              </RecordRow>
-
               {groups.length > 0 && (
-                <RecordRow label="Groups" icon={Users}>
-                  <div className="flex flex-wrap gap-1.5">
+                <div className="space-y-1">
+                  <p className="text-xs font-medium uppercase text-muted-foreground">Groups</p>
+                  <div className="flex flex-wrap gap-1">
                     {groups.map((group) => {
                       const color = groupColorClasses[group.color]
                       const active = draft.groupIds.includes(group.id)
@@ -226,21 +224,25 @@ export function ContactDetail({
                             })
                           }}
                           className={cn(
-                            "inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-xs font-medium transition-colors",
+                            "inline-flex h-6 items-center gap-1 rounded-full border px-2 text-xs font-medium transition-colors",
                             active ? cn(color.bg, color.text, "border-transparent") : "border-border bg-background text-muted-foreground hover:bg-secondary",
                           )}
                         >
-                          <span className={cn("h-2 w-2 rounded-full", active ? color.dot : "bg-muted-foreground/50")} />
+                          <span className={cn("h-1.5 w-1.5 rounded-full", active ? color.dot : "bg-muted-foreground/50")} />
                           {group.name}
                         </button>
                       )
                     })}
                   </div>
-                </RecordRow>
+                </div>
               )}
+            </div>
 
-              <RecordGroup>
-                <InlineRows
+            {/* Section 2: Phone, Email, Website */}
+            <div className="space-y-1.5 rounded-lg bg-background/50 p-3">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Contact Information</h3>
+              <div className="space-y-1.5">
+                <InlineRowsCompact
                   items={draft.phones ?? []}
                   valueLabel="Phone"
                   valueType="tel"
@@ -248,7 +250,7 @@ export function ContactDetail({
                   labelSuggestions={labelSuggestions.phone}
                   onChange={(phones) => updateDraft(syncLegacyFields({ ...draft, phones }))}
                 />
-                <InlineRows
+                <InlineRowsCompact
                   items={draft.emails ?? []}
                   valueLabel="Email"
                   valueType="email"
@@ -256,7 +258,7 @@ export function ContactDetail({
                   labelSuggestions={labelSuggestions.email}
                   onChange={(emails) => updateDraft(syncLegacyFields({ ...draft, emails }))}
                 />
-                <InlineRows
+                <InlineRowsCompact
                   items={draft.websites ?? []}
                   valueLabel="Website"
                   valueType="url"
@@ -264,64 +266,43 @@ export function ContactDetail({
                   labelSuggestions={labelSuggestions.website}
                   onChange={(websites) => updateDraft(syncLegacyFields({ ...draft, websites }))}
                 />
-              </RecordGroup>
+              </div>
+            </div>
 
-              <AddressRows
+            {/* Section 3: Address */}
+            <div className="space-y-1.5 rounded-lg bg-background/50 p-3">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Address</h3>
+              <AddressRowsCompact
                 items={draft.addresses ?? []}
                 labelSuggestions={labelSuggestions.address}
                 onChange={(addresses) => updateDraft(syncLegacyFields({ ...draft, addresses }))}
-                compact
               />
+            </div>
 
-              <RecordRow
-                icon={CalendarDays}
-                labelNode={<StaticLabel text="Birthday" />}
-              >
-                <DatePartsRow
-                  item={{ ...birthdayParts, id: "birthday", label: "Birthday" }}
-                  lockedLabel
-                  labelSuggestions={labelSuggestions.date}
-                  onChange={(birthday) => updateDraft({ ...draft, birthday: hasDateValue(birthday) ? datePartsToString(birthday) : undefined })}
-                  compact
-                  hideLabel
-                />
-              </RecordRow>
-
-              <DateRows
-                items={draft.significantDates ?? []}
-                labelSuggestions={labelSuggestions.date}
-                onChange={(significantDates) => updateDraft(syncLegacyFields({ ...draft, significantDates }))}
-                compact
+            {/* Section 4: Notes */}
+            <div className="space-y-1.5 rounded-lg bg-background/50 p-3">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Notes</h3>
+              <Textarea
+                value={draft.notes}
+                onChange={(event) => updateDraft({ ...draft, notes: event.target.value })}
+                className="min-h-[60px] rounded-md border-0 bg-transparent px-1 pt-1 shadow-none placeholder:text-muted-foreground/45 hover:bg-secondary/50 focus-visible:bg-background focus-visible:ring-1 focus-visible:ring-ring"
+                placeholder="Add notes"
               />
+            </div>
 
-              <RelatedRows
-                items={draft.relatedPeople ?? []}
-                labelSuggestions={labelSuggestions.relationship}
-                onChange={(relatedPeople) => updateDraft(syncLegacyFields({ ...draft, relatedPeople }))}
-                compact
-              />
-
-              <RecordRow label="Notes" icon={FileText}>
-                <Textarea
-                  value={draft.notes}
-                  onChange={(event) => updateDraft({ ...draft, notes: event.target.value })}
-                  className="min-h-[76px] rounded-md border-0 bg-transparent px-1 pt-1 shadow-none hover:bg-secondary/50 focus-visible:bg-background focus-visible:ring-1 focus-visible:ring-ring"
-                  placeholder="Notes"
-                />
-              </RecordRow>
-
-              <RecordRow label="Custom" icon={SlidersHorizontal}>
-                {shouldShowCustomFields ? (
-                  <div className="max-w-[42rem]">
-                    <ContactCustomFields contact={draft} fields={customFields} onChange={handleCustomChange} />
-                  </div>
-                ) : (
-                  <Button type="button" variant="secondary" className="h-8 rounded-full gap-2" onClick={() => setShowCustomFields(true)}>
-                    <Plus className="h-4 w-4" />
-                    Add custom fields
-                  </Button>
-                )}
-              </RecordRow>
+            {/* Custom Fields */}
+            <div className="space-y-1.5 rounded-lg bg-background/50 p-3">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Custom Fields</h3>
+              {shouldShowCustomFields ? (
+                <div className="max-w-[42rem]">
+                  <ContactCustomFields contact={draft} fields={customFields} onChange={handleCustomChange} />
+                </div>
+              ) : (
+                <Button type="button" variant="ghost" size="sm" className="h-4 gap-0.5 px-0.5 text-[10px]" onClick={() => setShowCustomFields(true)}>
+                  <Plus className="h-3 w-3" />
+                  Add custom fields
+                </Button>
+              )}
             </div>
           </div>
         </section>
@@ -344,77 +325,149 @@ export function ContactDetail({
   )
 }
 
+function InlineRowsCompact({
+  items,
+  valueLabel,
+  valueType,
+  addLabel,
+  labelSuggestions,
+  onChange,
+}: {
+  items: ContactLabeledValue[]
+  valueLabel: string
+  valueType: string
+  addLabel: string
+  labelSuggestions: string[]
+  onChange: (items: ContactLabeledValue[]) => void
+}) {
+  const rows = items.length > 0 ? items : [newLabeledValue(defaultLabel(addLabel))]
+  const Icon = iconForValueLabel(valueLabel)
+  return (
+    <div className="space-y-0.5">
+      {rows.map((item, index) => (
+        <div key={item.id} className="grid grid-cols-1 gap-2 md:grid-cols-[7rem_minmax(12rem,1fr)_1.5rem] md:items-center">
+          <LabelInput
+            ariaLabel={`${valueLabel} label ${index + 1}`}
+            value={item.label}
+            placeholder={valueLabel}
+            suggestions={labelSuggestions}
+            onChange={(label) => onChange(replaceAt(rows, index, { ...item, label }))}
+            className="text-xs"
+          />
+          <CompactInput
+            ariaLabel={`${valueLabel} ${index + 1}`}
+            placeholder={valueLabel}
+            type={valueType}
+            value={item.value}
+            onChange={(value) => onChange(replaceAt(rows, index, { ...item, value }))}
+          />
+          {rows.length > 1 ? (
+            <IconButton label="Remove" onClick={() => onChange(rows.filter((row) => row.id !== item.id))} className="h-5 w-5">
+              <X className="h-3 w-3" />
+            </IconButton>
+          ) : (
+            <span />
+          )}
+        </div>
+      ))}
+      <Button type="button" variant="ghost" className="h-4 gap-0.5 px-0.5 text-[10px]" onClick={() => onChange([...rows, newLabeledValue(defaultLabel(addLabel))])}>
+        <Plus className="h-3 w-3" />
+        {addLabel}
+      </Button>
+    </div>
+  )
+}
+
+function AddressRowsCompact({
+  items,
+  labelSuggestions,
+  onChange,
+}: {
+  items: ContactAddress[]
+  labelSuggestions: string[]
+  onChange: (items: ContactAddress[]) => void
+}) {
+  const rows = items.length > 0 ? items : [newAddress()]
+  return (
+    <div className="space-y-1.5">
+      {rows.map((item, index) => (
+        <div key={item.id} className="space-y-1">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-[7rem_minmax(12rem,1fr)_1.5rem] md:items-center">
+            <LabelInput
+              ariaLabel={`Address label ${index + 1}`}
+              value={item.label}
+              placeholder="Address"
+              suggestions={labelSuggestions}
+              onChange={(label) => onChange(replaceAt(rows, index, { ...item, label }))}
+              className="text-xs"
+            />
+            <CompactInput
+              ariaLabel={`Address line 1 ${index + 1}`}
+              placeholder="Address line 1"
+              value={item.addressLine1 ?? ""}
+              onChange={(addressLine1) => onChange(replaceAt(rows, index, { ...item, addressLine1 }))}
+            />
+            {rows.length > 1 ? (
+              <IconButton label="Remove" onClick={() => onChange(rows.filter((row) => row.id !== item.id))} className="h-5 w-5">
+                <X className="h-3 w-3" />
+              </IconButton>
+            ) : (
+              <span />
+            )}
+          </div>
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-[7rem_minmax(12rem,1fr)]">
+            <span className="text-xs" />
+            <CompactInput
+              ariaLabel={`Address line 2 ${index + 1}`}
+              placeholder="Address line 2"
+              value={item.addressLine2 ?? ""}
+              onChange={(addressLine2) => onChange(replaceAt(rows, index, { ...item, addressLine2 }))}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-[7rem_minmax(6rem,1fr)_minmax(6rem,1fr)_minmax(6rem,1fr)] md:items-center">
+            <span className="text-xs" />
+            <CompactInput
+              ariaLabel={`City ${index + 1}`}
+              placeholder="City"
+              value={item.city ?? ""}
+              onChange={(city) => onChange(replaceAt(rows, index, { ...item, city }))}
+            />
+            <CompactInput
+              ariaLabel={`State ${index + 1}`}
+              placeholder="State"
+              value={item.state ?? ""}
+              onChange={(state) => onChange(replaceAt(rows, index, { ...item, state }))}
+            />
+            <CompactInput
+              ariaLabel={`ZIP ${index + 1}`}
+              placeholder="ZIP"
+              value={item.zip ?? ""}
+              onChange={(zip) => onChange(replaceAt(rows, index, { ...item, zip }))}
+            />
+          </div>
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-[7rem_minmax(12rem,1fr)]">
+            <span className="text-xs" />
+            <CompactInput
+              ariaLabel={`Country ${index + 1}`}
+              placeholder="Country"
+              value={item.country ?? ""}
+              onChange={(country) => onChange(replaceAt(rows, index, { ...item, country }))}
+            />
+          </div>
+        </div>
+      ))}
+      <Button type="button" variant="ghost" className="h-4 gap-0.5 px-0.5 text-[10px]" onClick={() => onChange([...rows, newAddress()])}>
+        <Plus className="h-3 w-3" />
+        Add address
+      </Button>
+    </div>
+  )
+}
+
 function RecordGroup({ children }: { children: React.ReactNode }) {
   return <div className="space-y-1.5">{children}</div>
 }
 
-function TagEditor({
-  tags,
-  suggestions,
-  onChange,
-}: {
-  tags: string[]
-  suggestions: string[]
-  onChange: (tags: string[]) => void
-}) {
-  const [draft, setDraft] = useState("")
-  const listId = useId()
-
-  function addTag(value: string) {
-    const tag = value.trim()
-    if (!tag) return
-    onChange(uniqueStrings([...tags, tag]))
-    setDraft("")
-  }
-
-  function handleChange(value: string) {
-    if (value.includes(",")) {
-      const parts = value.split(",")
-      const complete = parts.slice(0, -1)
-      const rest = parts.at(-1) ?? ""
-      onChange(uniqueStrings([...tags, ...complete]))
-      setDraft(rest)
-    } else {
-      setDraft(value)
-    }
-  }
-
-  return (
-    <div className="flex min-h-7 flex-wrap items-center gap-1.5">
-      {tags.map((tag) => (
-        <button
-          type="button"
-          key={tag}
-          onClick={() => onChange(tags.filter((item) => item !== tag))}
-          className="inline-flex h-7 items-center gap-1.5 rounded-full border border-border bg-background px-2.5 text-xs font-medium text-foreground transition-colors hover:bg-secondary"
-        >
-          {tag}
-          <X className="h-3 w-3 text-muted-foreground" />
-        </button>
-      ))}
-      <Input
-        value={draft}
-        list={listId}
-        placeholder={tags.length > 0 ? "Add tag" : "Tags"}
-        aria-label="Add tag"
-        onChange={(event) => handleChange(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            event.preventDefault()
-            addTag(draft)
-          }
-        }}
-        onBlur={() => addTag(draft)}
-        className="h-7 min-w-24 flex-1 rounded-md border-0 bg-transparent px-1 text-sm shadow-none placeholder:text-muted-foreground/45 hover:bg-secondary/50 focus-visible:bg-background focus-visible:ring-1 focus-visible:ring-ring"
-      />
-      <datalist id={listId}>
-        {suggestions.map((suggestion) => (
-          <option key={suggestion} value={suggestion} />
-        ))}
-      </datalist>
-    </div>
-  )
-}
 
 function RecordRow({
   label,
@@ -492,7 +545,7 @@ function InlineRows({
         </RecordRow>
       ))}
       <RecordRow label="" iconSpacer>
-        <Button type="button" variant="secondary" className="h-8 rounded-full gap-2 px-4" onClick={() => onChange([...rows, newLabeledValue(defaultLabel(addLabel))])}>
+        <Button type="button" variant="secondary" className="h-7 rounded-full gap-1 px-2 text-xs" onClick={() => onChange([...rows, newLabeledValue(defaultLabel(addLabel))])}>
           <Plus className="h-4 w-4" />
           {addLabel}
         </Button>
@@ -548,7 +601,7 @@ function AddressRows({
           </RecordRow>
         ))}
         <RecordRow label="" iconSpacer>
-          <Button type="button" variant="secondary" className="h-8 rounded-full gap-2 px-4" onClick={() => onChange([...rows, newAddress()])}>
+          <Button type="button" variant="secondary" className="h-7 rounded-full gap-1 px-2 text-xs" onClick={() => onChange([...rows, newAddress()])}>
             <Plus className="h-4 w-4" />
             Add address
           </Button>
@@ -578,7 +631,7 @@ function AddressRows({
           </div>
         </div>
       ))}
-      <Button type="button" variant="secondary" className="w-full rounded-full gap-2" onClick={() => onChange([...rows, newAddress()])}>
+      <Button type="button" variant="secondary" className="w-full rounded-full gap-1 px-2 text-xs" onClick={() => onChange([...rows, newAddress()])}>
         <Plus className="h-4 w-4" />
         Add address
       </Button>
@@ -628,7 +681,7 @@ function DateRows({
           </RecordRow>
         ))}
         <RecordRow label="" iconSpacer>
-          <Button type="button" variant="secondary" className="h-8 rounded-full gap-2 px-4" onClick={() => onChange([...rows, newDate()])}>
+          <Button type="button" variant="secondary" className="h-7 rounded-full gap-1 px-2 text-xs" onClick={() => onChange([...rows, newDate()])}>
             <Plus className="h-4 w-4" />
             Add significant date
           </Button>
@@ -656,7 +709,7 @@ function DateRows({
           }
         />
       ))}
-      <Button type="button" variant="secondary" className="w-full rounded-full gap-2" onClick={() => onChange([...rows, newDate()])}>
+      <Button type="button" variant="secondary" className="w-full rounded-full gap-1 px-2 text-xs" onClick={() => onChange([...rows, newDate()])}>
         <Plus className="h-4 w-4" />
         Add significant date
       </Button>
@@ -700,7 +753,7 @@ function RelatedRows({
           </RecordRow>
         ))}
         <RecordRow label="" iconSpacer>
-          <Button type="button" variant="secondary" className="h-8 rounded-full gap-2 px-4" onClick={() => onChange([...rows, newRelatedPerson()])}>
+          <Button type="button" variant="secondary" className="h-7 rounded-full gap-1 px-2 text-xs" onClick={() => onChange([...rows, newRelatedPerson()])}>
             <Plus className="h-4 w-4" />
             Add related person
           </Button>
@@ -721,7 +774,7 @@ function RelatedRows({
           )}
         </div>
       ))}
-      <Button type="button" variant="secondary" className="w-full rounded-full gap-2" onClick={() => onChange([...rows, newRelatedPerson()])}>
+      <Button type="button" variant="secondary" className="w-full rounded-full gap-1 px-2 text-xs" onClick={() => onChange([...rows, newRelatedPerson()])}>
         <Plus className="h-4 w-4" />
         Add related person
       </Button>

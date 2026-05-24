@@ -119,6 +119,21 @@ export function ParticipationSection({
     [eventOccurrences, eventSeries],
   )
 
+  const eventAccentClasses = useMemo(
+    () =>
+      contactParticipations.map((_, index) => {
+        const palette = [
+          { border: "border-blue-400/70", dot: "bg-blue-500" },
+          { border: "border-emerald-400/70", dot: "bg-emerald-500" },
+          { border: "border-amber-400/70", dot: "bg-amber-500" },
+          { border: "border-violet-400/70", dot: "bg-violet-500" },
+          { border: "border-rose-400/70", dot: "bg-rose-500" },
+        ]
+        return palette[index % palette.length]
+      }),
+    [contactParticipations],
+  )
+
   const participationNodes = useRef<Record<string, HTMLDivElement | null>>({})
   const highlightTimer = useRef<number | null>(null)
   const [highlightedParticipationId, setHighlightedParticipationId] = useState<string | null>(null)
@@ -525,7 +540,7 @@ export function ParticipationSection({
         </div>
       ) : (
         <div className="space-y-3">
-          {contactParticipations.map((participation) => {
+          {contactParticipations.map((participation, index) => {
             const balance = getParticipationBalance(participation)
             const label = getParticipationLabel(participation, eventOccurrences, eventSeries)
             const newPaymentDraft = paymentDrafts[participation.id] ?? emptyPaymentDraft()
@@ -539,13 +554,15 @@ export function ParticipationSection({
               >
                 <div
                   className={cn(
-                    "space-y-3 rounded-lg bg-background/70 p-4 transition-shadow",
+                    "space-y-3 rounded-lg bg-background/70 p-4 border-l-4 transition-shadow",
+                    eventAccentClasses[index]?.border,
                     highlightedParticipationId === participation.id && "ring-2 ring-primary ring-offset-2",
                   )}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
+                        <span className={cn("h-2.5 w-2.5 rounded-full", eventAccentClasses[index]?.dot)} />
                         <button
                           type="button"
                           onClick={() => onSelectEventPayments(participation.occurrenceId)}
