@@ -1,6 +1,7 @@
 "use client"
 
 import { Camera, ImagePlus, Plus, X } from "lucide-react"
+import NextImage from "next/image"
 import { cn } from "@/lib/utils"
 
 type AvatarSize = "sm" | "md" | "lg" | "xl"
@@ -37,10 +38,12 @@ export function ContactAvatar({
       )}
     >
       {photoUrl ? (
-        <img
+        <NextImage
           src={photoUrl}
           alt={[firstName, lastName].filter(Boolean).join(" ") || "Contact photo"}
-          className="h-full w-full object-cover"
+          fill
+          sizes="(max-width: 640px) 64px, 128px"
+          className="object-cover"
         />
       ) : (
         <div className="flex h-full w-full items-center justify-center font-semibold">

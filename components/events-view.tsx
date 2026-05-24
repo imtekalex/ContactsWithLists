@@ -447,7 +447,7 @@ function EventDetail({
     () => getEventMembers(occurrence, contacts, participations),
     [contacts, occurrence, participations],
   )
-  const memberIds = new Set(members.map((contact) => contact.id))
+  const memberIds = useMemo(() => new Set(members.map((contact) => contact.id)), [members])
   const searchLower = contactSearch.trim().toLowerCase()
   const availableContacts = contacts
     .filter((contact) => !memberIds.has(contact.id) && !stagedContactIds.includes(contact.id))

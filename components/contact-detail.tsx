@@ -96,7 +96,7 @@ export function ContactDetail({
     setDirty(false)
     setShowCustomFields(false)
     setShowAllNameFields(false)
-  }, [contact.id])
+  }, [contact])
 
   function updateDraft(next: Contact) {
     setDraft(ensureEditableContact(next))
