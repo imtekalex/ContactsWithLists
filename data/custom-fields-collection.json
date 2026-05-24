@@ -84,14 +84,7 @@
       }
     ]
   },
-  {
-    "id": "cf_birthday",
-    "name": "Birthday",
-    "slug": "birthday",
-    "type": "date",
-    "isGlobal": true,
-    "groupIds": []
-  },
+  /* cf_birthday removed */
   {
     "id": "cf_member",
     "name": "Member Number",

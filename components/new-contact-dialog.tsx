@@ -67,18 +67,15 @@ const empty = {
   middleName: "",
   lastName: "",
   nameSuffix: "",
-  phoneticFirstName: "",
-  phoneticMiddleName: "",
-  phoneticLastName: "",
   nickname: "",
-  fileAs: "",
+  // removed: fileAs and phonetic name fields
   email: "",
   email2: "",
   phone: "",
   phone2: "",
   company: "",
   title: "",
-  department: "",
+  // removed: department
   addressLine1: "",
   addressLine2: "",
   city: "",
@@ -192,11 +189,8 @@ export function NewContactDialog({
     middleName: form.middleName || undefined,
     lastName: form.lastName,
     nameSuffix: form.nameSuffix || undefined,
-    phoneticFirstName: form.phoneticFirstName || undefined,
-    phoneticMiddleName: form.phoneticMiddleName || undefined,
-    phoneticLastName: form.phoneticLastName || undefined,
     nickname: form.nickname || undefined,
-    fileAs: form.fileAs || undefined,
+    // phonetic and fileAs removed
     email: form.email,
     email2: form.email2 || undefined,
     emails: [
@@ -211,7 +205,7 @@ export function NewContactDialog({
     ].filter((item) => item.value.trim()),
     company: form.company,
     title: form.title,
-    department: form.department || undefined,
+    // department removed
     addressLine1: form.addressLine1 || undefined,
     addressLine2: form.addressLine2 || undefined,
     city: form.city,
@@ -235,29 +229,7 @@ export function NewContactDialog({
         : [],
     website: form.website,
     websites: form.website ? [{ id: "website_primary", label: "Website", value: form.website }] : [],
-    birthday: form.birthday || undefined,
-    significantDate: form.significantDate || undefined,
-    significantDateLabel: form.significantDateLabel || undefined,
-    significantDates: form.significantDate
-      ? [
-          {
-            id: "date_primary",
-            label: form.significantDateLabel || "Anniversary",
-            ...dateStringToParts(form.significantDate),
-          },
-        ]
-      : [],
-    relatedPerson: form.relatedPerson || undefined,
-    relationLabel: form.relationLabel || undefined,
-    relatedPeople: form.relatedPerson
-      ? [
-          {
-            id: "related_primary",
-            label: form.relationLabel || "Related",
-            name: form.relatedPerson,
-          },
-        ]
-      : [],
+    // dates & relationships removed
     notes: form.notes,
     starred: form.starred,
     tags: form.tags,
@@ -573,49 +545,9 @@ export function NewContactDialog({
                       />
                     </div>
                     <div className="sm:col-span-2">
-                      <Label htmlFor="fileAs" className="text-xs">
-                        File as
-                      </Label>
-                      <Input
-                        id="fileAs"
-                        value={form.fileAs}
-                        onChange={(e) => setForm({ ...form, fileAs: e.target.value })}
-                        className="mt-1.5"
-                      />
+                      {/* File as removed per request */}
                     </div>
-                    <div>
-                      <Label htmlFor="phoneticFirstName" className="text-xs">
-                        Phonetic first
-                      </Label>
-                      <Input
-                        id="phoneticFirstName"
-                        value={form.phoneticFirstName}
-                        onChange={(e) => setForm({ ...form, phoneticFirstName: e.target.value })}
-                        className="mt-1.5"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="phoneticMiddleName" className="text-xs">
-                        Phonetic middle
-                      </Label>
-                      <Input
-                        id="phoneticMiddleName"
-                        value={form.phoneticMiddleName}
-                        onChange={(e) => setForm({ ...form, phoneticMiddleName: e.target.value })}
-                        className="mt-1.5"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="phoneticLastName" className="text-xs">
-                        Phonetic last
-                      </Label>
-                      <Input
-                        id="phoneticLastName"
-                        value={form.phoneticLastName}
-                        onChange={(e) => setForm({ ...form, phoneticLastName: e.target.value })}
-                        className="mt-1.5"
-                      />
-                    </div>
+                    {/* Phonetic name fields removed per request */}
                   </div>
                 </section>
 
@@ -692,17 +624,7 @@ export function NewContactDialog({
                         className="mt-1.5"
                       />
                     </div>
-                    <div>
-                      <Label htmlFor="department" className="text-xs">
-                        Department
-                      </Label>
-                      <Input
-                        id="department"
-                        value={form.department}
-                        onChange={(e) => setForm({ ...form, department: e.target.value })}
-                        className="mt-1.5"
-                      />
-                    </div>
+                    {/* Department removed per request */}
                     <div className="sm:col-span-2">
                       <Label htmlFor="website" className="text-xs">
                         Website
@@ -802,77 +724,7 @@ export function NewContactDialog({
               </CollapsibleContent>
             </Collapsible>
 
-            {/* Dates Section */}
-            <Collapsible defaultOpen>
-              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 hover:bg-secondary/50 rounded-lg transition-colors">
-                <span className="flex items-center gap-3 text-sm font-semibold text-foreground">
-                  <CalendarDays className="w-4 h-4 text-muted-foreground" />
-                  Dates & relationships
-                </span>
-                <ChevronDown className="w-4 h-4 text-muted-foreground" />
-              </CollapsibleTrigger>
-              <CollapsibleContent className="pt-3 pb-4 px-3">
-                <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div>
-                    <Label htmlFor="birthday" className="text-xs">
-                      Birthday
-                    </Label>
-                    <Input
-                      id="birthday"
-                      type="date"
-                      value={form.birthday}
-                      onChange={(e) => setForm({ ...form, birthday: e.target.value })}
-                      className="mt-1.5"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="significantDate" className="text-xs">
-                      Significant date
-                    </Label>
-                    <Input
-                      id="significantDate"
-                      type="date"
-                      value={form.significantDate}
-                      onChange={(e) => setForm({ ...form, significantDate: e.target.value })}
-                      className="mt-1.5"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="significantDateLabel" className="text-xs">
-                      Date label
-                    </Label>
-                    <Input
-                      id="significantDateLabel"
-                      value={form.significantDateLabel}
-                      onChange={(e) => setForm({ ...form, significantDateLabel: e.target.value })}
-                      className="mt-1.5"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="relatedPerson" className="text-xs">
-                      Related person
-                    </Label>
-                    <Input
-                      id="relatedPerson"
-                      value={form.relatedPerson}
-                      onChange={(e) => setForm({ ...form, relatedPerson: e.target.value })}
-                      className="mt-1.5"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="relationLabel" className="text-xs">
-                      Relationship
-                    </Label>
-                    <Input
-                      id="relationLabel"
-                      value={form.relationLabel}
-                      onChange={(e) => setForm({ ...form, relationLabel: e.target.value })}
-                      className="mt-1.5"
-                    />
-                  </div>
-                </section>
-              </CollapsibleContent>
-            </Collapsible>
+            {/* Dates & relationships section removed per request */}
 
             {/* Notes Section */}
             <Collapsible>

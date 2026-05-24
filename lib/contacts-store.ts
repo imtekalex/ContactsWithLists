@@ -57,31 +57,16 @@ export type ContactsState = {
 
 export type ContactsCollectionKey = keyof ContactsState
 
-const promotedCustomFieldIds = new Set(["cf_birthday", "cf_nickname"])
-const promotedCustomFieldSlugs = new Set(["birthday", "nickname"])
-
 function normalizeCustomFields(fields: CustomField[]): CustomField[] {
-  return fields.filter(
-    (field) =>
-      !promotedCustomFieldIds.has(field.id) &&
-      !promotedCustomFieldSlugs.has(field.slug),
-  )
+  // Keep all custom fields; no automatic promotion of birthday/nickname
+  return fields
 }
 
 function normalizeContact(contact: Contact): Contact {
   const customValues = { ...(contact.customValues ?? {}) }
-  const birthdayValue = customValues.cf_birthday
-  const nicknameValue = customValues.cf_nickname
-
-  const birthday =
-    contact.birthday ??
-    (birthdayValue?.type === "date" ? birthdayValue.value : undefined)
-  const nickname =
-    contact.nickname ??
-    (nicknameValue?.type === "text" ? nicknameValue.value : undefined)
-
-  delete customValues.cf_birthday
-  delete customValues.cf_nickname
+  // Do not promote custom fields into top-level contact properties.
+  const birthday = contact.birthday
+  const nickname = contact.nickname
 
   const emails = normalizeLabeledValues(contact.emails, [
     { id: "email_primary", label: "Work", value: contact.email },
@@ -111,34 +96,7 @@ function normalizeContact(contact: Contact): Contact {
             },
           ]
         : []
-  const significantDates =
-    contact.significantDates && contact.significantDates.length > 0
-      ? contact.significantDates.filter(hasDateValue)
-      : contact.significantDate
-        ? [
-            {
-              id: "date_primary",
-              label: contact.significantDateLabel || "Anniversary",
-              ...dateStringToParts(contact.significantDate),
-            },
-          ]
-        : []
-  const relatedPeople =
-    contact.relatedPeople && contact.relatedPeople.length > 0
-      ? contact.relatedPeople.filter((item) => item.name.trim().length > 0)
-      : contact.relatedPerson
-        ? [
-            {
-              id: "related_primary",
-              label: contact.relationLabel || "Related",
-              name: contact.relatedPerson,
-            },
-          ]
-        : []
-
   const primaryAddress = addresses[0]
-  const primaryDate = significantDates[0]
-  const primaryRelated = relatedPeople[0]
 
   return {
     ...contact,
@@ -159,12 +117,7 @@ function normalizeContact(contact: Contact): Contact {
     state: primaryAddress?.state ?? "",
     zip: primaryAddress?.zip,
     country: primaryAddress?.country ?? "",
-    significantDates,
-    significantDate: primaryDate ? datePartsToString(primaryDate) : undefined,
-    significantDateLabel: primaryDate?.label,
-    relatedPeople,
-    relatedPerson: primaryRelated?.name,
-    relationLabel: primaryRelated?.label,
+    // legacy date/relationship fields intentionally omitted
     customValues,
   }
 }
@@ -185,7 +138,7 @@ function hasAddressValue(item: NonNullable<Contact["addresses"]>[number]) {
   return Boolean(item.addressLine1 || item.addressLine2 || item.city || item.state || item.zip || item.country)
 }
 
-function hasDateValue(item: NonNullable<Contact["significantDates"]>[number]) {
+function hasDateValue(item: ContactDate) {
   return Boolean(item.month || item.day || item.year)
 }
 
