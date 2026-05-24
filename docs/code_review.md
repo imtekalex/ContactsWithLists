@@ -57,3 +57,13 @@
 - Were all affected screens/components updated when a concept was renamed?
 - Were docs, tests, snapshots, fixtures, seed data, analytics/event labels, and API-facing labels checked where relevant?
 - Do tests or snapshots cover important terminology, labels, or visual-state expectations where appropriate?
+
+## Direct-commit policy
+
+- This repository currently uses direct commits rather than a PR-first workflow. Before pushing changes, run the full local quality gates:
+	- `pnpm build`
+	- `pnpm test`
+	- `pnpm exec tsc --noEmit`
+	- `pnpm check-forbidden-patterns`
+- Keep changes small and self-contained; document any non-trivial work in `specs/` and `DECISIONS.md`.
+- If the team decides to require PRs later, update this guide and restore PR-based CI triggers.

@@ -46,3 +46,8 @@ Forbidden behaviors:
 - no renaming user-facing concepts in only one part of the app.
 
 Keep this file short. Link to deeper docs rather than duplicating everything.
+
+Direct-commit policy:
+- This repository currently prefers direct commits to `main`/`master` rather than a PR-first workflow.
+- Run `pnpm check-quality` locally before pushing; CI runs the same checks on push.
+- If you need to re-enable PR-based reviews, restore `pull_request` triggers and add a PR template in `.github/`.
