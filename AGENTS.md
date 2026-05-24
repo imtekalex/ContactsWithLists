@@ -1,6 +1,7 @@
 # Codex Agent Workflow
 
 Before any non-trivial change, read these files first:
+
 1. `AI_CONTRACT.md`
 2. `ARCHITECTURE.md`
 3. `projectmap.md`
@@ -9,9 +10,11 @@ Before any non-trivial change, read these files first:
 6. The relevant spec under `specs/`
 
 Non-trivial change definition:
+
 - Any change touching business logic, data models, APIs, auth/security, payments, persistence, infrastructure, performance, user-facing terminology or copy, design tokens/colors, shared UI components, or more than one module.
 
 Required workflow:
+
 1. Inspect existing code, patterns, and product conventions before editing.
 2. Inspect existing terminology, labels, colors, design tokens, and UI conventions before changing user-facing surfaces.
 3. State the plan before editing.
@@ -24,6 +27,7 @@ Required workflow:
 10. Self-review against `AI_CONTRACT.md` before the final response.
 
 Exact repo commands:
+
 - `pnpm install`
 - `pnpm dev`
 - `pnpm build`
@@ -35,6 +39,7 @@ Exact repo commands:
 - `pnpm audit --summary`
 
 Forbidden behaviors:
+
 - no one-off hardcoded fixes for specific values unless explicitly documented as compatibility handling;
 - no duplicated logic when an existing abstraction exists;
 - no business rules in UI components if a domain/service layer exists;
@@ -48,6 +53,7 @@ Forbidden behaviors:
 Keep this file short. Link to deeper docs rather than duplicating everything.
 
 Direct-commit policy:
+
 - This repository currently prefers direct commits to `main`/`master` rather than a PR-first workflow.
 - Run `pnpm check-quality` locally before pushing; CI runs the same checks on push.
 - If you need to re-enable PR-based reviews, restore `pull_request` triggers and add a PR template in `.github/`.

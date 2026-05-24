@@ -13,6 +13,7 @@
 ## Behavior rules
 
 ## Product consistency
+
 - Existing terminology to preserve:
 - New or changed terminology:
 - Terms that must not be used interchangeably:

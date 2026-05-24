@@ -14,6 +14,7 @@ You are performing cleanup work in this repository.
 10. Run the available quality gates after cleanup.
 
 Commands:
+
 - `pnpm test`
 - `pnpm exec tsc --noEmit`
 - `pnpm check-quality`

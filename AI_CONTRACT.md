@@ -1,6 +1,7 @@
 # AI Coding Contract
 
 ## Correctness hierarchy
+
 1. Existing public behavior and tests.
 2. Explicit feature spec in `specs/`.
 3. Architecture boundaries in `ARCHITECTURE.md`.
@@ -9,6 +10,7 @@
 6. Simplicity.
 
 ## Source-of-truth rules
+
 - Fix systems, not symptoms.
 - Behavior changes must be expressed as reusable rules, not isolated exceptions.
 - Domain rules live in domain models/services, not presentation code.
@@ -26,6 +28,7 @@
 - Prefer boring, maintainable solutions over clever abstractions.
 
 ## Checklist before completion
+
 - I inspected existing code and patterns before editing.
 - I inspected existing terminology, labels, colors, components, and design tokens before changing user-facing surfaces.
 - I kept the change scoped to the requested work.

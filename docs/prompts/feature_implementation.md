@@ -15,12 +15,14 @@ You are implementing a new feature or bug fix in this repository.
 11. Self-review against `AI_CONTRACT.md` before finalizing.
 
 Do not:
+
 - introduce a second name for an existing concept without documenting the distinction;
 - hardcode colors or visual styling when tokens/components exist;
 - update snapshots blindly; explain whether terminology or visual changes are intentional;
 - rename concepts without a consistency pass across affected UI, docs, tests, and specs.
 
 Commands:
+
 - `pnpm test`
 - `pnpm exec tsc --noEmit`
 - `pnpm check-quality`

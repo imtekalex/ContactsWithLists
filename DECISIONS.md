@@ -1,6 +1,7 @@
 # Architecture Decision Log
 
 ## Template
+
 - Date:
 - Decision:
 - Context:
@@ -9,6 +10,7 @@
 - Follow-up:
 
 ## Initial decisions
+
 - Date: 2026-05-24
   Decision: Add project-local guardrail documentation and quality wrappers without changing product behavior.
   Context: The repository has no lint, format, or product consistency guardrails and uses local JSON persistence in development.
