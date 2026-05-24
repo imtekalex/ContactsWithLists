@@ -36,3 +36,10 @@
   Options considered: Wait for explicit CI adoption versus add a minimal, conservative workflow now.
   Consequences: Enables automated `pnpm check-quality` runs on PRs while remaining conservative (no formatting/lint enforcement added).
   Follow-up: Revisit CI to add lint/format gates and more targeted checks once the team confirms policies.
+
+- Date: 2026-05-24
+  Decision: Prefer direct commits over pull requests for now; remove PR template.
+  Context: Repository owner requested immediate commits rather than PR-based workflow while guardrails are bootstrapped.
+  Options considered: Keep PR template and PR-triggered CI versus remove PR template and rely on push-based CI.
+  Consequences: Changes will be committed directly to branches; CI runs on push. Reintroduce PR-based workflow later if desired.
+  Follow-up: If the team later decides to require PRs, restore `pull_request` CI triggers and a PR template, and document the review process in `docs/code_review.md`.
