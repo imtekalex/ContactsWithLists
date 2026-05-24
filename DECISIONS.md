@@ -29,3 +29,10 @@
   Options considered: Create a `.github` directory proactively versus wait for explicit GitHub usage.
   Consequences: Avoids introducing source control metadata without clear ownership.
   Follow-up: Add `pull_request_template.md` if the repo later adopts GitHub workflows.
+
+- Date: 2026-05-24
+  Decision: Add a minimal GitHub Actions workflow and PR template to bootstrap CI and review guidance.
+  Context: After initial guardrail work, the repository owner accepted adding CI and a PR template to run the quality gates.
+  Options considered: Wait for explicit CI adoption versus add a minimal, conservative workflow now.
+  Consequences: Enables automated `pnpm check-quality` runs on PRs while remaining conservative (no formatting/lint enforcement added).
+  Follow-up: Revisit CI to add lint/format gates and more targeted checks once the team confirms policies.
