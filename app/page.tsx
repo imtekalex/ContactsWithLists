@@ -46,6 +46,7 @@ import {
   type Contact,
   type ContactList,
   type CustomField,
+  type CustomFieldValue,
   type Group,
   type GroupColor,
   type ActivityEntry,
@@ -614,12 +615,19 @@ export default function Home() {
             const fieldId = fieldKey.slice(3)
             const field = findCustomFieldById(fieldId)
             const rawValue = optionValueForField(field, fieldValue)
-            const customValue =
-              field?.type === "dropdown"
-                ? { type: "dropdown", value: String(rawValue) }
-                : field?.type === "multiSelect"
-                ? { type: "multiSelect", value: Array.isArray(rawValue) ? rawValue : [String(rawValue)] }
-                : { type: "text", value: String(rawValue) }
+            let customValue: CustomFieldValue
+
+            if (field?.type === "dropdown") {
+              customValue = { type: "dropdown", value: String(rawValue) }
+            } else if (field?.type === "multiSelect") {
+              customValue = {
+                type: "multiSelect",
+                value: Array.isArray(rawValue) ? rawValue : [String(rawValue)],
+              }
+            } else {
+              customValue = { type: "text", value: String(rawValue) }
+            }
+
             next = {
               ...next,
               customValues: {

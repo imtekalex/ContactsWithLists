@@ -6,7 +6,9 @@
     "dev": "next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",
-    "test": "vitest run"
+    "test": "vitest run",
+    "check-quality": "node ./scripts/check-quality.mjs",
+    "check-forbidden-patterns": "node ./scripts/check-forbidden-patterns.mjs"
   },
   "dependencies": {
     "@faker-js/faker": "^10.4.0",
