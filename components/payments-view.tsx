@@ -579,7 +579,7 @@ function GroupHeader({
   summary,
   showCreditOffset = false,
   onTitleClick,
-  variant,
+  variant: _variant,
   tone,
 }: {
   icon: React.ComponentType<{ className?: string }>
@@ -643,7 +643,7 @@ function ParticipationPaymentBlock({
   title,
   subtitle,
   contactId,
-  variant,
+  variant: _variant,
   tone,
   paymentDrafts,
   addingForParticipationId,

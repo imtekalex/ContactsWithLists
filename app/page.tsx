@@ -71,7 +71,7 @@ import { CustomFieldsManager } from "@/components/custom-fields-manager"
 import { GroupsManager } from "@/components/groups-manager"
 import { getParticipationBalance } from "@/lib/payments"
 import {
-  ParticipationSection,
+  
   type CreateParticipationInput,
   type CreatePaymentInput,
   type UpdatePaymentInput,
@@ -575,7 +575,7 @@ export default function Home() {
           if (keywordField?.type === "dropdown") {
             const keywordId = optionValueForField(keywordField, keywordRemove)
             if (next.customValues.cf_keywords?.type === "dropdown" && next.customValues.cf_keywords.value === keywordId) {
-              const { cf_keywords, ...rest } = next.customValues
+              const { cf_keywords: _cf_keywords, ...rest } = next.customValues
               next = { ...next, customValues: rest }
             }
           } else if (keywordField?.type === "multiSelect") {
@@ -597,7 +597,7 @@ export default function Home() {
             }
           } else if (keywordField) {
             if (next.customValues.cf_keywords?.type === "text" && next.customValues.cf_keywords.value === keywordRemove) {
-              const { cf_keywords, ...rest } = next.customValues
+              const { cf_keywords: _cf_keywords, ...rest } = next.customValues
               next = { ...next, customValues: rest }
             }
           } else {
@@ -671,7 +671,7 @@ export default function Home() {
     ])
   }
 
-  function getTodayIso(timestamp = Date.now()) {
+  function _getTodayIso(timestamp = Date.now()) {
     return new Date(timestamp).toISOString().slice(0, 10)
   }
 
@@ -988,7 +988,7 @@ export default function Home() {
     )
   }
 
-  function ensureEventOccurrence(input: {
+  function _ensureEventOccurrence(input: {
     name: string
     date?: string
     recurrence: EventRecurrence

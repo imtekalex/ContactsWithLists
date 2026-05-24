@@ -1096,11 +1096,11 @@ function datePartsToString(value: ContactDate) {
   return value.year ? `${value.year}-${month}-${day}` : `${month}-${day}`
 }
 
-function hasAnyAddress(addresses: ContactAddress[]) {
+function _hasAnyAddress(addresses: ContactAddress[]) {
   return addresses.some(hasAddressValue)
 }
 
-function hasAnyRelationship(people: ContactRelatedPerson[]) {
+function _hasAnyRelationship(people: ContactRelatedPerson[]) {
   return people.some((person) => person.name.trim().length > 0)
 }
 
