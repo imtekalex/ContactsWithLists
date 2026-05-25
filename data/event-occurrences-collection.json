@@ -6,11 +6,7 @@
     "date": "2024-06-15",
     "location": "Countryside retreat house",
     "notes": "Past annual retreat. One participant overpaid, creating credit for later.",
-    "contactIds": [
-      "c2",
-      "c7",
-      "c16"
-    ],
+    "contactIds": ["c2", "c7", "c16"],
     "createdAt": 1718496000000,
     "updatedAt": 1719360000000
   },
@@ -21,11 +17,7 @@
     "date": "2025-06-14",
     "location": "Countryside retreat house",
     "notes": "Past yearly occurrence with a static participant roster.",
-    "contactIds": [
-      "c1",
-      "c2",
-      "c16"
-    ],
+    "contactIds": ["c1", "c2", "c16"],
     "createdAt": 1746144000000,
     "updatedAt": 1747008000000
   },
@@ -36,12 +28,7 @@
     "date": "2026-06-14",
     "location": "Countryside retreat house",
     "notes": "Upcoming retreat. Mara has two payments recorded and still owes a balance.",
-    "contactIds": [
-      "c1",
-      "c2",
-      "c7",
-      "c16"
-    ],
+    "contactIds": ["c1", "c2", "c7", "c16"],
     "createdAt": 1760659200000,
     "updatedAt": 1760659200000
   },
@@ -52,10 +39,7 @@
     "date": "2026-04-18",
     "location": "Berlin studio",
     "notes": "One-off event with settled and discounted participants.",
-    "contactIds": [
-      "c14",
-      "c16"
-    ],
+    "contactIds": ["c14", "c16"],
     "createdAt": 1759968000000,
     "updatedAt": 1759968000000
   },
@@ -66,11 +50,7 @@
     "date": "2026-09-12",
     "location": "Community hall",
     "notes": "Future yearly event with one waitlisted participant.",
-    "contactIds": [
-      "c7",
-      "c12",
-      "c16"
-    ],
+    "contactIds": ["c7", "c12", "c16"],
     "createdAt": 1760140800000,
     "updatedAt": 1760140800000
   }

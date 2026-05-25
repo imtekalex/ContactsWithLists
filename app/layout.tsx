@@ -1,21 +1,21 @@
-import type { Metadata } from 'next'
-import localFont from 'next/font/local'
-import { Analytics } from '@vercel/analytics/next'
-import './globals.css'
+import type { Metadata } from 'next';
+import localFont from 'next/font/local';
+import { Analytics } from '@vercel/analytics/next';
+import './globals.css';
 
 const geistSans = localFont({
   src: '../public/fonts/geist/Geist-Variable.woff2',
   variable: '--font-geist-sans',
   weight: '100 900',
   display: 'swap',
-})
+});
 
 const geistMono = localFont({
   src: '../public/fonts/geist/GeistMono-Variable.woff2',
   variable: '--font-geist-mono',
   weight: '100 900',
   display: 'swap',
-})
+});
 
 export const metadata: Metadata = {
   title: 'Local Contacts Studio',
@@ -38,19 +38,22 @@ export const metadata: Metadata = {
     ],
     apple: '/apple-icon.png',
   },
-}
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
   return (
     <html lang="en" className="bg-background">
-      <body suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
+      <body
+        suppressHydrationWarning
+        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
+      >
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
-  )
+  );
 }

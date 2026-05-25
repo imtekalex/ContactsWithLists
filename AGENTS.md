@@ -36,7 +36,7 @@ Exact repo commands:
 - `pnpm exec tsc --noEmit`
 - `pnpm check-quality`
 - `pnpm check-forbidden-patterns`
-- `pnpm audit --summary`
+- `pnpm audit`
 
 Forbidden behaviors:
 

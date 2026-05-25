@@ -1,7 +1,7 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { Hand, Sparkles, Plus } from "lucide-react"
+import { useState } from 'react';
+import { Hand, Sparkles, Plus } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -9,21 +9,21 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card } from "@/components/ui/card"
-import { cn } from "@/lib/utils"
-import type { ContactList } from "@/lib/contacts-data"
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
+import type { ContactList } from '@/lib/contacts-data';
 
 interface Props {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  selectedCount: number
-  lists: ContactList[]
-  onAddToExisting: (listId: string) => void
-  onCreateNew: (name: string) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  selectedCount: number;
+  lists: ContactList[];
+  onAddToExisting: (listId: string) => void;
+  onCreateNew: (name: string) => void;
 }
 
 export function AddToListDialog({
@@ -34,29 +34,30 @@ export function AddToListDialog({
   onAddToExisting,
   onCreateNew,
 }: Props) {
-  const [mode, setMode] = useState<"existing" | "new">("existing")
-  const [newName, setNewName] = useState("")
+  const [mode, setMode] = useState<'existing' | 'new'>('existing');
+  const [newName, setNewName] = useState('');
 
   function reset() {
-    setMode("existing")
-    setNewName("")
+    setMode('existing');
+    setNewName('');
   }
 
-  const manualLists = lists.filter((l) => l.type === "manual")
+  const manualLists = lists.filter((l) => l.type === 'manual');
 
   return (
     <Dialog
       open={open}
       onOpenChange={(o) => {
-        onOpenChange(o)
-        if (!o) reset()
+        onOpenChange(o);
+        if (!o) reset();
       }}
     >
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Add to list</DialogTitle>
           <DialogDescription>
-            Add the {selectedCount} selected contact{selectedCount === 1 ? "" : "s"} to a manual list.
+            Add the {selectedCount} selected contact{selectedCount === 1 ? '' : 's'} to a manual
+            list.
           </DialogDescription>
         </DialogHeader>
 
@@ -64,12 +65,12 @@ export function AddToListDialog({
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
-              onClick={() => setMode("existing")}
+              onClick={() => setMode('existing')}
               className={cn(
-                "rounded-md border px-3 py-2 text-sm font-medium",
-                mode === "existing"
-                  ? "border-primary bg-primary/5"
-                  : "border-border hover:bg-secondary/60",
+                'rounded-md border px-3 py-2 text-sm font-medium',
+                mode === 'existing'
+                  ? 'border-primary bg-primary/5'
+                  : 'border-border hover:bg-secondary/60'
               )}
             >
               <Hand className="w-4 h-4 inline mr-1.5 -mt-0.5" />
@@ -77,12 +78,12 @@ export function AddToListDialog({
             </button>
             <button
               type="button"
-              onClick={() => setMode("new")}
+              onClick={() => setMode('new')}
               className={cn(
-                "rounded-md border px-3 py-2 text-sm font-medium",
-                mode === "new"
-                  ? "border-primary bg-primary/5"
-                  : "border-border hover:bg-secondary/60",
+                'rounded-md border px-3 py-2 text-sm font-medium',
+                mode === 'new'
+                  ? 'border-primary bg-primary/5'
+                  : 'border-border hover:bg-secondary/60'
               )}
             >
               <Sparkles className="w-4 h-4 inline mr-1.5 -mt-0.5" />
@@ -90,7 +91,7 @@ export function AddToListDialog({
             </button>
           </div>
 
-          {mode === "existing" ? (
+          {mode === 'existing' ? (
             <Card className="max-h-72 overflow-y-auto divide-y divide-border">
               {manualLists.length === 0 ? (
                 <p className="p-4 text-sm text-muted-foreground italic">
@@ -101,8 +102,8 @@ export function AddToListDialog({
                   <button
                     key={l.id}
                     onClick={() => {
-                      onAddToExisting(l.id)
-                      reset()
+                      onAddToExisting(l.id);
+                      reset();
                     }}
                     className="w-full text-left px-4 py-3 hover:bg-secondary/40 flex items-center gap-2"
                   >
@@ -134,13 +135,15 @@ export function AddToListDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          {mode === "new" && (
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          {mode === 'new' && (
             <Button
               onClick={() => {
-                if (!newName.trim()) return
-                onCreateNew(newName.trim())
-                reset()
+                if (!newName.trim()) return;
+                onCreateNew(newName.trim());
+                reset();
               }}
               disabled={!newName.trim()}
             >
@@ -150,5 +153,5 @@ export function AddToListDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

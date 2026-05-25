@@ -4,13 +4,7 @@
     "name": "Holiday Cards 2025",
     "description": "Send custom holiday cards to these contacts",
     "type": "manual",
-    "contactIds": [
-      "c1",
-      "c2",
-      "c4",
-      "c9",
-      "c14"
-    ],
+    "contactIds": ["c1", "c2", "c4", "c9", "c14"],
     "createdAt": 1759104000000,
     "updatedAt": 1761091200000
   },
@@ -19,16 +13,7 @@
     "name": "Newsletter Q4",
     "description": "Recipients of the Q4 product newsletter",
     "type": "manual",
-    "contactIds": [
-      "c1",
-      "c2",
-      "c5",
-      "c7",
-      "c9",
-      "c12",
-      "c14",
-      "c15"
-    ],
+    "contactIds": ["c1", "c2", "c5", "c7", "c9", "c12", "c14", "c15"],
     "createdAt": 1759968000000,
     "updatedAt": 1761436800000
   },
@@ -37,12 +22,7 @@
     "name": "Board Meeting Attendees",
     "description": "Quarterly board meeting roster",
     "type": "manual",
-    "contactIds": [
-      "c2",
-      "c5",
-      "c9",
-      "c15"
-    ],
+    "contactIds": ["c2", "c5", "c9", "c15"],
     "createdAt": 1760832000000,
     "updatedAt": 1761523200000
   },

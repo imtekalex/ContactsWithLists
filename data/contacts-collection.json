@@ -17,14 +17,8 @@
     "website": "https://acmecorp.com",
     "notes": "Key decision maker for the enterprise deal. Met at the SaaStr conference.",
     "starred": true,
-    "tags": [
-      "enterprise",
-      "saas"
-    ],
-    "groupIds": [
-      "g1",
-      "g2"
-    ],
+    "tags": ["enterprise", "saas"],
+    "groupIds": ["g1", "g2"],
     "customValues": {
       "cf_status": {
         "type": "dropdown",
@@ -36,10 +30,7 @@
       },
       "cf_interests": {
         "type": "multiSelect",
-        "value": [
-          "opt_design",
-          "opt_tech"
-        ]
+        "value": ["opt_design", "opt_tech"]
       },
       "cf_birthday": {
         "type": "date",
@@ -76,14 +67,8 @@
     "website": "https://techinnovations.io",
     "notes": "Strategic partner. Discussing co-marketing opportunities for Q3.",
     "starred": true,
-    "tags": [
-      "partner",
-      "executive"
-    ],
-    "groupIds": [
-      "g1",
-      "g2"
-    ],
+    "tags": ["partner", "executive"],
+    "groupIds": ["g1", "g2"],
     "customValues": {
       "cf_status": {
         "type": "dropdown",
@@ -95,10 +80,7 @@
       },
       "cf_interests": {
         "type": "multiSelect",
-        "value": [
-          "opt_arch",
-          "opt_events"
-        ]
+        "value": ["opt_arch", "opt_events"]
       },
       "cf_vip": {
         "type": "boolean",
@@ -125,13 +107,8 @@
     "website": "https://globalsolutions.com",
     "notes": "Interested in Q2 partnership. Follow up next week.",
     "starred": false,
-    "tags": [
-      "sales",
-      "prospect"
-    ],
-    "groupIds": [
-      "g2"
-    ],
+    "tags": ["sales", "prospect"],
+    "groupIds": ["g2"],
     "customValues": {},
     "createdAt": 1760486400000,
     "updatedAt": 1761091200000
@@ -149,13 +126,8 @@
     "website": "https://designstudio.co",
     "notes": "Handles all our branding projects. Excellent quality and reliable delivery.",
     "starred": true,
-    "tags": [
-      "creative",
-      "vendor"
-    ],
-    "groupIds": [
-      "g4"
-    ],
+    "tags": ["creative", "vendor"],
+    "groupIds": ["g4"],
     "customValues": {},
     "createdAt": 1756512000000,
     "updatedAt": 1761609600000
@@ -178,14 +150,8 @@
     "website": "https://startupventures.vc",
     "notes": "Lead investor for Series B. Quarterly check-ins scheduled.",
     "starred": true,
-    "tags": [
-      "investor",
-      "vc"
-    ],
-    "groupIds": [
-      "g1",
-      "g5"
-    ],
+    "tags": ["investor", "vc"],
+    "groupIds": ["g1", "g5"],
     "customValues": {
       "cf_status": {
         "type": "dropdown",
@@ -220,13 +186,8 @@
     "website": "https://brownassociates.legal",
     "notes": "Corporate counsel for contract reviews and compliance.",
     "starred": false,
-    "tags": [
-      "legal",
-      "professional"
-    ],
-    "groupIds": [
-      "g4"
-    ],
+    "tags": ["legal", "professional"],
+    "groupIds": ["g4"],
     "customValues": {},
     "createdAt": 1753920000000,
     "updatedAt": 1760400000000
@@ -244,14 +205,8 @@
     "website": "https://cloudtech.io",
     "notes": "Technical integration partner. Working on API v2 rollout.",
     "starred": false,
-    "tags": [
-      "technical",
-      "partner"
-    ],
-    "groupIds": [
-      "g2",
-      "g3"
-    ],
+    "tags": ["technical", "partner"],
+    "groupIds": ["g2", "g3"],
     "customValues": {},
     "createdAt": 1759536000000,
     "updatedAt": 1760832000000
@@ -269,13 +224,8 @@
     "website": "https://mediagroup.com",
     "notes": "Handles PR and media relations for product launches.",
     "starred": false,
-    "tags": [
-      "marketing",
-      "vendor"
-    ],
-    "groupIds": [
-      "g4"
-    ],
+    "tags": ["marketing", "vendor"],
+    "groupIds": ["g4"],
     "customValues": {},
     "createdAt": 1758672000000,
     "updatedAt": 1761004800000
@@ -293,14 +243,8 @@
     "website": "https://financeplus.com",
     "notes": "Financial advisor for Series A. Strong network in fintech.",
     "starred": true,
-    "tags": [
-      "finance",
-      "advisor"
-    ],
-    "groupIds": [
-      "g1",
-      "g5"
-    ],
+    "tags": ["finance", "advisor"],
+    "groupIds": ["g1", "g5"],
     "customValues": {
       "cf_status": {
         "type": "dropdown",
@@ -335,13 +279,8 @@
     "website": "https://hrconnect.io",
     "notes": "Recruitment partner for senior engineering hires.",
     "starred": false,
-    "tags": [
-      "hr",
-      "recruitment"
-    ],
-    "groupIds": [
-      "g4"
-    ],
+    "tags": ["hr", "recruitment"],
+    "groupIds": ["g4"],
     "customValues": {},
     "createdAt": 1757376000000,
     "updatedAt": 1761177600000
@@ -359,13 +298,8 @@
     "website": "https://devops.tech",
     "notes": "Infrastructure consultant. Helping with the Kubernetes migration.",
     "starred": false,
-    "tags": [
-      "technical",
-      "devops"
-    ],
-    "groupIds": [
-      "g3"
-    ],
+    "tags": ["technical", "devops"],
+    "groupIds": ["g3"],
     "customValues": {},
     "createdAt": 1756944000000,
     "updatedAt": 1760918400000
@@ -383,15 +317,8 @@
     "website": "https://datainsights.ai",
     "notes": "AI/ML consultant for product features. Expert in LLM fine-tuning.",
     "starred": true,
-    "tags": [
-      "ai",
-      "data",
-      "technical"
-    ],
-    "groupIds": [
-      "g1",
-      "g3"
-    ],
+    "tags": ["ai", "data", "technical"],
+    "groupIds": ["g1", "g3"],
     "customValues": {
       "cf_status": {
         "type": "dropdown",
@@ -403,10 +330,7 @@
       },
       "cf_interests": {
         "type": "multiSelect",
-        "value": [
-          "opt_tech",
-          "opt_news"
-        ]
+        "value": ["opt_tech", "opt_news"]
       },
       "cf_vip": {
         "type": "boolean",
@@ -429,14 +353,8 @@
     "website": "https://securitycore.io",
     "notes": "Security audit partner. Annual SOC 2 reviews.",
     "starred": false,
-    "tags": [
-      "security",
-      "compliance"
-    ],
-    "groupIds": [
-      "g3",
-      "g4"
-    ],
+    "tags": ["security", "compliance"],
+    "groupIds": ["g3", "g4"],
     "customValues": {},
     "createdAt": 1755648000000,
     "updatedAt": 1760659200000
@@ -454,13 +372,8 @@
     "website": "https://productlabs.co",
     "notes": "Joint product roadmap discussions for integrated features.",
     "starred": true,
-    "tags": [
-      "product",
-      "partner"
-    ],
-    "groupIds": [
-      "g2"
-    ],
+    "tags": ["product", "partner"],
+    "groupIds": ["g2"],
     "customValues": {},
     "createdAt": 1760140800000,
     "updatedAt": 1761609600000
@@ -478,13 +391,8 @@
     "website": "https://growthcapital.fund",
     "notes": "Series C lead candidate. Quarterly board observer.",
     "starred": true,
-    "tags": [
-      "investor",
-      "vc"
-    ],
-    "groupIds": [
-      "g5"
-    ],
+    "tags": ["investor", "vc"],
+    "groupIds": ["g5"],
     "customValues": {},
     "createdAt": 1759795200000,
     "updatedAt": 1761436800000
@@ -502,14 +410,8 @@
     "website": "https://example.com/website-a",
     "notes": "Details:\n- sometimes uses website a\n- has nice clothes\n\nStatus: Offers to assist in SQ. (on list)\nUser def.: 9 VOLTS / (X-OE)",
     "starred": true,
-    "tags": [
-      "Former Adv. Grp.",
-      "M0 - VOLT x 2+",
-      "SQ"
-    ],
-    "groupIds": [
-      "g1"
-    ],
+    "tags": ["Former Adv. Grp.", "M0 - VOLT x 2+", "SQ"],
+    "groupIds": ["g1"],
     "customValues": {
       "cf_nickname": {
         "type": "text",

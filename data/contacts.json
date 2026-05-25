@@ -18,14 +18,8 @@
       "website": "https://acmecorp.com",
       "notes": "Key decision maker for the enterprise deal. Met at the SaaStr conference.",
       "starred": true,
-      "tags": [
-        "enterprise",
-        "saas"
-      ],
-      "groupIds": [
-        "g1",
-        "g2"
-      ],
+      "tags": ["enterprise", "saas"],
+      "groupIds": ["g1", "g2"],
       "customValues": {
         "cf_status": {
           "type": "dropdown",
@@ -37,10 +31,7 @@
         },
         "cf_interests": {
           "type": "multiSelect",
-          "value": [
-            "opt_design",
-            "opt_tech"
-          ]
+          "value": ["opt_design", "opt_tech"]
         },
         "cf_birthday": {
           "type": "date",
@@ -77,14 +68,8 @@
       "website": "https://techinnovations.io",
       "notes": "Strategic partner. Discussing co-marketing opportunities for Q3.",
       "starred": true,
-      "tags": [
-        "partner",
-        "executive"
-      ],
-      "groupIds": [
-        "g1",
-        "g2"
-      ],
+      "tags": ["partner", "executive"],
+      "groupIds": ["g1", "g2"],
       "customValues": {
         "cf_status": {
           "type": "dropdown",
@@ -96,10 +81,7 @@
         },
         "cf_interests": {
           "type": "multiSelect",
-          "value": [
-            "opt_arch",
-            "opt_events"
-          ]
+          "value": ["opt_arch", "opt_events"]
         },
         "cf_vip": {
           "type": "boolean",
@@ -126,13 +108,8 @@
       "website": "https://globalsolutions.com",
       "notes": "Interested in Q2 partnership. Follow up next week.",
       "starred": false,
-      "tags": [
-        "sales",
-        "prospect"
-      ],
-      "groupIds": [
-        "g2"
-      ],
+      "tags": ["sales", "prospect"],
+      "groupIds": ["g2"],
       "customValues": {},
       "createdAt": 1760486400000,
       "updatedAt": 1761091200000
@@ -150,13 +127,8 @@
       "website": "https://designstudio.co",
       "notes": "Handles all our branding projects. Excellent quality and reliable delivery.",
       "starred": true,
-      "tags": [
-        "creative",
-        "vendor"
-      ],
-      "groupIds": [
-        "g4"
-      ],
+      "tags": ["creative", "vendor"],
+      "groupIds": ["g4"],
       "customValues": {},
       "createdAt": 1756512000000,
       "updatedAt": 1761609600000
@@ -179,14 +151,8 @@
       "website": "https://startupventures.vc",
       "notes": "Lead investor for Series B. Quarterly check-ins scheduled.",
       "starred": true,
-      "tags": [
-        "investor",
-        "vc"
-      ],
-      "groupIds": [
-        "g1",
-        "g5"
-      ],
+      "tags": ["investor", "vc"],
+      "groupIds": ["g1", "g5"],
       "customValues": {
         "cf_status": {
           "type": "dropdown",
@@ -221,13 +187,8 @@
       "website": "https://brownassociates.legal",
       "notes": "Corporate counsel for contract reviews and compliance.",
       "starred": false,
-      "tags": [
-        "legal",
-        "professional"
-      ],
-      "groupIds": [
-        "g4"
-      ],
+      "tags": ["legal", "professional"],
+      "groupIds": ["g4"],
       "customValues": {},
       "createdAt": 1753920000000,
       "updatedAt": 1760400000000
@@ -245,14 +206,8 @@
       "website": "https://cloudtech.io",
       "notes": "Technical integration partner. Working on API v2 rollout.",
       "starred": false,
-      "tags": [
-        "technical",
-        "partner"
-      ],
-      "groupIds": [
-        "g2",
-        "g3"
-      ],
+      "tags": ["technical", "partner"],
+      "groupIds": ["g2", "g3"],
       "customValues": {},
       "createdAt": 1759536000000,
       "updatedAt": 1760832000000
@@ -270,13 +225,8 @@
       "website": "https://mediagroup.com",
       "notes": "Handles PR and media relations for product launches.",
       "starred": false,
-      "tags": [
-        "marketing",
-        "vendor"
-      ],
-      "groupIds": [
-        "g4"
-      ],
+      "tags": ["marketing", "vendor"],
+      "groupIds": ["g4"],
       "customValues": {},
       "createdAt": 1758672000000,
       "updatedAt": 1761004800000
@@ -294,14 +244,8 @@
       "website": "https://financeplus.com",
       "notes": "Financial advisor for Series A. Strong network in fintech.",
       "starred": true,
-      "tags": [
-        "finance",
-        "advisor"
-      ],
-      "groupIds": [
-        "g1",
-        "g5"
-      ],
+      "tags": ["finance", "advisor"],
+      "groupIds": ["g1", "g5"],
       "customValues": {
         "cf_status": {
           "type": "dropdown",
@@ -336,13 +280,8 @@
       "website": "https://hrconnect.io",
       "notes": "Recruitment partner for senior engineering hires.",
       "starred": false,
-      "tags": [
-        "hr",
-        "recruitment"
-      ],
-      "groupIds": [
-        "g4"
-      ],
+      "tags": ["hr", "recruitment"],
+      "groupIds": ["g4"],
       "customValues": {},
       "createdAt": 1757376000000,
       "updatedAt": 1761177600000
@@ -360,13 +299,8 @@
       "website": "https://devops.tech",
       "notes": "Infrastructure consultant. Helping with the Kubernetes migration.",
       "starred": false,
-      "tags": [
-        "technical",
-        "devops"
-      ],
-      "groupIds": [
-        "g3"
-      ],
+      "tags": ["technical", "devops"],
+      "groupIds": ["g3"],
       "customValues": {},
       "createdAt": 1756944000000,
       "updatedAt": 1760918400000
@@ -384,15 +318,8 @@
       "website": "https://datainsights.ai",
       "notes": "AI/ML consultant for product features. Expert in LLM fine-tuning.",
       "starred": true,
-      "tags": [
-        "ai",
-        "data",
-        "technical"
-      ],
-      "groupIds": [
-        "g1",
-        "g3"
-      ],
+      "tags": ["ai", "data", "technical"],
+      "groupIds": ["g1", "g3"],
       "customValues": {
         "cf_status": {
           "type": "dropdown",
@@ -404,10 +331,7 @@
         },
         "cf_interests": {
           "type": "multiSelect",
-          "value": [
-            "opt_tech",
-            "opt_news"
-          ]
+          "value": ["opt_tech", "opt_news"]
         },
         "cf_vip": {
           "type": "boolean",
@@ -430,14 +354,8 @@
       "website": "https://securitycore.io",
       "notes": "Security audit partner. Annual SOC 2 reviews.",
       "starred": false,
-      "tags": [
-        "security",
-        "compliance"
-      ],
-      "groupIds": [
-        "g3",
-        "g4"
-      ],
+      "tags": ["security", "compliance"],
+      "groupIds": ["g3", "g4"],
       "customValues": {},
       "createdAt": 1755648000000,
       "updatedAt": 1760659200000
@@ -455,13 +373,8 @@
       "website": "https://productlabs.co",
       "notes": "Joint product roadmap discussions for integrated features.",
       "starred": true,
-      "tags": [
-        "product",
-        "partner"
-      ],
-      "groupIds": [
-        "g2"
-      ],
+      "tags": ["product", "partner"],
+      "groupIds": ["g2"],
       "customValues": {},
       "createdAt": 1760140800000,
       "updatedAt": 1761609600000
@@ -479,13 +392,8 @@
       "website": "https://growthcapital.fund",
       "notes": "Series C lead candidate. Quarterly board observer.",
       "starred": true,
-      "tags": [
-        "investor",
-        "vc"
-      ],
-      "groupIds": [
-        "g5"
-      ],
+      "tags": ["investor", "vc"],
+      "groupIds": ["g5"],
       "customValues": {},
       "createdAt": 1759795200000,
       "updatedAt": 1761436800000
@@ -503,14 +411,8 @@
       "website": "https://example.com/website-a",
       "notes": "Details:\n- sometimes uses website a\n- has nice clothes\n\nStatus: Offers to assist in SQ. (on list)\nUser def.: 9 VOLTS / (X-OE)",
       "starred": true,
-      "tags": [
-        "Former Adv. Grp.",
-        "M0 - VOLT x 2+",
-        "SQ"
-      ],
-      "groupIds": [
-        "g1"
-      ],
+      "tags": ["Former Adv. Grp.", "M0 - VOLT x 2+", "SQ"],
+      "groupIds": ["g1"],
       "customValues": {
         "cf_nickname": {
           "type": "text",
@@ -781,10 +683,7 @@
       "type": "number",
       "description": "Annual budget in USD",
       "isGlobal": false,
-      "groupIds": [
-        "g1",
-        "g5"
-      ]
+      "groupIds": ["g1", "g5"]
     },
     {
       "id": "cf_invest_stage",
@@ -793,9 +692,7 @@
       "type": "dropdown",
       "description": "Preferred funding stage",
       "isGlobal": false,
-      "groupIds": [
-        "g5"
-      ],
+      "groupIds": ["g5"],
       "options": [
         {
           "id": "opt_stage_seed",
@@ -870,13 +767,7 @@
       "name": "Holiday Cards 2025",
       "description": "Send custom holiday cards to these contacts",
       "type": "manual",
-      "contactIds": [
-        "c1",
-        "c2",
-        "c4",
-        "c9",
-        "c14"
-      ],
+      "contactIds": ["c1", "c2", "c4", "c9", "c14"],
       "createdAt": 1759104000000,
       "updatedAt": 1761091200000
     },
@@ -885,16 +776,7 @@
       "name": "Newsletter Q4",
       "description": "Recipients of the Q4 product newsletter",
       "type": "manual",
-      "contactIds": [
-        "c1",
-        "c2",
-        "c5",
-        "c7",
-        "c9",
-        "c12",
-        "c14",
-        "c15"
-      ],
+      "contactIds": ["c1", "c2", "c5", "c7", "c9", "c12", "c14", "c15"],
       "createdAt": 1759968000000,
       "updatedAt": 1761436800000
     },
@@ -903,12 +785,7 @@
       "name": "Board Meeting Attendees",
       "description": "Quarterly board meeting roster",
       "type": "manual",
-      "contactIds": [
-        "c2",
-        "c5",
-        "c9",
-        "c15"
-      ],
+      "contactIds": ["c2", "c5", "c9", "c15"],
       "createdAt": 1760832000000,
       "updatedAt": 1761523200000
     },
@@ -1036,11 +913,7 @@
       "date": "2024-06-15",
       "location": "Countryside retreat house",
       "notes": "Past annual retreat. One participant overpaid, creating credit for later.",
-      "contactIds": [
-        "c2",
-        "c7",
-        "c16"
-      ],
+      "contactIds": ["c2", "c7", "c16"],
       "createdAt": 1718496000000,
       "updatedAt": 1719360000000
     },
@@ -1051,11 +924,7 @@
       "date": "2025-06-14",
       "location": "Countryside retreat house",
       "notes": "Past yearly occurrence with a static participant roster.",
-      "contactIds": [
-        "c1",
-        "c2",
-        "c16"
-      ],
+      "contactIds": ["c1", "c2", "c16"],
       "createdAt": 1746144000000,
       "updatedAt": 1747008000000
     },
@@ -1066,12 +935,7 @@
       "date": "2026-06-14",
       "location": "Countryside retreat house",
       "notes": "Upcoming retreat. Mara has two payments recorded and still owes a balance.",
-      "contactIds": [
-        "c1",
-        "c2",
-        "c7",
-        "c16"
-      ],
+      "contactIds": ["c1", "c2", "c7", "c16"],
       "createdAt": 1760659200000,
       "updatedAt": 1760659200000
     },
@@ -1082,10 +946,7 @@
       "date": "2026-04-18",
       "location": "Berlin studio",
       "notes": "One-off event with settled and discounted participants.",
-      "contactIds": [
-        "c14",
-        "c16"
-      ],
+      "contactIds": ["c14", "c16"],
       "createdAt": 1759968000000,
       "updatedAt": 1759968000000
     },
@@ -1096,11 +957,7 @@
       "date": "2026-09-12",
       "location": "Community hall",
       "notes": "Future yearly event with one waitlisted participant.",
-      "contactIds": [
-        "c7",
-        "c12",
-        "c16"
-      ],
+      "contactIds": ["c7", "c12", "c16"],
       "createdAt": 1760140800000,
       "updatedAt": 1760140800000
     }

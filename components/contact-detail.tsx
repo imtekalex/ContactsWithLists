@@ -1,27 +1,12 @@
-"use client"
+'use client';
 
-import { useEffect, useId, useRef, useState } from "react"
-import {
-  CalendarDays,
-  FileText,
-  Globe,
-  Mail,
-  MapPin,
-  Minus,
-  Phone,
-  Plus,
-  Star,
-  SlidersHorizontal,
-  Trash2,
-  UserRound,
-  Users,
-  X,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { cn } from "@/lib/utils"
+import { useEffect, useId, useRef, useState } from 'react';
+import { Minus, Plus, Star, Trash2, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
 import type {
   Contact,
   ContactAddress,
@@ -34,35 +19,39 @@ import type {
   EventParticipation,
   EventSeries,
   Group,
-} from "@/lib/contacts-data"
-import { ContactCustomFields, hasCustomValuesToShow } from "@/components/contact-custom-fields"
-import { ContactPhotoPicker } from "@/components/contact-avatar"
+} from '@/lib/contacts-data';
+import { ContactCustomFields, hasCustomValuesToShow } from '@/components/contact-custom-fields';
+import { ContactPhotoPicker } from '@/components/contact-avatar';
 import {
   ParticipationSection,
   type CreateParticipationInput,
   type CreatePaymentInput,
   type UpdatePaymentInput,
-} from "@/components/participation-section"
+} from '@/components/participation-section';
 
-type ColorClass = { dot: string; bg: string; text: string; ring: string }
+type ColorClass = { dot: string; bg: string; text: string; ring: string };
 
 interface Props {
-  contact: Contact
-  groups: Group[]
-  groupColorClasses: Record<Group["color"], ColorClass>
-  customFields: CustomField[]
-  eventSeries: EventSeries[]
-  eventOccurrences: EventOccurrence[]
-  participations: EventParticipation[]
-  onUpdate: (contact: Contact) => void
-  onDelete: (id: string) => void
-  onToggleStar: (id: string) => void
-  onCreateParticipation: (input: CreateParticipationInput) => void
-  onAddPayment: (participationId: string, payment: CreatePaymentInput) => void
-  onUpdatePayment: (participationId: string, paymentId: string, payment: UpdatePaymentInput) => void
-  onDeleteParticipation: (participationId: string) => void
-  onDeletePayment: (participationId: string, paymentId: string) => void
-  onSelectEventPayments: (occurrenceId: string) => void
+  contact: Contact;
+  groups: Group[];
+  groupColorClasses: Record<Group['color'], ColorClass>;
+  customFields: CustomField[];
+  eventSeries: EventSeries[];
+  eventOccurrences: EventOccurrence[];
+  participations: EventParticipation[];
+  onUpdate: (contact: Contact) => void;
+  onDelete: (id: string) => void;
+  onToggleStar: (id: string) => void;
+  onCreateParticipation: (input: CreateParticipationInput) => void;
+  onAddPayment: (participationId: string, payment: CreatePaymentInput) => void;
+  onUpdatePayment: (
+    participationId: string,
+    paymentId: string,
+    payment: UpdatePaymentInput
+  ) => void;
+  onDeleteParticipation: (participationId: string) => void;
+  onDeletePayment: (participationId: string, paymentId: string) => void;
+  onSelectEventPayments: (occurrenceId: string) => void;
 }
 
 export function ContactDetail({
@@ -83,50 +72,49 @@ export function ContactDetail({
   onDeletePayment,
   onSelectEventPayments,
 }: Props) {
-  const [draft, setDraft] = useState<Contact>(() => ensureEditableContact(contact))
-  const [dirty, setDirty] = useState(false)
-  const [showCustomFields, setShowCustomFields] = useState(false)
-  const [showAllNameFields, setShowAllNameFields] = useState(false)
+  const [draft, setDraft] = useState<Contact>(() => ensureEditableContact(contact));
+  const [dirty, setDirty] = useState(false);
+  const [showCustomFields, setShowCustomFields] = useState(false);
+  const [showAllNameFields, setShowAllNameFields] = useState(false);
 
   useEffect(() => {
-    setDraft(ensureEditableContact(contact))
-    setDirty(false)
-    setShowCustomFields(false)
-    setShowAllNameFields(false)
-  }, [contact])
+    setDraft(ensureEditableContact(contact));
+    setDirty(false);
+    setShowCustomFields(false);
+    setShowAllNameFields(false);
+  }, [contact]);
 
   function updateDraft(next: Contact) {
-    setDraft(ensureEditableContact(next))
-    setDirty(true)
+    setDraft(ensureEditableContact(next));
+    setDirty(true);
   }
 
   function save() {
-    onUpdate(syncLegacyFields(draft))
-    setDirty(false)
+    onUpdate(syncLegacyFields(draft));
+    setDirty(false);
   }
 
   function cancel() {
-    setDraft(ensureEditableContact(contact))
-    setDirty(false)
+    setDraft(ensureEditableContact(contact));
+    setDirty(false);
   }
 
   function handleCustomChange(fieldId: string, value: CustomFieldValue | undefined) {
-    const next = { ...(draft.customValues ?? {}) }
-    if (value === undefined) delete next[fieldId]
-    else next[fieldId] = value
-    updateDraft({ ...draft, customValues: next })
+    const next = { ...(draft.customValues ?? {}) };
+    if (value === undefined) delete next[fieldId];
+    else next[fieldId] = value;
+    updateDraft({ ...draft, customValues: next });
   }
 
-  const name = displayName(draft)
-  const subtitle = [draft.title, draft.company].filter(Boolean).join(" - ")
+  const name = displayName(draft);
   const lastModifiedLabel = new Date(draft.updatedAt).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  })
-  const labelSuggestions = buildLabelSuggestions(draft)
-  const shouldShowCustomFields = showCustomFields || hasCustomValuesToShow(draft, customFields)
-  const visibleNameFields = getVisibleNameFields(draft, showAllNameFields)
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+  const labelSuggestions = buildLabelSuggestions(draft);
+  const shouldShowCustomFields = showCustomFields || hasCustomValuesToShow(draft, customFields);
+  const visibleNameFields = getVisibleNameFields(draft, showAllNameFields);
 
   return (
     <div className="h-full bg-slate-50/70">
@@ -149,9 +137,14 @@ export function ContactDetail({
                     <button
                       onClick={() => onToggleStar(contact.id)}
                       className="flex-shrink-0 text-muted-foreground transition-colors hover:text-amber-400"
-                      aria-label={contact.starred ? "Unstar contact" : "Star contact"}
+                      aria-label={contact.starred ? 'Unstar contact' : 'Star contact'}
                     >
-                      <Star className={cn("h-5 w-5", contact.starred && "fill-amber-400 text-amber-400")} />
+                      <Star
+                        className={cn(
+                          'h-5 w-5',
+                          contact.starred && 'fill-amber-400 text-amber-400'
+                        )}
+                      />
                     </button>
                   </div>
                 </div>
@@ -177,7 +170,9 @@ export function ContactDetail({
 
             {/* Section 1: Name, Title, Company, Groups */}
             <div className="space-y-1.5 rounded-lg bg-background/50 p-3">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Name & Organization</h3>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Name & Organization
+              </h3>
               <div className="space-y-1">
                 <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
                   {visibleNameFields.map((field) => (
@@ -189,17 +184,33 @@ export function ContactDetail({
                     />
                   ))}
                 </div>
-                <Button type="button" variant="ghost" size="sm" className="h-4 gap-0.5 px-0.5 text-[10px]" onClick={() => setShowAllNameFields((value) => !value)}>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-4 gap-0.5 px-0.5 text-[10px]"
+                  onClick={() => setShowAllNameFields((value) => !value)}
+                >
                   {showAllNameFields ? <Minus className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
-                  <span className="text-[10px]">{showAllNameFields ? "Hide" : "Show"}</span>
+                  <span className="text-[10px]">{showAllNameFields ? 'Hide' : 'Show'}</span>
                 </Button>
                 <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                  <CompactInput label="Title" value={draft.title} onChange={(value) => updateDraft({ ...draft, title: value })} />
-                  <CompactInput label="Company" value={draft.company} onChange={(value) => updateDraft({ ...draft, company: value })} />
+                  <CompactInput
+                    label="Title"
+                    value={draft.title}
+                    onChange={(value) => updateDraft({ ...draft, title: value })}
+                  />
+                  <CompactInput
+                    label="Company"
+                    value={draft.company}
+                    onChange={(value) => updateDraft({ ...draft, company: value })}
+                  />
                 </div>
                 <div className="grid grid-cols-1 gap-2">
                   <div>
-                    <span className="text-xs font-medium uppercase text-muted-foreground">Last Modified</span>
+                    <span className="text-xs font-medium uppercase text-muted-foreground">
+                      Last Modified
+                    </span>
                     <p className="text-sm font-medium">{lastModifiedLabel}</p>
                   </div>
                 </div>
@@ -209,8 +220,8 @@ export function ContactDetail({
                   <p className="text-xs font-medium uppercase text-muted-foreground">Groups</p>
                   <div className="flex flex-wrap gap-1">
                     {groups.map((group) => {
-                      const color = groupColorClasses[group.color]
-                      const active = draft.groupIds.includes(group.id)
+                      const color = groupColorClasses[group.color];
+                      const active = draft.groupIds.includes(group.id);
                       return (
                         <button
                           type="button"
@@ -221,17 +232,24 @@ export function ContactDetail({
                               groupIds: active
                                 ? draft.groupIds.filter((id) => id !== group.id)
                                 : [...draft.groupIds, group.id],
-                            })
+                            });
                           }}
                           className={cn(
-                            "inline-flex h-6 items-center gap-1 rounded-full border px-2 text-xs font-medium transition-colors",
-                            active ? cn(color.bg, color.text, "border-transparent") : "border-border bg-background text-muted-foreground hover:bg-secondary",
+                            'inline-flex h-6 items-center gap-1 rounded-full border px-2 text-xs font-medium transition-colors',
+                            active
+                              ? cn(color.bg, color.text, 'border-transparent')
+                              : 'border-border bg-background text-muted-foreground hover:bg-secondary'
                           )}
                         >
-                          <span className={cn("h-1.5 w-1.5 rounded-full", active ? color.dot : "bg-muted-foreground/50")} />
+                          <span
+                            className={cn(
+                              'h-1.5 w-1.5 rounded-full',
+                              active ? color.dot : 'bg-muted-foreground/50'
+                            )}
+                          />
                           {group.name}
                         </button>
-                      )
+                      );
                     })}
                   </div>
                 </div>
@@ -240,7 +258,9 @@ export function ContactDetail({
 
             {/* Section 2: Phone, Email, Website */}
             <div className="space-y-1.5 rounded-lg bg-background/50 p-3">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Contact Information</h3>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Contact Information
+              </h3>
               <div className="space-y-1.5">
                 <InlineRowsCompact
                   items={draft.phones ?? []}
@@ -271,7 +291,9 @@ export function ContactDetail({
 
             {/* Section 3: Address */}
             <div className="space-y-1.5 rounded-lg bg-background/50 p-3">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Address</h3>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Address
+              </h3>
               <AddressRowsCompact
                 items={draft.addresses ?? []}
                 labelSuggestions={labelSuggestions.address}
@@ -281,7 +303,9 @@ export function ContactDetail({
 
             {/* Section 4: Notes */}
             <div className="space-y-1.5 rounded-lg bg-background/50 p-3">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Notes</h3>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Notes
+              </h3>
               <Textarea
                 value={draft.notes}
                 onChange={(event) => updateDraft({ ...draft, notes: event.target.value })}
@@ -292,13 +316,25 @@ export function ContactDetail({
 
             {/* Custom Fields */}
             <div className="space-y-1.5 rounded-lg bg-background/50 p-3">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Custom Fields</h3>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Custom Fields
+              </h3>
               {shouldShowCustomFields ? (
                 <div className="max-w-[42rem]">
-                  <ContactCustomFields contact={draft} fields={customFields} onChange={handleCustomChange} />
+                  <ContactCustomFields
+                    contact={draft}
+                    fields={customFields}
+                    onChange={handleCustomChange}
+                  />
                 </div>
               ) : (
-                <Button type="button" variant="ghost" size="sm" className="h-4 gap-0.5 px-0.5 text-[10px]" onClick={() => setShowCustomFields(true)}>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-4 gap-0.5 px-0.5 text-[10px]"
+                  onClick={() => setShowCustomFields(true)}
+                >
                   <Plus className="h-3 w-3" />
                   Add custom fields
                 </Button>
@@ -322,7 +358,7 @@ export function ContactDetail({
         />
       </div>
     </div>
-  )
+  );
 }
 
 function InlineRowsCompact({
@@ -333,19 +369,21 @@ function InlineRowsCompact({
   labelSuggestions,
   onChange,
 }: {
-  items: ContactLabeledValue[]
-  valueLabel: string
-  valueType: string
-  addLabel: string
-  labelSuggestions: string[]
-  onChange: (items: ContactLabeledValue[]) => void
+  items: ContactLabeledValue[];
+  valueLabel: string;
+  valueType: string;
+  addLabel: string;
+  labelSuggestions: string[];
+  onChange: (items: ContactLabeledValue[]) => void;
 }) {
-  const rows = items.length > 0 ? items : [newLabeledValue(defaultLabel(addLabel))]
-  const Icon = iconForValueLabel(valueLabel)
+  const rows = items.length > 0 ? items : [newLabeledValue(defaultLabel(addLabel))];
   return (
     <div className="space-y-0.5">
       {rows.map((item, index) => (
-        <div key={item.id} className="grid grid-cols-1 gap-2 md:grid-cols-[7rem_minmax(12rem,1fr)_1.5rem] md:items-center">
+        <div
+          key={item.id}
+          className="grid grid-cols-1 gap-2 md:grid-cols-[7rem_minmax(12rem,1fr)_1.5rem] md:items-center"
+        >
           <LabelInput
             ariaLabel={`${valueLabel} label ${index + 1}`}
             value={item.label}
@@ -362,7 +400,11 @@ function InlineRowsCompact({
             onChange={(value) => onChange(replaceAt(rows, index, { ...item, value }))}
           />
           {rows.length > 1 ? (
-            <IconButton label="Remove" onClick={() => onChange(rows.filter((row) => row.id !== item.id))} className="h-5 w-5">
+            <IconButton
+              label="Remove"
+              onClick={() => onChange(rows.filter((row) => row.id !== item.id))}
+              className="h-5 w-5"
+            >
               <X className="h-3 w-3" />
             </IconButton>
           ) : (
@@ -370,12 +412,17 @@ function InlineRowsCompact({
           )}
         </div>
       ))}
-      <Button type="button" variant="ghost" className="h-4 gap-0.5 px-0.5 text-[10px]" onClick={() => onChange([...rows, newLabeledValue(defaultLabel(addLabel))])}>
+      <Button
+        type="button"
+        variant="ghost"
+        className="h-4 gap-0.5 px-0.5 text-[10px]"
+        onClick={() => onChange([...rows, newLabeledValue(defaultLabel(addLabel))])}
+      >
         <Plus className="h-3 w-3" />
         {addLabel}
       </Button>
     </div>
-  )
+  );
 }
 
 function AddressRowsCompact({
@@ -383,11 +430,11 @@ function AddressRowsCompact({
   labelSuggestions,
   onChange,
 }: {
-  items: ContactAddress[]
-  labelSuggestions: string[]
-  onChange: (items: ContactAddress[]) => void
+  items: ContactAddress[];
+  labelSuggestions: string[];
+  onChange: (items: ContactAddress[]) => void;
 }) {
-  const rows = items.length > 0 ? items : [newAddress()]
+  const rows = items.length > 0 ? items : [newAddress()];
   return (
     <div className="space-y-1.5">
       {rows.map((item, index) => (
@@ -404,11 +451,17 @@ function AddressRowsCompact({
             <CompactInput
               ariaLabel={`Address line 1 ${index + 1}`}
               placeholder="Address line 1"
-              value={item.addressLine1 ?? ""}
-              onChange={(addressLine1) => onChange(replaceAt(rows, index, { ...item, addressLine1 }))}
+              value={item.addressLine1 ?? ''}
+              onChange={(addressLine1) =>
+                onChange(replaceAt(rows, index, { ...item, addressLine1 }))
+              }
             />
             {rows.length > 1 ? (
-              <IconButton label="Remove" onClick={() => onChange(rows.filter((row) => row.id !== item.id))} className="h-5 w-5">
+              <IconButton
+                label="Remove"
+                onClick={() => onChange(rows.filter((row) => row.id !== item.id))}
+                className="h-5 w-5"
+              >
                 <X className="h-3 w-3" />
               </IconButton>
             ) : (
@@ -420,8 +473,10 @@ function AddressRowsCompact({
             <CompactInput
               ariaLabel={`Address line 2 ${index + 1}`}
               placeholder="Address line 2"
-              value={item.addressLine2 ?? ""}
-              onChange={(addressLine2) => onChange(replaceAt(rows, index, { ...item, addressLine2 }))}
+              value={item.addressLine2 ?? ''}
+              onChange={(addressLine2) =>
+                onChange(replaceAt(rows, index, { ...item, addressLine2 }))
+              }
             />
           </div>
           <div className="grid grid-cols-2 gap-2 md:grid-cols-[7rem_minmax(6rem,1fr)_minmax(6rem,1fr)_minmax(6rem,1fr)] md:items-center">
@@ -429,19 +484,19 @@ function AddressRowsCompact({
             <CompactInput
               ariaLabel={`City ${index + 1}`}
               placeholder="City"
-              value={item.city ?? ""}
+              value={item.city ?? ''}
               onChange={(city) => onChange(replaceAt(rows, index, { ...item, city }))}
             />
             <CompactInput
               ariaLabel={`State ${index + 1}`}
               placeholder="State"
-              value={item.state ?? ""}
+              value={item.state ?? ''}
               onChange={(state) => onChange(replaceAt(rows, index, { ...item, state }))}
             />
             <CompactInput
               ariaLabel={`ZIP ${index + 1}`}
               placeholder="ZIP"
-              value={item.zip ?? ""}
+              value={item.zip ?? ''}
               onChange={(zip) => onChange(replaceAt(rows, index, { ...item, zip }))}
             />
           </div>
@@ -450,399 +505,23 @@ function AddressRowsCompact({
             <CompactInput
               ariaLabel={`Country ${index + 1}`}
               placeholder="Country"
-              value={item.country ?? ""}
+              value={item.country ?? ''}
               onChange={(country) => onChange(replaceAt(rows, index, { ...item, country }))}
             />
           </div>
         </div>
       ))}
-      <Button type="button" variant="ghost" className="h-4 gap-0.5 px-0.5 text-[10px]" onClick={() => onChange([...rows, newAddress()])}>
+      <Button
+        type="button"
+        variant="ghost"
+        className="h-4 gap-0.5 px-0.5 text-[10px]"
+        onClick={() => onChange([...rows, newAddress()])}
+      >
         <Plus className="h-3 w-3" />
         Add address
       </Button>
     </div>
-  )
-}
-
-function RecordGroup({ children }: { children: React.ReactNode }) {
-  return <div className="space-y-1.5">{children}</div>
-}
-
-
-function RecordRow({
-  label,
-  labelNode,
-  icon: Icon,
-  iconSpacer = false,
-  children,
-}: {
-  label?: string
-  labelNode?: React.ReactNode
-  icon?: React.ComponentType<{ className?: string }>
-  iconSpacer?: boolean
-  children: React.ReactNode
-}) {
-  return (
-    <div className="grid grid-cols-1 gap-y-1.5 py-1 sm:grid-cols-[1.25rem_7.5rem_minmax(0,1fr)] sm:gap-x-1">
-      <div className="hidden h-7 items-center justify-center self-start text-muted-foreground sm:flex">
-        {Icon ? <Icon className="h-4 w-4" /> : iconSpacer ? <span className="h-4 w-4" aria-hidden="true" /> : null}
-      </div>
-      <div className="min-h-7 self-start pr-3">{labelNode ?? <StaticLabel text={label ?? ""} />}</div>
-      <div className="min-w-0">{children}</div>
-    </div>
-  )
-}
-
-function InlineRows({
-  items,
-  valueLabel,
-  valueType,
-  addLabel,
-  labelSuggestions,
-  onChange,
-}: {
-  items: ContactLabeledValue[]
-  valueLabel: string
-  valueType: string
-  addLabel: string
-  labelSuggestions: string[]
-  onChange: (items: ContactLabeledValue[]) => void
-}) {
-  const rows = items.length > 0 ? items : [newLabeledValue(defaultLabel(addLabel))]
-  const Icon = iconForValueLabel(valueLabel)
-  return (
-    <div className="space-y-1.5">
-      {rows.map((item, index) => (
-        <RecordRow
-          key={item.id}
-          icon={index === 0 ? Icon : undefined}
-          labelNode={
-            <LabelInput
-              ariaLabel={`${valueLabel} label ${index + 1}`}
-              value={item.label}
-              placeholder={valueLabel}
-              suggestions={labelSuggestions}
-              onChange={(label) => onChange(replaceAt(rows, index, { ...item, label }))}
-            />
-          }
-        >
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(12rem,36rem)_2rem] sm:items-center">
-            <CompactInput
-              ariaLabel={`${valueLabel} ${index + 1}`}
-              placeholder={valueLabel}
-              type={valueType}
-              value={item.value}
-              onChange={(value) => onChange(replaceAt(rows, index, { ...item, value }))}
-            />
-            {rows.length > 1 ? (
-              <IconButton label="Remove" onClick={() => onChange(rows.filter((row) => row.id !== item.id))}>
-                <X className="h-4 w-4" />
-              </IconButton>
-            ) : (
-              <ActionSpacer />
-            )}
-          </div>
-        </RecordRow>
-      ))}
-      <RecordRow label="" iconSpacer>
-        <Button type="button" variant="secondary" className="h-7 rounded-full gap-1 px-2 text-xs" onClick={() => onChange([...rows, newLabeledValue(defaultLabel(addLabel))])}>
-          <Plus className="h-4 w-4" />
-          {addLabel}
-        </Button>
-      </RecordRow>
-    </div>
-  )
-}
-
-function AddressRows({
-  items,
-  labelSuggestions,
-  onChange,
-  compact = false,
-}: {
-  items: ContactAddress[]
-  labelSuggestions: string[]
-  onChange: (items: ContactAddress[]) => void
-  compact?: boolean
-}) {
-  const rows = items.length > 0 ? items : [newAddress()]
-  if (compact) {
-    return (
-      <div className="space-y-3">
-        {rows.map((item, index) => (
-          <RecordRow
-            key={item.id}
-            icon={index === 0 ? MapPin : undefined}
-            labelNode={
-              <LabelInput ariaLabel={`Address label ${index + 1}`} value={item.label} placeholder="Address" suggestions={labelSuggestions} onChange={(label) => onChange(replaceAt(rows, index, { ...item, label }))} />
-            }
-          >
-            <div className="space-y-2">
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(14rem,42rem)_2rem] sm:items-center">
-                <CompactInput ariaLabel={`Address line 1 ${index + 1}`} placeholder="Address line 1" value={item.addressLine1 ?? ""} onChange={(addressLine1) => onChange(replaceAt(rows, index, { ...item, addressLine1 }))} />
-                {rows.length > 1 ? (
-                  <IconButton label="Remove" onClick={() => onChange(rows.filter((row) => row.id !== item.id))}>
-                    <X className="h-4 w-4" />
-                  </IconButton>
-                ) : (
-                  <ActionSpacer />
-                )}
-              </div>
-              <div className="max-w-[42rem]">
-                <CompactInput ariaLabel={`Address line 2 ${index + 1}`} placeholder="Address line 2" value={item.addressLine2 ?? ""} onChange={(addressLine2) => onChange(replaceAt(rows, index, { ...item, addressLine2 }))} />
-              </div>
-              <div className="grid max-w-[42rem] grid-cols-1 gap-2 md:grid-cols-[minmax(8rem,1fr)_minmax(7rem,0.8fr)_minmax(8rem,1fr)]">
-                <CompactInput ariaLabel={`City ${index + 1}`} placeholder="City" value={item.city ?? ""} onChange={(city) => onChange(replaceAt(rows, index, { ...item, city }))} />
-                <CompactInput ariaLabel={`State ${index + 1}`} placeholder="State" value={item.state ?? ""} onChange={(state) => onChange(replaceAt(rows, index, { ...item, state }))} />
-                <CompactInput ariaLabel={`ZIP or postal code ${index + 1}`} placeholder="ZIP / postal code" value={item.zip ?? ""} onChange={(zip) => onChange(replaceAt(rows, index, { ...item, zip }))} />
-                <CompactInput ariaLabel={`Country ${index + 1}`} placeholder="Country" value={item.country ?? ""} onChange={(country) => onChange(replaceAt(rows, index, { ...item, country }))} />
-              </div>
-            </div>
-          </RecordRow>
-        ))}
-        <RecordRow label="" iconSpacer>
-          <Button type="button" variant="secondary" className="h-7 rounded-full gap-1 px-2 text-xs" onClick={() => onChange([...rows, newAddress()])}>
-            <Plus className="h-4 w-4" />
-            Add address
-          </Button>
-        </RecordRow>
-      </div>
-    )
-  }
-  return (
-    <div className="space-y-4">
-      {rows.map((item, index) => (
-        <div key={item.id} className="space-y-3">
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(12rem,1fr)_minmax(8rem,0.35fr)_2rem] md:items-end">
-            <FieldInput label={index === 0 ? "Address line 1" : `Address line 1 ${index + 1}`} value={item.addressLine1 ?? ""} onChange={(addressLine1) => onChange(replaceAt(rows, index, { ...item, addressLine1 }))} />
-            <FieldInput label="Label" value={item.label} suggestions={labelSuggestions} onChange={(label) => onChange(replaceAt(rows, index, { ...item, label }))} />
-            {rows.length > 1 && (
-              <IconButton className="md:self-end" label="Remove" onClick={() => onChange(rows.filter((row) => row.id !== item.id))}>
-                <X className="h-4 w-4" />
-              </IconButton>
-            )}
-          </div>
-          <FieldInput label="Address line 2" value={item.addressLine2 ?? ""} onChange={(addressLine2) => onChange(replaceAt(rows, index, { ...item, addressLine2 }))} />
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-            <FieldInput label="City" value={item.city ?? ""} onChange={(city) => onChange(replaceAt(rows, index, { ...item, city }))} />
-            <FieldInput label="State" value={item.state ?? ""} onChange={(state) => onChange(replaceAt(rows, index, { ...item, state }))} />
-            <FieldInput label="ZIP / Postal code" value={item.zip ?? ""} onChange={(zip) => onChange(replaceAt(rows, index, { ...item, zip }))} />
-            <FieldInput label="Country" value={item.country ?? ""} onChange={(country) => onChange(replaceAt(rows, index, { ...item, country }))} />
-          </div>
-        </div>
-      ))}
-      <Button type="button" variant="secondary" className="w-full rounded-full gap-1 px-2 text-xs" onClick={() => onChange([...rows, newAddress()])}>
-        <Plus className="h-4 w-4" />
-        Add address
-      </Button>
-    </div>
-  )
-}
-
-function DateRows({
-  items,
-  labelSuggestions,
-  onChange,
-  compact = false,
-}: {
-  items: ContactDate[]
-  labelSuggestions: string[]
-  onChange: (items: ContactDate[]) => void
-  compact?: boolean
-}) {
-  const rows = items.length > 0 ? items : [newDate()]
-  if (compact) {
-    return (
-      <div className="space-y-3">
-        {rows.map((item, index) => (
-          <RecordRow
-            key={item.id}
-            icon={index === 0 ? CalendarDays : undefined}
-            labelNode={
-              <LabelInput ariaLabel={`Date label ${index + 1}`} value={item.label} placeholder="Date" suggestions={labelSuggestions} onChange={(label) => onChange(replaceAt(rows, index, { ...item, label }))} />
-            }
-          >
-            <DatePartsRow
-              item={item}
-              labelSuggestions={labelSuggestions}
-              onChange={(date) => onChange(replaceAt(rows, index, date))}
-              compact
-              hideLabel
-              trailing={
-                rows.length > 1 ? (
-                  <IconButton label="Remove" onClick={() => onChange(rows.filter((row) => row.id !== item.id))}>
-                    <X className="h-4 w-4" />
-                  </IconButton>
-                ) : (
-                  <ActionSpacer />
-                )
-              }
-            />
-          </RecordRow>
-        ))}
-        <RecordRow label="" iconSpacer>
-          <Button type="button" variant="secondary" className="h-7 rounded-full gap-1 px-2 text-xs" onClick={() => onChange([...rows, newDate()])}>
-            <Plus className="h-4 w-4" />
-            Add significant date
-          </Button>
-        </RecordRow>
-      </div>
-    )
-  }
-  return (
-    <div className="space-y-3">
-      {rows.map((item, index) => (
-        <DatePartsRow
-          key={item.id}
-          item={item}
-          labelSuggestions={labelSuggestions}
-          onChange={(date) => onChange(replaceAt(rows, index, date))}
-          compact={compact}
-          trailing={
-            rows.length > 1 ? (
-              <IconButton className="sm:self-end" label="Remove" onClick={() => onChange(rows.filter((row) => row.id !== item.id))}>
-                <X className="h-4 w-4" />
-              </IconButton>
-            ) : (
-              <span aria-hidden="true" />
-            )
-          }
-        />
-      ))}
-      <Button type="button" variant="secondary" className="w-full rounded-full gap-1 px-2 text-xs" onClick={() => onChange([...rows, newDate()])}>
-        <Plus className="h-4 w-4" />
-        Add significant date
-      </Button>
-    </div>
-  )
-}
-
-function RelatedRows({
-  items,
-  labelSuggestions,
-  onChange,
-  compact = false,
-}: {
-  items: ContactRelatedPerson[]
-  labelSuggestions: string[]
-  onChange: (items: ContactRelatedPerson[]) => void
-  compact?: boolean
-}) {
-  const rows = items.length > 0 ? items : [newRelatedPerson()]
-  if (compact) {
-    return (
-      <div className="space-y-3">
-        {rows.map((item, index) => (
-          <RecordRow
-            key={item.id}
-            icon={index === 0 ? UserRound : undefined}
-            labelNode={
-              <LabelInput ariaLabel={`Relationship ${index + 1}`} value={item.label} placeholder="Relationship" suggestions={labelSuggestions} onChange={(label) => onChange(replaceAt(rows, index, { ...item, label }))} />
-            }
-          >
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(10rem,30rem)_2rem] sm:items-center">
-              <CompactInput ariaLabel={`Related person ${index + 1}`} placeholder="Related person" value={item.name} onChange={(name) => onChange(replaceAt(rows, index, { ...item, name }))} />
-              {rows.length > 1 ? (
-                <IconButton label="Remove" onClick={() => onChange(rows.filter((row) => row.id !== item.id))}>
-                  <X className="h-4 w-4" />
-                </IconButton>
-              ) : (
-                <ActionSpacer />
-              )}
-            </div>
-          </RecordRow>
-        ))}
-        <RecordRow label="" iconSpacer>
-          <Button type="button" variant="secondary" className="h-7 rounded-full gap-1 px-2 text-xs" onClick={() => onChange([...rows, newRelatedPerson()])}>
-            <Plus className="h-4 w-4" />
-            Add related person
-          </Button>
-        </RecordRow>
-      </div>
-    )
-  }
-  return (
-    <div className="space-y-3">
-      {rows.map((item, index) => (
-        <div key={item.id} className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(10rem,1fr)_minmax(8rem,0.45fr)_2rem] sm:items-end">
-          <FieldInput label={index === 0 ? "Related person" : `Related person ${index + 1}`} value={item.name} onChange={(name) => onChange(replaceAt(rows, index, { ...item, name }))} />
-          <FieldInput label="Relationship" value={item.label} suggestions={labelSuggestions} onChange={(label) => onChange(replaceAt(rows, index, { ...item, label }))} />
-          {rows.length > 1 && (
-            <IconButton className="sm:self-end" label="Remove" onClick={() => onChange(rows.filter((row) => row.id !== item.id))}>
-              <X className="h-4 w-4" />
-            </IconButton>
-          )}
-        </div>
-      ))}
-      <Button type="button" variant="secondary" className="w-full rounded-full gap-1 px-2 text-xs" onClick={() => onChange([...rows, newRelatedPerson()])}>
-        <Plus className="h-4 w-4" />
-        Add related person
-      </Button>
-    </div>
-  )
-}
-
-function DatePartsRow({
-  item,
-  onChange,
-  lockedLabel = false,
-  labelSuggestions = [],
-  trailing = <span aria-hidden="true" />,
-  compact = false,
-  hideLabel = false,
-}: {
-  item: ContactDate
-  onChange: (item: ContactDate) => void
-  lockedLabel?: boolean
-  labelSuggestions?: string[]
-  trailing?: React.ReactNode
-  compact?: boolean
-  hideLabel?: boolean
-}) {
-  if (compact) {
-    return (
-      <div className={cn("grid grid-cols-1 gap-2 sm:items-center", hideLabel ? "sm:grid-cols-[4.75rem_4.25rem_7rem_2rem_2rem]" : "sm:grid-cols-[4.75rem_4.25rem_7rem_2rem_minmax(8rem,14rem)_2rem]")}>
-        <CompactInput ariaLabel="Month" placeholder="Month" value={item.month} onChange={(month) => onChange({ ...item, month })} />
-        <CompactInput ariaLabel="Day" placeholder="Day" value={item.day} onChange={(day) => onChange({ ...item, day })} />
-        <CompactInput ariaLabel="Year optional" placeholder="Year (optional)" value={item.year ?? ""} onChange={(year) => onChange({ ...item, year })} />
-        <DatePickerInput
-          value={datePartsToDateInput(item)}
-          onChange={(value) => {
-            if (value) onChange({ ...item, ...dateInputToParts(value) })
-          }}
-        />
-        {!hideLabel && (
-          <CompactInput
-            ariaLabel="Label"
-            value={item.label}
-            suggestions={labelSuggestions}
-            onChange={(label) => {
-              if (!lockedLabel) onChange({ ...item, label })
-            }}
-            disabled={lockedLabel}
-          />
-        )}
-        {trailing}
-      </div>
-    )
-  }
-  return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(4.5rem,0.65fr)_minmax(4.5rem,0.55fr)_minmax(6.5rem,0.85fr)_minmax(8rem,1fr)_2rem] sm:items-end">
-      <FieldInput label="Month" value={item.month} onChange={(month) => onChange({ ...item, month })} />
-      <FieldInput label="Day" value={item.day} onChange={(day) => onChange({ ...item, day })} />
-      <FieldInput label="Year (optional)" value={item.year ?? ""} onChange={(year) => onChange({ ...item, year })} />
-      <FieldInput
-        label="Label"
-        value={item.label}
-        suggestions={labelSuggestions}
-        onChange={(label) => {
-          if (!lockedLabel) onChange({ ...item, label })
-        }}
-        disabled={lockedLabel}
-      />
-      {trailing}
-    </div>
-  )
+  );
 }
 
 function CompactInput({
@@ -851,24 +530,28 @@ function CompactInput({
   placeholder,
   value,
   onChange,
-  type = "text",
+  type = 'text',
   disabled = false,
   suggestions = [],
 }: {
-  label?: string
-  ariaLabel?: string
-  placeholder?: string
-  value: string
-  onChange: (value: string) => void
-  type?: string
-  disabled?: boolean
-  suggestions?: string[]
+  label?: string;
+  ariaLabel?: string;
+  placeholder?: string;
+  value: string;
+  onChange: (value: string) => void;
+  type?: string;
+  disabled?: boolean;
+  suggestions?: string[];
 }) {
-  const generatedListId = useId()
-  const listId = suggestions.length > 0 ? generatedListId : undefined
+  const generatedListId = useId();
+  const listId = suggestions.length > 0 ? generatedListId : undefined;
   return (
     <div className="min-w-0">
-      {label && <Label className="mb-0.5 block text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</Label>}
+      {label && (
+        <Label className="mb-0.5 block text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          {label}
+        </Label>
+      )}
       <Input
         type={type}
         value={value}
@@ -887,20 +570,7 @@ function CompactInput({
         </datalist>
       )}
     </div>
-  )
-}
-
-function DatePickerInput({ value, onChange }: { value: string; onChange: (value: string) => void }) {
-  return (
-    <Input
-      type="date"
-      value={value}
-      aria-label="Pick date"
-      title="Pick date"
-      onChange={(event) => onChange(event.target.value)}
-      className="h-7 w-8 rounded-md border-0 bg-transparent px-1 text-transparent shadow-none [color-scheme:light] hover:bg-secondary/50 focus-visible:bg-background focus-visible:ring-1 focus-visible:ring-ring [&::-webkit-calendar-picker-indicator]:m-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-70"
-    />
-  )
+  );
 }
 
 function LabelInput({
@@ -911,30 +581,32 @@ function LabelInput({
   suggestions = [],
   className,
 }: {
-  ariaLabel: string
-  placeholder?: string
-  value: string
-  onChange: (value: string) => void
-  suggestions?: string[]
-  className?: string
+  ariaLabel: string;
+  placeholder?: string;
+  value: string;
+  onChange: (value: string) => void;
+  suggestions?: string[];
+  className?: string;
 }) {
-  const [open, setOpen] = useState(false)
-  const rootRef = useRef<HTMLDivElement | null>(null)
-  const filteredSuggestions = suggestions.filter((suggestion) => {
-    const current = value.trim().toLowerCase()
-    return suggestion !== value && (!current || suggestion.toLowerCase().includes(current))
-  }).slice(0, 8)
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const filteredSuggestions = suggestions
+    .filter((suggestion) => {
+      const current = value.trim().toLowerCase();
+      return suggestion !== value && (!current || suggestion.toLowerCase().includes(current));
+    })
+    .slice(0, 8);
 
   useEffect(() => {
-    if (!open) return
+    if (!open) return;
 
     function handlePointerDown(event: PointerEvent) {
-      if (!rootRef.current?.contains(event.target as Node)) setOpen(false)
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
     }
 
-    document.addEventListener("pointerdown", handlePointerDown)
-    return () => document.removeEventListener("pointerdown", handlePointerDown)
-  }, [open])
+    document.addEventListener('pointerdown', handlePointerDown);
+    return () => document.removeEventListener('pointerdown', handlePointerDown);
+  }, [open]);
 
   return (
     <div ref={rootRef} className="relative">
@@ -945,11 +617,11 @@ function LabelInput({
         className={className}
         onFocus={() => setOpen(filteredSuggestions.length > 0)}
         onChange={(event) => {
-          onChange(event.target.value)
-          setOpen(true)
+          onChange(event.target.value);
+          setOpen(true);
         }}
         onKeyDown={(event) => {
-          if (event.key === "Escape") setOpen(false)
+          if (event.key === 'Escape') setOpen(false);
         }}
       />
       {open && filteredSuggestions.length > 0 && (
@@ -960,8 +632,8 @@ function LabelInput({
               key={suggestion}
               className="block w-full px-2 py-1.5 text-left text-popover-foreground hover:bg-secondary sm:text-right"
               onClick={() => {
-                onChange(suggestion)
-                setOpen(false)
+                onChange(suggestion);
+                setOpen(false);
               }}
             >
               {suggestion}
@@ -970,298 +642,283 @@ function LabelInput({
         </div>
       )}
     </div>
-  )
-}
-
-function StaticLabel({ text }: { text: string }) {
-  return (
-    <span className={cn(labelControlClassName, "pointer-events-none")}>{text}</span>
-  )
+  );
 }
 
 const labelControlClassName =
-  "ml-auto flex h-7 w-full min-w-0 items-center justify-start rounded-md border-0 bg-transparent px-1 text-left text-sm font-medium text-muted-foreground shadow-none placeholder:text-muted-foreground/45 hover:bg-secondary/50 focus-visible:bg-background focus-visible:ring-1 focus-visible:ring-ring sm:justify-end sm:text-right"
+  'ml-auto flex h-7 w-full min-w-0 items-center justify-start rounded-md border-0 bg-transparent px-1 text-left text-sm font-medium text-muted-foreground shadow-none placeholder:text-muted-foreground/45 hover:bg-secondary/50 focus-visible:bg-background focus-visible:ring-1 focus-visible:ring-ring sm:justify-end sm:text-right';
 
 function LabelControl(props: React.ComponentProps<typeof Input>) {
-  return (
-    <Input
-      {...props}
-      className={cn(
-        labelControlClassName,
-        props.className,
-      )}
-    />
-  )
+  return <Input {...props} className={cn(labelControlClassName, props.className)} />;
 }
 
-function FieldInput({
+function IconButton({
   label,
-  value,
-  onChange,
-  type = "text",
-  disabled = false,
-  suggestions = [],
+  onClick,
+  children,
+  className,
 }: {
-  label: string
-  value: string
-  onChange: (value: string) => void
-  type?: string
-  disabled?: boolean
-  suggestions?: string[]
+  label: string;
+  onClick: () => void;
+  children: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <CompactInput
-      label={label}
-      value={value}
-      onChange={onChange}
-      type={type}
-      disabled={disabled}
-      suggestions={suggestions}
-    />
-  )
-}
-
-function IconButton({ label, onClick, children, className }: { label: string; onClick: () => void; children: React.ReactNode; className?: string }) {
-  return (
-    <Button type="button" variant="ghost" size="icon-sm" onClick={onClick} className={cn("h-7 w-7 self-center text-muted-foreground", className)}>
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon-sm"
+      onClick={onClick}
+      className={cn('h-7 w-7 self-center text-muted-foreground', className)}
+    >
       {children}
       <span className="sr-only">{label}</span>
     </Button>
-  )
-}
-
-function ActionSpacer() {
-  return <span className="hidden h-7 w-7 sm:block" aria-hidden="true" />
+  );
 }
 
 function replaceAt<T>(items: T[], index: number, value: T) {
-  return items.map((item, idx) => (idx === index ? value : item))
+  return items.map((item, idx) => (idx === index ? value : item));
 }
 
 function ensureEditableContact(contact: Contact): Contact {
-  const next = syncLegacyFields(contact)
+  const next = syncLegacyFields(contact);
   return {
     ...next,
-    emails: next.emails && next.emails.length > 0 ? next.emails : [newLabeledValue("Work", next.email)],
-    phones: next.phones && next.phones.length > 0 ? next.phones : [newLabeledValue("Mobile", next.phone)],
-    websites: next.websites && next.websites.length > 0 ? next.websites : [newLabeledValue("Website", next.website)],
+    emails:
+      next.emails && next.emails.length > 0 ? next.emails : [newLabeledValue('Work', next.email)],
+    phones:
+      next.phones && next.phones.length > 0 ? next.phones : [newLabeledValue('Mobile', next.phone)],
+    websites:
+      next.websites && next.websites.length > 0
+        ? next.websites
+        : [newLabeledValue('Website', next.website)],
     addresses: next.addresses && next.addresses.length > 0 ? next.addresses : [newAddress(next)],
-    significantDates: next.significantDates && next.significantDates.length > 0 ? next.significantDates : [newDate()],
-    relatedPeople: next.relatedPeople && next.relatedPeople.length > 0 ? next.relatedPeople : [newRelatedPerson()],
-  }
+    significantDates:
+      next.significantDates && next.significantDates.length > 0
+        ? next.significantDates
+        : [newDate()],
+    relatedPeople:
+      next.relatedPeople && next.relatedPeople.length > 0
+        ? next.relatedPeople
+        : [newRelatedPerson()],
+  };
 }
 
 function syncLegacyFields(contact: Contact): Contact {
-  const emails = contact.emails ?? []
-  const phones = contact.phones ?? []
-  const websites = contact.websites ?? []
-  const addresses = contact.addresses ?? []
-  const significantDates = contact.significantDates ?? []
-  const relatedPeople = contact.relatedPeople ?? []
-  const address = addresses.find(hasAddressValue) ?? addresses[0]
-  const significantDate = significantDates.find(hasDateValue) ?? significantDates[0]
-  const relatedPerson = relatedPeople.find((item) => item.name.trim()) ?? relatedPeople[0]
+  const emails = contact.emails ?? [];
+  const phones = contact.phones ?? [];
+  const websites = contact.websites ?? [];
+  const addresses = contact.addresses ?? [];
+  const significantDates = contact.significantDates ?? [];
+  const relatedPeople = contact.relatedPeople ?? [];
+  const address = addresses.find(hasAddressValue) ?? addresses[0];
+  const significantDate = significantDates.find(hasDateValue) ?? significantDates[0];
+  const relatedPerson = relatedPeople.find((item) => item.name.trim()) ?? relatedPeople[0];
 
   return {
     ...contact,
     emails,
-    email: emails[0]?.value ?? "",
+    email: emails[0]?.value ?? '',
     email2: emails[1]?.value || undefined,
     phones,
-    phone: phones[0]?.value ?? "",
+    phone: phones[0]?.value ?? '',
     phone2: phones[1]?.value || undefined,
     websites,
-    website: websites[0]?.value ?? "",
+    website: websites[0]?.value ?? '',
     addresses,
     addressLine1: address?.addressLine1,
     addressLine2: address?.addressLine2,
-    city: address?.city ?? "",
+    city: address?.city ?? '',
     zip: address?.zip,
-    country: address?.country ?? "",
+    country: address?.country ?? '',
     significantDates,
-    significantDate: significantDate && hasDateValue(significantDate) ? datePartsToString(significantDate) : undefined,
+    significantDate:
+      significantDate && hasDateValue(significantDate)
+        ? datePartsToString(significantDate)
+        : undefined,
     significantDateLabel: significantDate?.label,
     relatedPeople,
     relatedPerson: relatedPerson?.name,
     relationLabel: relatedPerson?.label,
-  }
+  };
 }
 
 function hasAddressValue(item: ContactAddress) {
-  return Boolean(item.addressLine1 || item.addressLine2 || item.city || item.state || item.zip || item.country)
+  return Boolean(
+    item.addressLine1 || item.addressLine2 || item.city || item.state || item.zip || item.country
+  );
 }
 
 function hasDateValue(item: ContactDate) {
-  return Boolean(item.month || item.day || item.year)
+  return Boolean(item.month || item.day || item.year);
 }
 
-function newLabeledValue(label: string, value = ""): ContactLabeledValue {
-  return { id: `value_${Date.now()}_${Math.random().toString(36).slice(2)}`, label, value }
+function newLabeledValue(label: string, value = ''): ContactLabeledValue {
+  return { id: `value_${Date.now()}_${Math.random().toString(36).slice(2)}`, label, value };
 }
 
 function newAddress(contact?: Contact): ContactAddress {
   return {
     id: `address_${Date.now()}_${Math.random().toString(36).slice(2)}`,
-    label: "Home",
-    addressLine1: contact?.addressLine1 ?? "",
-    addressLine2: contact?.addressLine2 ?? "",
-    city: contact?.city ?? "",
-    state: contact?.state ?? "",
-    zip: contact?.zip ?? "",
-    country: contact?.country ?? "",
-  }
+    label: 'Home',
+    addressLine1: contact?.addressLine1 ?? '',
+    addressLine2: contact?.addressLine2 ?? '',
+    city: contact?.city ?? '',
+    state: contact?.state ?? '',
+    zip: contact?.zip ?? '',
+    country: contact?.country ?? '',
+  };
 }
 
 function newDate(): ContactDate {
-  return newDateWithLabel("Anniversary")
+  return newDateWithLabel('Anniversary');
 }
 
 function newDateWithLabel(label: string): ContactDate {
-  return { id: `date_${Date.now()}_${Math.random().toString(36).slice(2)}`, label, month: "", day: "", year: "" }
+  return {
+    id: `date_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+    label,
+    month: '',
+    day: '',
+    year: '',
+  };
 }
 
 function newRelatedPerson(): ContactRelatedPerson {
-  return { id: `related_${Date.now()}_${Math.random().toString(36).slice(2)}`, label: "Spouse", name: "" }
+  return {
+    id: `related_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+    label: 'Spouse',
+    name: '',
+  };
 }
 
 function defaultLabel(addLabel: string) {
-  if (addLabel.includes("email")) return "Work"
-  if (addLabel.includes("phone")) return "Mobile"
-  if (addLabel.includes("website")) return "Website"
-  return ""
-}
-
-function iconForValueLabel(valueLabel: string) {
-  if (valueLabel === "Phone") return Phone
-  if (valueLabel === "Email") return Mail
-  if (valueLabel === "Website") return Globe
-  return undefined
+  if (addLabel.includes('email')) return 'Work';
+  if (addLabel.includes('phone')) return 'Mobile';
+  if (addLabel.includes('website')) return 'Website';
+  return '';
 }
 
 function displayName(contact: Contact) {
-  const parts = [contact.namePrefix, contact.firstName, contact.middleName, contact.lastName, contact.nameSuffix].filter(Boolean)
-  return parts.join(" ") || contact.nickname || "Unnamed contact"
+  const parts = [
+    contact.namePrefix,
+    contact.firstName,
+    contact.middleName,
+    contact.lastName,
+    contact.nameSuffix,
+  ].filter(Boolean);
+  return parts.join(' ') || contact.nickname || 'Unnamed contact';
 }
 
 function datePartsToString(value: ContactDate) {
-  const rawMonth = value.month.trim()
-  const rawDay = value.day.trim()
-  if (!rawMonth || !rawDay) return ""
-  const month = rawMonth.padStart(2, "0")
-  const day = rawDay.padStart(2, "0")
-  return value.year ? `${value.year}-${month}-${day}` : `${month}-${day}`
+  const rawMonth = value.month.trim();
+  const rawDay = value.day.trim();
+  if (!rawMonth || !rawDay) return '';
+  const month = rawMonth.padStart(2, '0');
+  const day = rawDay.padStart(2, '0');
+  return value.year ? `${value.year}-${month}-${day}` : `${month}-${day}`;
 }
 
 function _hasAnyAddress(addresses: ContactAddress[]) {
-  return addresses.some(hasAddressValue)
+  return addresses.some(hasAddressValue);
 }
 
 function _hasAnyRelationship(people: ContactRelatedPerson[]) {
-  return people.some((person) => person.name.trim().length > 0)
+  return people.some((person) => person.name.trim().length > 0);
 }
 
 function getVisibleNameFields(contact: Contact, showAll: boolean) {
-  const fields: Array<{ key: "namePrefix" | "firstName" | "middleName" | "lastName" | "nameSuffix" | "nickname"; label: string; value: string }> = [
-    { key: "namePrefix", label: "Prefix", value: contact.namePrefix ?? "" },
-    { key: "firstName", label: "First name", value: contact.firstName },
-    { key: "middleName", label: "Middle name", value: contact.middleName ?? "" },
-    { key: "lastName", label: "Last name", value: contact.lastName },
-    { key: "nameSuffix", label: "Suffix", value: contact.nameSuffix ?? "" },
-    { key: "nickname", label: "Nickname", value: contact.nickname ?? "" },
-  ]
-  if (showAll) return fields
-  return fields.filter((field) => field.key === "firstName" || field.key === "lastName" || field.value.trim().length > 0)
-}
-
-function datePartsToDateInput(value: ContactDate) {
-  const rawMonth = value.month.trim()
-  const rawDay = value.day.trim()
-  const rawYear = value.year?.trim()
-  if (!rawMonth || !rawDay || !rawYear) return ""
-  return `${rawYear}-${rawMonth.padStart(2, "0")}-${rawDay.padStart(2, "0")}`
-}
-
-function dateInputToParts(value: string) {
-  const [year, month, day] = value.split("-")
-  return { year: year ?? "", month: month ?? "", day: day ?? "" }
+  const fields: Array<{
+    key: 'namePrefix' | 'firstName' | 'middleName' | 'lastName' | 'nameSuffix' | 'nickname';
+    label: string;
+    value: string;
+  }> = [
+    { key: 'namePrefix', label: 'Prefix', value: contact.namePrefix ?? '' },
+    { key: 'firstName', label: 'First name', value: contact.firstName },
+    { key: 'middleName', label: 'Middle name', value: contact.middleName ?? '' },
+    { key: 'lastName', label: 'Last name', value: contact.lastName },
+    { key: 'nameSuffix', label: 'Suffix', value: contact.nameSuffix ?? '' },
+    { key: 'nickname', label: 'Nickname', value: contact.nickname ?? '' },
+  ];
+  if (showAll) return fields;
+  return fields.filter(
+    (field) =>
+      field.key === 'firstName' || field.key === 'lastName' || field.value.trim().length > 0
+  );
 }
 
 function buildLabelSuggestions(contact: Contact) {
   return {
     phone: uniqueStrings([
-      "Mobile",
-      "Work",
-      "Home",
-      "Main",
-      "Office",
-      "Fax",
-      "Other",
+      'Mobile',
+      'Work',
+      'Home',
+      'Main',
+      'Office',
+      'Fax',
+      'Other',
       ...(contact.phones ?? []).map((item) => item.label),
     ]),
     email: uniqueStrings([
-      "Work",
-      "Personal",
-      "Home",
-      "Billing",
-      "School",
-      "Other",
+      'Work',
+      'Personal',
+      'Home',
+      'Billing',
+      'School',
+      'Other',
       ...(contact.emails ?? []).map((item) => item.label),
     ]),
     website: uniqueStrings([
-      "Website",
-      "Portfolio",
-      "LinkedIn",
-      "GitHub",
-      "Company",
-      "Other",
+      'Website',
+      'Portfolio',
+      'LinkedIn',
+      'GitHub',
+      'Company',
+      'Other',
       ...(contact.websites ?? []).map((item) => item.label),
     ]),
     address: uniqueStrings([
-      "Home",
-      "Work",
-      "Billing",
-      "Shipping",
-      "Other",
+      'Home',
+      'Work',
+      'Billing',
+      'Shipping',
+      'Other',
       ...(contact.addresses ?? []).map((item) => item.label),
     ]),
     date: uniqueStrings([
-      "Anniversary",
-      "Birthday",
-      "First met",
-      "Last contacted",
-      "Follow-up",
-      "Work anniversary",
-      "Other",
+      'Anniversary',
+      'Birthday',
+      'First met',
+      'Last contacted',
+      'Follow-up',
+      'Work anniversary',
+      'Other',
       ...(contact.significantDates ?? []).map((item) => item.label),
     ]),
     relationship: uniqueStrings([
-      "Spouse",
-      "Partner",
-      "Family",
-      "Parent",
-      "Child",
-      "Sibling",
-      "Friend",
-      "Manager",
-      "Assistant",
-      "Colleague",
-      "Client",
-      "Vendor",
-      "Referred by",
-      "Emergency contact",
-      "Other",
+      'Spouse',
+      'Partner',
+      'Family',
+      'Parent',
+      'Child',
+      'Sibling',
+      'Friend',
+      'Manager',
+      'Assistant',
+      'Colleague',
+      'Client',
+      'Vendor',
+      'Referred by',
+      'Emergency contact',
+      'Other',
       ...(contact.relatedPeople ?? []).map((item) => item.label),
     ]),
-  }
+  };
 }
 
 function uniqueStrings(items: string[]) {
-  return Array.from(new Set(items.map((item) => item.trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b))
-}
-
-function dateStringToParts(value: string): ContactDate {
-  const parts = value.split("-")
-  if (parts.length === 2) return { ...newDateWithLabel("Birthday"), month: parts[0] ?? "", day: parts[1] ?? "" }
-  const [year, month, day] = parts
-  return { ...newDateWithLabel("Birthday"), month: month ?? "", day: day ?? "", year: year ?? "" }
+  return Array.from(new Set(items.map((item) => item.trim()).filter(Boolean))).sort((a, b) =>
+    a.localeCompare(b)
+  );
 }

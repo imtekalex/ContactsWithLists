@@ -73,8 +73,8 @@ A local-first contact and list manager built with Next.js, React, TypeScript, Ta
 ## Known ambiguous boundaries and risks
 
 - `price` vs `fee` terminology is already mixed in event participation flows.
-- No lint or format gate is configured in the repo.
-- No `.github` CI workflow is present.
+- Lint and format run as blocking quality checks.
+- GitHub Actions runs the repo quality wrapper on pushes to `main`/`master`.
 - Product consistency checks are primarily manual today.
 - `data/local/` is development-only persistence and not a production storage architecture.
 

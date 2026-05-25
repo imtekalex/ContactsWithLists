@@ -2,6 +2,4 @@ node_modules
 .next
 data/local
 public/fonts
-pnpm-lock.yaml
-dist
-**/*.d.ts
+next-env.d.ts

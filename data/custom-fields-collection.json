@@ -109,10 +109,7 @@
     "type": "number",
     "description": "Annual budget in USD",
     "isGlobal": false,
-    "groupIds": [
-      "g1",
-      "g5"
-    ]
+    "groupIds": ["g1", "g5"]
   },
   {
     "id": "cf_invest_stage",
@@ -121,9 +118,7 @@
     "type": "dropdown",
     "description": "Preferred funding stage",
     "isGlobal": false,
-    "groupIds": [
-      "g5"
-    ],
+    "groupIds": ["g5"],
     "options": [
       {
         "id": "opt_stage_seed",

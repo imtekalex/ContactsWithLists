@@ -18,12 +18,13 @@
 
 ## Format/check
 
-- Not configured in this repository.
-- If formatting tooling is added later, update this document and `scripts/check-quality.mjs`.
+- `pnpm lint`
+- `pnpm format`
+- Lint and format are blocking inside `pnpm check-quality`.
 
 ## Security / audit
 
-- `pnpm audit --summary`
+- `pnpm audit`
 
 ## Forbidden-pattern scan
 
@@ -41,8 +42,8 @@
 
 ## CI
 
-- No CI pipeline is currently configured in source control.
-- Add a CI integration when the repository is ready for automated checks.
+- GitHub Actions runs `.github/workflows/check_quality.yml` on pushes to `main`/`master` and by manual dispatch.
+- CI installs dependencies with `pnpm install --frozen-lockfile` and runs `pnpm check-quality`.
 
 ## What to do when a gate is missing
 

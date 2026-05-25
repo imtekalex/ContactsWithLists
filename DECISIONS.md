@@ -11,6 +11,20 @@
 
 ## Initial decisions
 
+- Date: 2026-05-25
+  Decision: Use pnpm overrides to resolve transitive `postcss` and `esbuild` dependencies to patched versions.
+  Context: `pnpm audit` reported vulnerabilities through framework and build-tool dependencies. Direct package updates moved `next`, `recharts`, ESLint, and related tooling to patched/current compatible versions, but `next` still resolved `postcss@8.4.31` and `drizzle-kit` still resolved `esbuild@0.18.20` through `@esbuild-kit` packages.
+  Options considered: Accept audit failures, wait for upstream transitive dependency updates, or use narrow package-manager overrides.
+  Consequences: CI can enforce the security audit now, with a small dependency-resolution override to revisit later.
+  Follow-up: Remove the overrides once upstream packages resolve to patched versions without them.
+
+- Date: 2026-05-25
+  Decision: Treat lint and format checks as blocking quality gates.
+  Context: Existing lint warnings and formatting drift were cleaned up, so keeping these checks non-blocking would allow the same debt to return.
+  Options considered: Keep lint/format advisory only, or fail `pnpm check-quality` when lint or format fails.
+  Consequences: CI will fail on new lint warnings, lint errors, or formatting drift.
+  Follow-up: Keep broad formatting-only commits separate from behavior changes when possible.
+
 - Date: 2026-05-24
   Decision: Add project-local guardrail documentation and quality wrappers without changing product behavior.
   Context: The repository has no lint, format, or product consistency guardrails and uses local JSON persistence in development.

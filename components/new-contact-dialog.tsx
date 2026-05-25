@@ -1,6 +1,6 @@
-"use client"
+'use client';
 
-import { useState } from "react"
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -8,14 +8,14 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Separator } from "@/components/ui/separator"
-import { cn } from "@/lib/utils"
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 import type {
   Contact,
   CurrencyCode,
@@ -26,12 +26,11 @@ import type {
   EventSeries,
   Group,
   ParticipationStatus,
-} from "@/lib/contacts-data"
-import { ContactCustomFields } from "@/components/contact-custom-fields"
-import { ContactPhotoPicker } from "@/components/contact-avatar"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+} from '@/lib/contacts-data';
+import { ContactCustomFields } from '@/components/contact-custom-fields';
+import { ContactPhotoPicker } from '@/components/contact-avatar';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
-  CalendarDays,
   ChevronDown,
   MapPin,
   NotebookText,
@@ -40,100 +39,95 @@ import {
   Trash2,
   UserRound,
   Users,
-} from "lucide-react"
+} from 'lucide-react';
 
-type ColorClass = { dot: string; bg: string; text: string; ring: string }
+type ColorClass = { dot: string; bg: string; text: string; ring: string };
 
-const CUSTOM_PRICE_ID = "__custom__"
+const CUSTOM_PRICE_ID = '__custom__';
 
 interface Props {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  groups: Group[]
-  groupColorClasses: Record<Group["color"], ColorClass>
-  customFields: CustomField[]
-  eventOccurrences?: EventOccurrence[]
-  eventSeries?: EventSeries[]
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  groups: Group[];
+  groupColorClasses: Record<Group['color'], ColorClass>;
+  customFields: CustomField[];
+  eventOccurrences?: EventOccurrence[];
+  eventSeries?: EventSeries[];
   onCreate: (
-    contact: Omit<Contact, "id" | "createdAt" | "updatedAt">,
-    participations: NewContactParticipationInput[],
-  ) => void
+    contact: Omit<Contact, 'id' | 'createdAt' | 'updatedAt'>,
+    participations: NewContactParticipationInput[]
+  ) => void;
 }
 
 const empty = {
-  photoUrl: "",
-  namePrefix: "",
-  firstName: "",
-  middleName: "",
-  lastName: "",
-  nameSuffix: "",
-  nickname: "",
+  photoUrl: '',
+  namePrefix: '',
+  firstName: '',
+  middleName: '',
+  lastName: '',
+  nameSuffix: '',
+  nickname: '',
   // removed: fileAs and phonetic name fields
-  email: "",
-  email2: "",
-  phone: "",
-  phone2: "",
-  company: "",
-  title: "",
+  email: '',
+  email2: '',
+  phone: '',
+  phone2: '',
+  company: '',
+  title: '',
   // removed: department
-  addressLine1: "",
-  addressLine2: "",
-  city: "",
-  state: "",
-  zip: "",
-  country: "",
-  website: "",
-  birthday: "",
-  significantDate: "",
-  significantDateLabel: "",
-  relatedPerson: "",
-  relationLabel: "",
-  notes: "",
+  addressLine1: '',
+  addressLine2: '',
+  city: '',
+  state: '',
+  zip: '',
+  country: '',
+  website: '',
+  birthday: '',
+  significantDate: '',
+  significantDateLabel: '',
+  relatedPerson: '',
+  relationLabel: '',
+  notes: '',
   starred: false,
   tags: [] as string[],
   groupIds: [] as string[],
   customValues: {} as Record<string, CustomFieldValue>,
-}
+};
 
 type ParticipationDraft = {
-  occurrenceId: string
-  status: ParticipationStatus
-  priceOptionId: string
-  amountOwed: string
-  currency: CurrencyCode
-  notes: string
-}
+  occurrenceId: string;
+  status: ParticipationStatus;
+  priceOptionId: string;
+  amountOwed: string;
+  currency: CurrencyCode;
+  notes: string;
+};
 
 type PaymentDraft = {
-  amount: string
-  date: string
-  label: string
-  note: string
-}
+  amount: string;
+  date: string;
+  label: string;
+  note: string;
+};
 
 export type NewContactPaymentInput = {
-  amount: number
-  date?: string
-  label?: string
-  note?: string
-}
+  amount: number;
+  date?: string;
+  label?: string;
+  note?: string;
+};
 
 export type NewContactParticipationInput = {
-  occurrenceId: string
-  status: ParticipationStatus
-  amountOwed: number
-  currency: CurrencyCode
-  notes?: string
-  payments: NewContactPaymentInput[]
-}
+  occurrenceId: string;
+  status: ParticipationStatus;
+  amountOwed: number;
+  currency: CurrencyCode;
+  notes?: string;
+  payments: NewContactPaymentInput[];
+};
 
 function getTodayIso() {
-  return new Date().toISOString().slice(0, 10)
-}
-
-function dateStringToParts(value: string) {
-  const [year, month, day] = value.split("-")
-  return { month: month ?? "", day: day ?? "", year: year || undefined }
+  return new Date().toISOString().slice(0, 10);
 }
 
 export function NewContactDialog({
@@ -146,43 +140,48 @@ export function NewContactDialog({
   eventSeries = [],
   onCreate,
 }: Props) {
-  const [form, setForm] = useState(empty)
-  const [participationDrafts, setParticipationDrafts] = useState<ParticipationDraft[]>([])
-  const [paymentDrafts, setPaymentDrafts] = useState<PaymentDraft[][]>([])
-  const [formMessage, setFormMessage] = useState<string | null>(null)
+  const [form, setForm] = useState(empty);
+  const [participationDrafts, setParticipationDrafts] = useState<ParticipationDraft[]>([]);
+  const [paymentDrafts, setPaymentDrafts] = useState<PaymentDraft[][]>([]);
+  const [formMessage, setFormMessage] = useState<string | null>(null);
 
   function reset() {
-    setForm(empty)
-    setParticipationDrafts([])
-    setPaymentDrafts([])
-    setFormMessage(null)
+    setForm(empty);
+    setParticipationDrafts([]);
+    setPaymentDrafts([]);
+    setFormMessage(null);
   }
 
   function submit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!form.firstName.trim() && !form.lastName.trim()) return
+    e.preventDefault();
+    if (!form.firstName.trim() && !form.lastName.trim()) return;
 
-    const participations = buildParticipationInputs()
-    if (!participations) return
+    const participations = buildParticipationInputs();
+    if (!participations) return;
 
-    const { id: _id, createdAt: _createdAt, updatedAt: _updatedAt, ...contactInput } = formAsContact
-    onCreate(contactInput, participations)
-    reset()
-    onOpenChange(false)
+    const {
+      id: _id,
+      createdAt: _createdAt,
+      updatedAt: _updatedAt,
+      ...contactInput
+    } = formAsContact;
+    onCreate(contactInput, participations);
+    reset();
+    onOpenChange(false);
   }
 
   function toggleGroup(id: string) {
     setForm((f) =>
       f.groupIds.includes(id)
         ? { ...f, groupIds: f.groupIds.filter((g) => g !== id) }
-        : { ...f, groupIds: [...f.groupIds, id] },
-    )
+        : { ...f, groupIds: [...f.groupIds, id] }
+    );
   }
 
   // Build a Contact-shaped object so ContactCustomFields can determine
   // visibility and orphan handling using the same rules as the detail view.
   const formAsContact: Contact = {
-    id: "__new__",
+    id: '__new__',
     photoUrl: form.photoUrl || undefined,
     namePrefix: form.namePrefix || undefined,
     firstName: form.firstName,
@@ -194,14 +193,14 @@ export function NewContactDialog({
     email: form.email,
     email2: form.email2 || undefined,
     emails: [
-      { id: "email_primary", label: "Work", value: form.email },
-      { id: "email_secondary", label: "Private", value: form.email2 },
+      { id: 'email_primary', label: 'Work', value: form.email },
+      { id: 'email_secondary', label: 'Private', value: form.email2 },
     ].filter((item) => item.value.trim()),
     phone: form.phone,
     phone2: form.phone2 || undefined,
     phones: [
-      { id: "phone_primary", label: "Mobile", value: form.phone },
-      { id: "phone_secondary", label: "Work", value: form.phone2 },
+      { id: 'phone_primary', label: 'Mobile', value: form.phone },
+      { id: 'phone_secondary', label: 'Work', value: form.phone2 },
     ].filter((item) => item.value.trim()),
     company: form.company,
     title: form.title,
@@ -216,8 +215,8 @@ export function NewContactDialog({
       form.addressLine1 || form.addressLine2 || form.city || form.state || form.zip || form.country
         ? [
             {
-              id: "address_primary",
-              label: "Home",
+              id: 'address_primary',
+              label: 'Home',
               addressLine1: form.addressLine1 || undefined,
               addressLine2: form.addressLine2 || undefined,
               city: form.city || undefined,
@@ -228,7 +227,9 @@ export function NewContactDialog({
           ]
         : [],
     website: form.website,
-    websites: form.website ? [{ id: "website_primary", label: "Website", value: form.website }] : [],
+    websites: form.website
+      ? [{ id: 'website_primary', label: 'Website', value: form.website }]
+      : [],
     // dates & relationships removed
     notes: form.notes,
     starred: form.starred,
@@ -237,182 +238,188 @@ export function NewContactDialog({
     customValues: form.customValues,
     createdAt: 0,
     updatedAt: 0,
-  }
+  };
 
   function addParticipation() {
     const newParticipation: ParticipationDraft = {
-      occurrenceId: "",
-      status: "registered",
-      priceOptionId: "",
-      amountOwed: "",
-      currency: "EUR",
-      notes: "",
-    }
-    setParticipationDrafts([...participationDrafts, newParticipation])
-    setPaymentDrafts([...paymentDrafts, []])
-    setFormMessage(null)
+      occurrenceId: '',
+      status: 'registered',
+      priceOptionId: '',
+      amountOwed: '',
+      currency: 'EUR',
+      notes: '',
+    };
+    setParticipationDrafts([...participationDrafts, newParticipation]);
+    setPaymentDrafts([...paymentDrafts, []]);
+    setFormMessage(null);
   }
 
   function removeParticipation(idx: number) {
-    setParticipationDrafts(participationDrafts.filter((_, i) => i !== idx))
-    setPaymentDrafts(paymentDrafts.filter((_, i) => i !== idx))
-    setFormMessage(null)
+    setParticipationDrafts(participationDrafts.filter((_, i) => i !== idx));
+    setPaymentDrafts(paymentDrafts.filter((_, i) => i !== idx));
+    setFormMessage(null);
   }
 
   function updateParticipation(idx: number, updates: Partial<ParticipationDraft>) {
-    const newDrafts = [...participationDrafts]
-    newDrafts[idx] = { ...newDrafts[idx], ...updates }
-    setParticipationDrafts(newDrafts)
-    setFormMessage(null)
+    const newDrafts = [...participationDrafts];
+    newDrafts[idx] = { ...newDrafts[idx], ...updates };
+    setParticipationDrafts(newDrafts);
+    setFormMessage(null);
   }
 
   function addPayment(participationIdx: number) {
     const newPayment: PaymentDraft = {
-      amount: "",
+      amount: '',
       date: getTodayIso(),
-      label: "",
-      note: "",
-    }
+      label: '',
+      note: '',
+    };
     setPaymentDrafts(
       paymentDrafts.map((payments, idx) =>
-        idx === participationIdx ? [...payments, newPayment] : payments,
-      ),
-    )
-    setFormMessage(null)
+        idx === participationIdx ? [...payments, newPayment] : payments
+      )
+    );
+    setFormMessage(null);
   }
 
-  function updatePayment(participationIdx: number, paymentIdx: number, updates: Partial<PaymentDraft>) {
+  function updatePayment(
+    participationIdx: number,
+    paymentIdx: number,
+    updates: Partial<PaymentDraft>
+  ) {
     setPaymentDrafts(
       paymentDrafts.map((payments, idx) => {
-        if (idx !== participationIdx) return payments
+        if (idx !== participationIdx) return payments;
         return payments.map((payment, pidx) =>
-          pidx === paymentIdx ? { ...payment, ...updates } : payment,
-        )
-      }),
-    )
-    setFormMessage(null)
+          pidx === paymentIdx ? { ...payment, ...updates } : payment
+        );
+      })
+    );
+    setFormMessage(null);
   }
 
   function removePayment(participationIdx: number, paymentIdx: number) {
     setPaymentDrafts(
       paymentDrafts.map((payments, idx) =>
-        idx === participationIdx ? payments.filter((_, i) => i !== paymentIdx) : payments,
-      ),
-    )
-    setFormMessage(null)
+        idx === participationIdx ? payments.filter((_, i) => i !== paymentIdx) : payments
+      )
+    );
+    setFormMessage(null);
   }
 
   function getOccurrenceName(occurrenceId: string): string {
-    const occ = eventOccurrences.find(o => o.id === occurrenceId)
-    if (!occ) return "Unknown"
-    return `${occ.name}${occ.date ? ` (${occ.date})` : ""}`
+    const occ = eventOccurrences.find((o) => o.id === occurrenceId);
+    if (!occ) return 'Unknown';
+    return `${occ.name}${occ.date ? ` (${occ.date})` : ''}`;
   }
 
   function getSeriesForOccurrence(occurrenceId: string) {
-    const occ = eventOccurrences.find(o => o.id === occurrenceId)
-    return occ ? eventSeries.find(s => s.id === occ.seriesId) : undefined
+    const occ = eventOccurrences.find((o) => o.id === occurrenceId);
+    return occ ? eventSeries.find((s) => s.id === occ.seriesId) : undefined;
   }
 
   function getPriceOptionsForOccurrence(occurrenceId: string): EventPriceOption[] {
-    const series = getSeriesForOccurrence(occurrenceId)
-    if (!series) return []
-    if (series.priceOptions && series.priceOptions.length > 0) return series.priceOptions
-    if (series.defaultAmountOwed === undefined) return []
+    const series = getSeriesForOccurrence(occurrenceId);
+    if (!series) return [];
+    if (series.priceOptions && series.priceOptions.length > 0) return series.priceOptions;
+    if (series.defaultAmountOwed === undefined) return [];
     return [
       {
         id: series.defaultPriceOptionId ?? `price_${series.id}_standard`,
-        label: "Standard",
+        label: 'Standard',
         amount: series.defaultAmountOwed,
         currency: series.defaultCurrency,
       },
-    ]
+    ];
   }
 
   function getDefaultPriceOption(occurrenceId: string) {
-    const series = getSeriesForOccurrence(occurrenceId)
-    const options = getPriceOptionsForOccurrence(occurrenceId)
-    return options.find((option) => option.id === series?.defaultPriceOptionId) ?? options[0]
+    const series = getSeriesForOccurrence(occurrenceId);
+    const options = getPriceOptionsForOccurrence(occurrenceId);
+    return options.find((option) => option.id === series?.defaultPriceOptionId) ?? options[0];
   }
 
   function updateParticipationEvent(idx: number, occurrenceId: string) {
     if (!occurrenceId) {
       updateParticipation(idx, {
-        occurrenceId: "",
-        priceOptionId: "",
-        amountOwed: "",
-        currency: "EUR",
-      })
-      return
+        occurrenceId: '',
+        priceOptionId: '',
+        amountOwed: '',
+        currency: 'EUR',
+      });
+      return;
     }
 
-    const series = getSeriesForOccurrence(occurrenceId)
-    const defaultPrice = getDefaultPriceOption(occurrenceId)
+    const series = getSeriesForOccurrence(occurrenceId);
+    const defaultPrice = getDefaultPriceOption(occurrenceId);
     updateParticipation(idx, {
       occurrenceId,
       priceOptionId: defaultPrice?.id ?? CUSTOM_PRICE_ID,
-      amountOwed: defaultPrice ? String(defaultPrice.amount) : "",
-      currency: defaultPrice?.currency ?? series?.defaultCurrency ?? "EUR",
-    })
+      amountOwed: defaultPrice ? String(defaultPrice.amount) : '',
+      currency: defaultPrice?.currency ?? series?.defaultCurrency ?? 'EUR',
+    });
   }
 
   function updateParticipationPriceChoice(idx: number, priceOptionId: string) {
-    const participation = participationDrafts[idx]
-    if (!participation) return
+    const participation = participationDrafts[idx];
+    if (!participation) return;
     if (priceOptionId === CUSTOM_PRICE_ID) {
-      updateParticipation(idx, { priceOptionId: CUSTOM_PRICE_ID })
-      return
+      updateParticipation(idx, { priceOptionId: CUSTOM_PRICE_ID });
+      return;
     }
 
     const price = getPriceOptionsForOccurrence(participation.occurrenceId).find(
-      (option) => option.id === priceOptionId,
-    )
-    if (!price) return
+      (option) => option.id === priceOptionId
+    );
+    if (!price) return;
     updateParticipation(idx, {
       priceOptionId: price.id,
       amountOwed: String(price.amount),
       currency: price.currency,
-    })
+    });
   }
 
   function getPriceOptionLabel(price: EventPriceOption) {
-    return `${price.label} - ${price.amount} ${price.currency}`
+    return `${price.label} - ${price.amount} ${price.currency}`;
   }
 
   function buildParticipationInputs(): NewContactParticipationInput[] | null {
-    const seenOccurrenceIds = new Set<string>()
-    const inputs: NewContactParticipationInput[] = []
+    const seenOccurrenceIds = new Set<string>();
+    const inputs: NewContactParticipationInput[] = [];
 
     for (const [idx, draft] of participationDrafts.entries()) {
       if (!draft.occurrenceId) {
-        setFormMessage(`Choose an event for participation ${idx + 1}.`)
-        return null
+        setFormMessage(`Choose an event for participation ${idx + 1}.`);
+        return null;
       }
       if (seenOccurrenceIds.has(draft.occurrenceId)) {
-        setFormMessage(`Participation ${idx + 1} uses an event that is already selected.`)
-        return null
+        setFormMessage(`Participation ${idx + 1} uses an event that is already selected.`);
+        return null;
       }
-      seenOccurrenceIds.add(draft.occurrenceId)
+      seenOccurrenceIds.add(draft.occurrenceId);
 
-      const amountOwed = Number(draft.amountOwed)
+      const amountOwed = Number(draft.amountOwed);
       if (!Number.isFinite(amountOwed) || amountOwed < 0) {
-        setFormMessage(`Enter a valid price for participation ${idx + 1}.`)
-        return null
+        setFormMessage(`Enter a valid price for participation ${idx + 1}.`);
+        return null;
       }
 
-      const payments: NewContactPaymentInput[] = []
+      const payments: NewContactPaymentInput[] = [];
       for (const [paymentIdx, paymentDraft] of (paymentDrafts[idx] ?? []).entries()) {
         const hasPaymentData = Boolean(
           paymentDraft.amount.trim() ||
-            paymentDraft.date.trim() ||
-            paymentDraft.label.trim() ||
-            paymentDraft.note.trim(),
-        )
-        if (!hasPaymentData) continue
+          paymentDraft.date.trim() ||
+          paymentDraft.label.trim() ||
+          paymentDraft.note.trim()
+        );
+        if (!hasPaymentData) continue;
 
-        const amount = Number(paymentDraft.amount)
+        const amount = Number(paymentDraft.amount);
         if (!Number.isFinite(amount) || amount <= 0) {
-          setFormMessage(`Enter a valid payment amount for payment ${paymentIdx + 1} in participation ${idx + 1}.`)
-          return null
+          setFormMessage(
+            `Enter a valid payment amount for payment ${paymentIdx + 1} in participation ${idx + 1}.`
+          );
+          return null;
         }
 
         payments.push({
@@ -420,7 +427,7 @@ export function NewContactDialog({
           date: paymentDraft.date || undefined,
           label: paymentDraft.label.trim() || undefined,
           note: paymentDraft.note.trim() || undefined,
-        })
+        });
       }
 
       inputs.push({
@@ -430,19 +437,19 @@ export function NewContactDialog({
         currency: draft.currency,
         notes: draft.notes.trim() || undefined,
         payments,
-      })
+      });
     }
 
-    setFormMessage(null)
-    return inputs
+    setFormMessage(null);
+    return inputs;
   }
 
   return (
     <Dialog
       open={open}
       onOpenChange={(o) => {
-        onOpenChange(o)
-        if (!o) reset()
+        onOpenChange(o);
+        if (!o) reset();
       }}
     >
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -458,7 +465,7 @@ export function NewContactDialog({
                 firstName={form.firstName}
                 lastName={form.lastName}
                 photoUrl={form.photoUrl || undefined}
-                onChange={(photoUrl) => setForm({ ...form, photoUrl: photoUrl ?? "" })}
+                onChange={(photoUrl) => setForm({ ...form, photoUrl: photoUrl ?? '' })}
               />
             </div>
 
@@ -544,9 +551,7 @@ export function NewContactDialog({
                         className="mt-1.5"
                       />
                     </div>
-                    <div className="sm:col-span-2">
-                      {/* File as removed per request */}
-                    </div>
+                    <div className="sm:col-span-2">{/* File as removed per request */}</div>
                     {/* Phonetic name fields removed per request */}
                   </div>
                 </section>
@@ -763,30 +768,30 @@ export function NewContactDialog({
                   </h3>
                   <div className="flex flex-wrap gap-2">
                     {groups.map((g) => {
-                      const c = groupColorClasses[g.color]
-                      const active = form.groupIds.includes(g.id)
+                      const c = groupColorClasses[g.color];
+                      const active = form.groupIds.includes(g.id);
                       return (
                         <button
                           key={g.id}
                           type="button"
                           onClick={() => toggleGroup(g.id)}
                           className={cn(
-                            "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors",
+                            'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors',
                             active
-                              ? cn(c.bg, c.text, "border-transparent")
-                              : "border-border text-muted-foreground hover:bg-secondary",
+                              ? cn(c.bg, c.text, 'border-transparent')
+                              : 'border-border text-muted-foreground hover:bg-secondary'
                           )}
                         >
-                          <span className={cn("w-1.5 h-1.5 rounded-full", c.dot)} />
+                          <span className={cn('w-1.5 h-1.5 rounded-full', c.dot)} />
                           {g.name}
                         </button>
-                      )
+                      );
                     })}
                   </div>
                   {customFields.some((f) => !f.isGlobal) && (
                     <p className="text-xs text-muted-foreground mt-2">
-                      Some custom fields are scoped to specific groups and will appear
-                      below once you select the matching group.
+                      Some custom fields are scoped to specific groups and will appear below once
+                      you select the matching group.
                     </p>
                   )}
                   <div className="mt-3 flex items-center gap-2">
@@ -813,11 +818,11 @@ export function NewContactDialog({
                         fields={customFields}
                         onChange={(fieldId, value) => {
                           setForm((prev) => {
-                            const next = { ...prev.customValues }
-                            if (value === undefined) delete next[fieldId]
-                            else next[fieldId] = value
-                            return { ...prev, customValues: next }
-                          })
+                            const next = { ...prev.customValues };
+                            if (value === undefined) delete next[fieldId];
+                            else next[fieldId] = value;
+                            return { ...prev, customValues: next };
+                          });
                         }}
                       />
                     </div>
@@ -832,7 +837,8 @@ export function NewContactDialog({
                 <CollapsibleTrigger className="flex items-center justify-between w-full p-3 hover:bg-secondary/50 rounded-lg transition-colors">
                   <span className="flex items-center gap-3 text-sm font-semibold text-foreground">
                     <Users className="w-4 h-4 text-muted-foreground" />
-                    Participation & events {participationDrafts.length > 0 && `(${participationDrafts.length})`}
+                    Participation & events{' '}
+                    {participationDrafts.length > 0 && `(${participationDrafts.length})`}
                   </span>
                   <ChevronDown className="w-4 h-4 text-muted-foreground" />
                 </CollapsibleTrigger>
@@ -840,7 +846,9 @@ export function NewContactDialog({
                   {participationDrafts.map((p, idx) => (
                     <div key={idx} className="p-3 border border-border rounded-lg space-y-3">
                       <div className="flex items-center justify-between">
-                        <div className="text-xs font-semibold text-muted-foreground">Participation {idx + 1}</div>
+                        <div className="text-xs font-semibold text-muted-foreground">
+                          Participation {idx + 1}
+                        </div>
                         <button
                           type="button"
                           onClick={() => removeParticipation(idx)}
@@ -876,7 +884,11 @@ export function NewContactDialog({
                           <select
                             id={`status-${idx}`}
                             value={p.status}
-                            onChange={(e) => updateParticipation(idx, { status: e.target.value as ParticipationStatus })}
+                            onChange={(e) =>
+                              updateParticipation(idx, {
+                                status: e.target.value as ParticipationStatus,
+                              })
+                            }
                             className="w-full mt-1.5 px-2 py-1.5 rounded border border-border bg-background text-sm"
                           >
                             <option value="invited">Invited</option>
@@ -965,7 +977,9 @@ export function NewContactDialog({
                       {/* Payments for this participation */}
                       {(paymentDrafts[idx] || []).length > 0 && (
                         <div className="pt-2 border-t border-border space-y-2">
-                          <div className="text-xs font-semibold text-muted-foreground">Payments ({paymentDrafts[idx]?.length || 0})</div>
+                          <div className="text-xs font-semibold text-muted-foreground">
+                            Payments ({paymentDrafts[idx]?.length || 0})
+                          </div>
                           {(paymentDrafts[idx] || []).map((payment, pidx) => (
                             <div key={pidx} className="p-2 bg-secondary/30 rounded space-y-2">
                               <div className="grid grid-cols-3 gap-2">
@@ -979,7 +993,9 @@ export function NewContactDialog({
                                     step="0.01"
                                     min="0"
                                     value={payment.amount}
-                                    onChange={(e) => updatePayment(idx, pidx, { amount: e.target.value })}
+                                    onChange={(e) =>
+                                      updatePayment(idx, pidx, { amount: e.target.value })
+                                    }
                                     className="mt-1 text-xs h-8"
                                   />
                                 </div>
@@ -991,7 +1007,9 @@ export function NewContactDialog({
                                     id={`pay-date-${idx}-${pidx}`}
                                     type="date"
                                     value={payment.date}
-                                    onChange={(e) => updatePayment(idx, pidx, { date: e.target.value })}
+                                    onChange={(e) =>
+                                      updatePayment(idx, pidx, { date: e.target.value })
+                                    }
                                     className="mt-1 text-xs h-8"
                                   />
                                 </div>
@@ -1003,7 +1021,9 @@ export function NewContactDialog({
                                     <Input
                                       id={`pay-label-${idx}-${pidx}`}
                                       value={payment.label}
-                                      onChange={(e) => updatePayment(idx, pidx, { label: e.target.value })}
+                                      onChange={(e) =>
+                                        updatePayment(idx, pidx, { label: e.target.value })
+                                      }
                                       className="mt-1 text-xs h-8"
                                       placeholder="e.g., Down payment"
                                     />
@@ -1024,7 +1044,9 @@ export function NewContactDialog({
                                 <Input
                                   id={`pay-note-${idx}-${pidx}`}
                                   value={payment.note}
-                                  onChange={(e) => updatePayment(idx, pidx, { note: e.target.value })}
+                                  onChange={(e) =>
+                                    updatePayment(idx, pidx, { note: e.target.value })
+                                  }
                                   className="mt-1 text-xs h-8"
                                 />
                               </div>
@@ -1053,9 +1075,7 @@ export function NewContactDialog({
                   >
                     <Plus className="w-4 h-4" /> Add Event
                   </Button>
-                  {formMessage && (
-                    <p className="text-xs text-destructive">{formMessage}</p>
-                  )}
+                  {formMessage && <p className="text-xs text-destructive">{formMessage}</p>}
                 </CollapsibleContent>
               </Collapsible>
             )}
@@ -1070,5 +1090,5 @@ export function NewContactDialog({
         </form>
       </DialogContent>
     </Dialog>
-  )
-  }
+  );
+}

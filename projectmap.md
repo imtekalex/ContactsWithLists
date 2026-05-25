@@ -77,6 +77,7 @@ A local-first contact manager with reusable lists, custom fields, events, and pa
 - `pnpm test`
 - `pnpm check-quality`
 - `pnpm check-forbidden-patterns`
+- `pnpm audit`
 
 ## Files/folders to avoid mass-editing
 

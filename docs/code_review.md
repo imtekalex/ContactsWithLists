@@ -73,9 +73,6 @@
 ## Direct-commit policy
 
 - This repository currently uses direct commits rather than a PR-first workflow. Before pushing changes, run the full local quality gates:
-  - `pnpm build`
-  - `pnpm test`
-  - `pnpm exec tsc --noEmit`
-  - `pnpm check-forbidden-patterns`
+  - `pnpm check-quality`
 - Keep changes small and self-contained; document any non-trivial work in `specs/` and `DECISIONS.md`.
 - If the team decides to require PRs later, update this guide and restore PR-based CI triggers.
