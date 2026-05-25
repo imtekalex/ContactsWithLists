@@ -264,7 +264,7 @@ export function EventsView({
           </div>
           <Button size="sm" onClick={() => setShowForm((value) => !value)} className="gap-1.5">
             <Plus className="w-3.5 h-3.5" />
-            New
+            New Event
           </Button>
         </header>
 

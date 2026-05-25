@@ -126,7 +126,7 @@ export function ListsView({
   return (
     <div className="flex-1 overflow-hidden flex">
       {/* Lists sidebar */}
-      <aside className="w-[320px] border-r border-border bg-card flex flex-col">
+      <aside className="w-[340px] border-r border-border bg-card flex flex-col">
         <header className="px-5 py-4 border-b border-border flex items-center justify-between gap-2">
           <div>
             <h2 className="text-lg font-semibold tracking-tight">Lists</h2>
@@ -136,7 +136,7 @@ export function ListsView({
           </div>
           <Button size="sm" onClick={() => setCreateOpen(true)} className="gap-1.5">
             <Plus className="w-3.5 h-3.5" />
-            New
+            New List
           </Button>
         </header>
         <div className="flex-1 overflow-y-auto">

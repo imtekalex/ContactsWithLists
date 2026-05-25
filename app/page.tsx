@@ -62,10 +62,6 @@ import {
   saveContactsCollection,
   type PrintPreferences,
 } from '@/lib/contacts-store';
-import {
-  NewContactDialog,
-  type NewContactParticipationInput,
-} from '@/components/new-contact-dialog';
 import { ContactDetail } from '@/components/contact-detail';
 import { ListsView } from '@/components/lists-view';
 import { PrintDialog } from '@/components/print-dialog';
@@ -166,7 +162,6 @@ export default function Home() {
   const [search, setSearch] = useState('');
   const [starredOnly, setStarredOnly] = useState(false);
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
-  const [newDialogOpen, setNewDialogOpen] = useState(false);
 
   // Multi-select state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -709,51 +704,67 @@ export default function Home() {
     return new Date(timestamp).toISOString().slice(0, 10);
   }
 
-  function handleCreate(
-    contact: Omit<Contact, 'id' | 'createdAt' | 'updatedAt'>,
-    participationInputs: NewContactParticipationInput[] = []
-  ) {
+  function handleCreateContact() {
     const now = Date.now();
     const newContact: Contact = {
-      ...contact,
       id: `c${now}`,
+      photoUrl: '',
+      namePrefix: '',
+      firstName: '',
+      middleName: '',
+      lastName: '',
+      nameSuffix: '',
+      phoneticFirstName: '',
+      phoneticMiddleName: '',
+      phoneticLastName: '',
+      nickname: '',
+      fileAs: '',
+      department: '',
+      email: '',
+      email2: '',
+      emails: [],
+      phone: '',
+      phone2: '',
+      phones: [],
+      company: '',
+      title: '',
+      addressLine1: '',
+      addressLine2: '',
+      city: '',
+      state: '',
+      zip: '',
+      country: '',
+      addresses: [],
+      website: '',
+      websites: [],
+      birthday: '',
+      significantDate: '',
+      significantDateLabel: '',
+      relatedPerson: '',
+      relationLabel: '',
+      significantDates: [],
+      relatedPeople: [],
+      notes: '',
+      starred: false,
+      tags: [],
+      groupIds: activeGroupId ? [activeGroupId] : [],
+      customValues: {},
       createdAt: now,
       updatedAt: now,
     };
     setContacts((prev) => [newContact, ...prev]);
     setSelectedId(newContact.id);
+    setSelectedIds(new Set());
+    setSearch('');
+    setStarredOnly(false);
     logActivity({
       action: 'create',
       entityType: 'Contact',
-      entityName: `${newContact.firstName} ${newContact.lastName}`,
-      description: `Created contact${newContact.company ? ` at ${newContact.company}` : ''}`,
+      entityName: 'Unnamed contact',
+      description: activeGroupId
+        ? `Created contact in ${groups.find((group) => group.id === activeGroupId)?.name ?? 'group'}`
+        : 'Created contact',
     });
-
-    if (participationInputs.length > 0) {
-      const newParticipations: EventParticipation[] = participationInputs.map(
-        (input, participationIndex) => ({
-          id: `ep${now}_${participationIndex}`,
-          contactId: newContact.id,
-          occurrenceId: input.occurrenceId,
-          status: input.status,
-          amountOwed: input.amountOwed,
-          currency: input.currency,
-          notes: input.notes,
-          payments: input.payments.map((payment, paymentIndex) => ({
-            id: `pay${now}_${participationIndex}_${paymentIndex}`,
-            amount: payment.amount,
-            date: payment.date,
-            label: payment.label,
-            note: payment.note,
-            createdAt: now,
-          })),
-          createdAt: now,
-          updatedAt: now,
-        })
-      );
-
-      setParticipations((prev) => [...newParticipations, ...prev]);
-    }
   }
 
   function handleUpdate(updated: Contact) {
@@ -1427,6 +1438,14 @@ export default function Home() {
 
         {view === 'contacts' && (
           <div className="px-3 pb-4 flex-1 overflow-y-auto">
+            <Button
+              onClick={handleCreateContact}
+              className="mt-3 mb-3 w-full justify-start gap-2"
+              size="sm"
+            >
+              <Plus className="w-4 h-4" />
+              New Contact
+            </Button>
             <div className="px-2 mt-2 mb-2 flex items-center justify-between">
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Groups
@@ -1472,17 +1491,6 @@ export default function Home() {
             </div>
           </div>
         )}
-
-        <div className="mt-auto p-3 border-t border-border">
-          <Button
-            onClick={() => setNewDialogOpen(true)}
-            className="w-full justify-start gap-2"
-            size="sm"
-          >
-            <Plus className="w-4 h-4" />
-            New Contact
-          </Button>
-        </div>
       </aside>
 
       {/* Main content */}
@@ -1507,7 +1515,7 @@ export default function Home() {
         {view === 'contacts' && (
           <>
             {/* List column */}
-            <section className="w-[380px] border-r border-border bg-card flex flex-col">
+            <section className="w-[340px] border-r border-border bg-card flex flex-col">
               {selectionMode ? (
                 <BulkActionToolbar
                   count={selectedIds.size}
@@ -1552,23 +1560,6 @@ export default function Home() {
                     >
                       <Star className={cn('w-3.5 h-3.5', starredOnly && 'fill-current')} />
                       Starred
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() =>
-                        openPrintFor(
-                          filteredContacts,
-                          activeGroupId
-                            ? (groups.find((g) => g.id === activeGroupId)?.name ?? 'Contacts')
-                            : 'All contacts'
-                        )
-                      }
-                      className="h-8 gap-1.5"
-                      disabled={filteredContacts.length === 0}
-                    >
-                      <Printer className="w-3.5 h-3.5" />
-                      Print
                     </Button>
                     <Button
                       size="sm"
@@ -1672,7 +1663,7 @@ export default function Home() {
                   title="No contact selected"
                   description="Pick a contact from the list to see their details, or create a new one."
                   action={
-                    <Button onClick={() => setNewDialogOpen(true)} size="sm" className="gap-2">
+                    <Button onClick={handleCreateContact} size="sm" className="gap-2">
                       <Plus className="w-4 h-4" /> New Contact
                     </Button>
                   }
@@ -1760,17 +1751,6 @@ export default function Home() {
           />
         )}
       </main>
-
-      <NewContactDialog
-        open={newDialogOpen}
-        onOpenChange={setNewDialogOpen}
-        groups={groups}
-        groupColorClasses={groupColorClasses}
-        customFields={customFields}
-        eventOccurrences={eventOccurrences}
-        eventSeries={eventSeries}
-        onCreate={handleCreate}
-      />
 
       <PrintDialog
         open={printOpen}

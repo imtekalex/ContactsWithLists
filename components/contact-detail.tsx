@@ -1,7 +1,20 @@
 'use client';
 
 import { useEffect, useId, useRef, useState } from 'react';
-import { Minus, Plus, Star, Trash2, X } from 'lucide-react';
+import {
+  ChevronDown,
+  MapPin,
+  Minus,
+  NotebookText,
+  Phone,
+  Plus,
+  Star,
+  Tags,
+  Trash2,
+  UserRound,
+  X,
+  type LucideIcon,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -30,6 +43,15 @@ import {
 } from '@/components/participation-section';
 
 type ColorClass = { dot: string; bg: string; text: string; ring: string };
+type SectionKey = 'identity' | 'contact' | 'address' | 'notes' | 'custom';
+
+const DEFAULT_OPEN_SECTIONS: Record<SectionKey, boolean> = {
+  identity: true,
+  contact: true,
+  address: true,
+  notes: true,
+  custom: true,
+};
 
 interface Props {
   contact: Contact;
@@ -76,6 +98,8 @@ export function ContactDetail({
   const [dirty, setDirty] = useState(false);
   const [showCustomFields, setShowCustomFields] = useState(false);
   const [showAllNameFields, setShowAllNameFields] = useState(false);
+  const [openSections, setOpenSections] =
+    useState<Record<SectionKey, boolean>>(DEFAULT_OPEN_SECTIONS);
 
   useEffect(() => {
     setDraft(ensureEditableContact(contact));
@@ -104,6 +128,10 @@ export function ContactDetail({
     if (value === undefined) delete next[fieldId];
     else next[fieldId] = value;
     updateDraft({ ...draft, customValues: next });
+  }
+
+  function toggleSection(section: SectionKey) {
+    setOpenSections((current) => ({ ...current, [section]: !current[section] }));
   }
 
   const name = displayName(draft);
@@ -170,175 +198,208 @@ export function ContactDetail({
 
             {/* Section 1: Name, Title, Company, Groups */}
             <div className="space-y-1.5 rounded-lg bg-background/50 p-3">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Name & Organization
-              </h3>
-              <div className="space-y-1">
-                <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-                  {visibleNameFields.map((field) => (
-                    <CompactInput
-                      key={field.key}
-                      label={field.label}
-                      value={field.value}
-                      onChange={(value) => updateDraft({ ...draft, [field.key]: value })}
-                    />
-                  ))}
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-4 gap-0.5 px-0.5 text-[10px]"
-                  onClick={() => setShowAllNameFields((value) => !value)}
-                >
-                  {showAllNameFields ? <Minus className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
-                  <span className="text-[10px]">{showAllNameFields ? 'Hide' : 'Show'}</span>
-                </Button>
-                <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                  <CompactInput
-                    label="Title"
-                    value={draft.title}
-                    onChange={(value) => updateDraft({ ...draft, title: value })}
-                  />
-                  <CompactInput
-                    label="Company"
-                    value={draft.company}
-                    onChange={(value) => updateDraft({ ...draft, company: value })}
-                  />
-                </div>
-                <div className="grid grid-cols-1 gap-2">
-                  <div>
-                    <span className="text-xs font-medium uppercase text-muted-foreground">
-                      Last Modified
-                    </span>
-                    <p className="text-sm font-medium">{lastModifiedLabel}</p>
+              <SectionHeader
+                title="Name & Organization"
+                icon={UserRound}
+                open={openSections.identity}
+                onToggle={() => toggleSection('identity')}
+              />
+              {openSections.identity && (
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+                      {visibleNameFields.map((field) => (
+                        <CompactInput
+                          key={field.key}
+                          label={field.label}
+                          value={field.value}
+                          onChange={(value) => updateDraft({ ...draft, [field.key]: value })}
+                        />
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-1 gap-2 md:grid-cols-[7rem_minmax(12rem,1fr)]">
+                      <span aria-hidden className="hidden md:block" />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-fit justify-start gap-1 px-0.5 text-sm"
+                        onClick={() => setShowAllNameFields((value) => !value)}
+                      >
+                        {showAllNameFields ? (
+                          <Minus className="h-3.5 w-3.5" />
+                        ) : (
+                          <Plus className="h-3.5 w-3.5" />
+                        )}
+                        {showAllNameFields ? 'Hide' : 'Show'}
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                      <CompactInput
+                        label="Title"
+                        value={draft.title}
+                        onChange={(value) => updateDraft({ ...draft, title: value })}
+                      />
+                      <CompactInput
+                        label="Company"
+                        value={draft.company}
+                        onChange={(value) => updateDraft({ ...draft, company: value })}
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 gap-2">
+                      <div>
+                        <span className="text-xs font-medium uppercase text-muted-foreground">
+                          Last Modified
+                        </span>
+                        <p className="text-sm font-medium">{lastModifiedLabel}</p>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-              {groups.length > 0 && (
-                <div className="space-y-1">
-                  <p className="text-xs font-medium uppercase text-muted-foreground">Groups</p>
-                  <div className="flex flex-wrap gap-1">
-                    {groups.map((group) => {
-                      const color = groupColorClasses[group.color];
-                      const active = draft.groupIds.includes(group.id);
-                      return (
-                        <button
-                          type="button"
-                          key={group.id}
-                          onClick={() => {
-                            updateDraft({
-                              ...draft,
-                              groupIds: active
-                                ? draft.groupIds.filter((id) => id !== group.id)
-                                : [...draft.groupIds, group.id],
-                            });
-                          }}
-                          className={cn(
-                            'inline-flex h-6 items-center gap-1 rounded-full border px-2 text-xs font-medium transition-colors',
-                            active
-                              ? cn(color.bg, color.text, 'border-transparent')
-                              : 'border-border bg-background text-muted-foreground hover:bg-secondary'
-                          )}
-                        >
-                          <span
-                            className={cn(
-                              'h-1.5 w-1.5 rounded-full',
-                              active ? color.dot : 'bg-muted-foreground/50'
-                            )}
-                          />
-                          {group.name}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  {groups.length > 0 && (
+                    <div className="space-y-1">
+                      <p className="text-xs font-medium uppercase text-muted-foreground">Groups</p>
+                      <div className="flex flex-wrap gap-1">
+                        {groups.map((group) => {
+                          const color = groupColorClasses[group.color];
+                          const active = draft.groupIds.includes(group.id);
+                          return (
+                            <button
+                              type="button"
+                              key={group.id}
+                              onClick={() => {
+                                updateDraft({
+                                  ...draft,
+                                  groupIds: active
+                                    ? draft.groupIds.filter((id) => id !== group.id)
+                                    : [...draft.groupIds, group.id],
+                                });
+                              }}
+                              className={cn(
+                                'inline-flex h-6 items-center gap-1 rounded-full border px-2 text-xs font-medium transition-colors',
+                                active
+                                  ? cn(color.bg, color.text, 'border-transparent')
+                                  : 'border-border bg-background text-muted-foreground hover:bg-secondary'
+                              )}
+                            >
+                              <span
+                                className={cn(
+                                  'h-1.5 w-1.5 rounded-full',
+                                  active ? color.dot : 'bg-muted-foreground/50'
+                                )}
+                              />
+                              {group.name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
 
             {/* Section 2: Phone, Email, Website */}
             <div className="space-y-1.5 rounded-lg bg-background/50 p-3">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Contact Information
-              </h3>
-              <div className="space-y-1.5">
-                <InlineRowsCompact
-                  items={draft.phones ?? []}
-                  valueLabel="Phone"
-                  valueType="tel"
-                  addLabel="Add phone"
-                  labelSuggestions={labelSuggestions.phone}
-                  onChange={(phones) => updateDraft(syncLegacyFields({ ...draft, phones }))}
-                />
-                <InlineRowsCompact
-                  items={draft.emails ?? []}
-                  valueLabel="Email"
-                  valueType="email"
-                  addLabel="Add email"
-                  labelSuggestions={labelSuggestions.email}
-                  onChange={(emails) => updateDraft(syncLegacyFields({ ...draft, emails }))}
-                />
-                <InlineRowsCompact
-                  items={draft.websites ?? []}
-                  valueLabel="Website"
-                  valueType="url"
-                  addLabel="Add website"
-                  labelSuggestions={labelSuggestions.website}
-                  onChange={(websites) => updateDraft(syncLegacyFields({ ...draft, websites }))}
-                />
-              </div>
+              <SectionHeader
+                title="Contact Information"
+                icon={Phone}
+                open={openSections.contact}
+                onToggle={() => toggleSection('contact')}
+              />
+              {openSections.contact && (
+                <div className="space-y-1.5">
+                  <InlineRowsCompact
+                    items={draft.phones ?? []}
+                    valueLabel="Phone"
+                    valueType="tel"
+                    addLabel="Add phone"
+                    labelSuggestions={labelSuggestions.phone}
+                    onChange={(phones) => updateDraft(syncLegacyFields({ ...draft, phones }))}
+                  />
+                  <InlineRowsCompact
+                    items={draft.emails ?? []}
+                    valueLabel="Email"
+                    valueType="email"
+                    addLabel="Add email"
+                    labelSuggestions={labelSuggestions.email}
+                    onChange={(emails) => updateDraft(syncLegacyFields({ ...draft, emails }))}
+                  />
+                  <InlineRowsCompact
+                    items={draft.websites ?? []}
+                    valueLabel="Website"
+                    valueType="url"
+                    addLabel="Add website"
+                    labelSuggestions={labelSuggestions.website}
+                    onChange={(websites) => updateDraft(syncLegacyFields({ ...draft, websites }))}
+                  />
+                </div>
+              )}
             </div>
 
             {/* Section 3: Address */}
             <div className="space-y-1.5 rounded-lg bg-background/50 p-3">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Address
-              </h3>
-              <AddressRowsCompact
-                items={draft.addresses ?? []}
-                labelSuggestions={labelSuggestions.address}
-                onChange={(addresses) => updateDraft(syncLegacyFields({ ...draft, addresses }))}
+              <SectionHeader
+                title="Address"
+                icon={MapPin}
+                open={openSections.address}
+                onToggle={() => toggleSection('address')}
               />
+              {openSections.address && (
+                <AddressRowsCompact
+                  items={draft.addresses ?? []}
+                  labelSuggestions={labelSuggestions.address}
+                  onChange={(addresses) => updateDraft(syncLegacyFields({ ...draft, addresses }))}
+                />
+              )}
             </div>
 
             {/* Section 4: Notes */}
             <div className="space-y-1.5 rounded-lg bg-background/50 p-3">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Notes
-              </h3>
-              <Textarea
-                value={draft.notes}
-                onChange={(event) => updateDraft({ ...draft, notes: event.target.value })}
-                className="min-h-[60px] rounded-md border-0 bg-transparent px-1 pt-1 shadow-none placeholder:text-muted-foreground/45 hover:bg-secondary/50 focus-visible:bg-background focus-visible:ring-1 focus-visible:ring-ring"
-                placeholder="Add notes"
+              <SectionHeader
+                title="Notes"
+                icon={NotebookText}
+                open={openSections.notes}
+                onToggle={() => toggleSection('notes')}
               />
+              {openSections.notes && (
+                <Textarea
+                  value={draft.notes}
+                  onChange={(event) => updateDraft({ ...draft, notes: event.target.value })}
+                  className="min-h-[60px] rounded-md border-0 bg-transparent px-1 pt-1 shadow-none placeholder:text-muted-foreground/45 hover:bg-secondary/50 focus-visible:bg-background focus-visible:ring-1 focus-visible:ring-ring"
+                  placeholder="Add notes"
+                />
+              )}
             </div>
 
             {/* Custom Fields */}
             <div className="space-y-1.5 rounded-lg bg-background/50 p-3">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Custom Fields
-              </h3>
-              {shouldShowCustomFields ? (
-                <div className="max-w-[42rem]">
-                  <ContactCustomFields
-                    contact={draft}
-                    fields={customFields}
-                    onChange={handleCustomChange}
-                  />
-                </div>
-              ) : (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-4 gap-0.5 px-0.5 text-[10px]"
-                  onClick={() => setShowCustomFields(true)}
-                >
-                  <Plus className="h-3 w-3" />
-                  Add custom fields
-                </Button>
-              )}
+              <SectionHeader
+                title="Custom Fields"
+                icon={Tags}
+                open={openSections.custom}
+                onToggle={() => toggleSection('custom')}
+              />
+              {openSections.custom &&
+                (shouldShowCustomFields ? (
+                  <div className="max-w-[42rem]">
+                    <ContactCustomFields
+                      contact={draft}
+                      fields={customFields}
+                      onChange={handleCustomChange}
+                    />
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 gap-1 px-0.5 text-sm"
+                    onClick={() => setShowCustomFields(true)}
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Add custom fields
+                  </Button>
+                ))}
             </div>
           </div>
         </section>
@@ -358,6 +419,35 @@ export function ContactDetail({
         />
       </div>
     </div>
+  );
+}
+
+function SectionHeader({
+  title,
+  icon: Icon,
+  open,
+  onToggle,
+}: {
+  title: string;
+  icon: LucideIcon;
+  open: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className="flex w-full items-center justify-between gap-3 rounded-md px-0.5 py-1 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
+      aria-expanded={open}
+    >
+      <span className="flex min-w-0 items-center gap-2">
+        <Icon className="h-3.5 w-3.5 flex-shrink-0" />
+        <span className="truncate">{title}</span>
+      </span>
+      <ChevronDown
+        className={cn('h-3.5 w-3.5 flex-shrink-0 transition-transform', !open && '-rotate-90')}
+      />
+    </button>
   );
 }
 
@@ -412,15 +502,18 @@ function InlineRowsCompact({
           )}
         </div>
       ))}
-      <Button
-        type="button"
-        variant="ghost"
-        className="h-4 gap-0.5 px-0.5 text-[10px]"
-        onClick={() => onChange([...rows, newLabeledValue(defaultLabel(addLabel))])}
-      >
-        <Plus className="h-3 w-3" />
-        {addLabel}
-      </Button>
+      <div className="grid grid-cols-1 gap-2 md:grid-cols-[7rem_minmax(12rem,1fr)]">
+        <span aria-hidden className="hidden md:block" />
+        <Button
+          type="button"
+          variant="ghost"
+          className="h-7 w-fit justify-start gap-1 px-0.5 text-sm"
+          onClick={() => onChange([...rows, newLabeledValue(defaultLabel(addLabel))])}
+        >
+          <Plus className="h-3.5 w-3.5" />
+          {addLabel}
+        </Button>
+      </div>
     </div>
   );
 }
@@ -511,15 +604,18 @@ function AddressRowsCompact({
           </div>
         </div>
       ))}
-      <Button
-        type="button"
-        variant="ghost"
-        className="h-4 gap-0.5 px-0.5 text-[10px]"
-        onClick={() => onChange([...rows, newAddress()])}
-      >
-        <Plus className="h-3 w-3" />
-        Add address
-      </Button>
+      <div className="grid grid-cols-1 gap-2 md:grid-cols-[7rem_minmax(12rem,1fr)]">
+        <span aria-hidden className="hidden md:block" />
+        <Button
+          type="button"
+          variant="ghost"
+          className="h-7 w-fit justify-start gap-1 px-0.5 text-sm"
+          onClick={() => onChange([...rows, newAddress()])}
+        >
+          <Plus className="h-3.5 w-3.5" />
+          Add address
+        </Button>
+      </div>
     </div>
   );
 }
