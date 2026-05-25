@@ -320,7 +320,6 @@ export function ParticipationSection({
     <section className="mx-auto max-w-5xl space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3 border-t border-border pt-5">
         <div>
-          <h3 className="text-sm font-semibold">Participation & payments</h3>
           <p className="text-xs text-muted-foreground">
             {contactParticipations.length} participation
             {contactParticipations.length === 1 ? '' : 's'}

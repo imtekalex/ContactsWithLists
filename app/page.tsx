@@ -1438,15 +1438,7 @@ export default function Home() {
 
         {view === 'contacts' && (
           <div className="px-3 pb-4 flex-1 overflow-y-auto">
-            <Button
-              onClick={handleCreateContact}
-              className="mt-3 mb-3 w-full justify-start gap-2"
-              size="sm"
-            >
-              <Plus className="w-4 h-4" />
-              New Contact
-            </Button>
-            <div className="px-2 mt-2 mb-2 flex items-center justify-between">
+            <div className="px-2 mt-2 mb-2">
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Groups
               </span>
@@ -1534,13 +1526,20 @@ export default function Home() {
                 />
               ) : (
                 <div className="px-5 py-4 border-b border-border space-y-3">
-                  <div className="flex items-baseline justify-between">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <h2 className="text-lg font-semibold tracking-tight">
                       {activeGroupId
                         ? groups.find((g) => g.id === activeGroupId)?.name
                         : 'All Contacts'}
                     </h2>
-                    <span className="text-xs text-muted-foreground">{filteredContacts.length}</span>
+                    <Button
+                      size="sm"
+                      onClick={handleCreateContact}
+                      className="w-full sm:w-auto gap-2"
+                    >
+                      <Plus className="w-4 h-4" />
+                      New Contact
+                    </Button>
                   </div>
                   <div className="relative">
                     <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -1637,7 +1636,7 @@ export default function Home() {
             </section>
 
             {/* Detail column */}
-            <section className="flex-1 overflow-y-auto bg-background">
+            <section className="flex-1 overflow-y-auto bg-slate-50">
               {selected ? (
                 <ContactDetail
                   contact={selected}

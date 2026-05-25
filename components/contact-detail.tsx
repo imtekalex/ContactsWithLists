@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import {
   ChevronDown,
+  CreditCard,
   MapPin,
   Minus,
   NotebookText,
@@ -43,7 +44,7 @@ import {
 } from '@/components/participation-section';
 
 type ColorClass = { dot: string; bg: string; text: string; ring: string };
-type SectionKey = 'identity' | 'contact' | 'address' | 'notes' | 'custom';
+type SectionKey = 'identity' | 'contact' | 'address' | 'notes' | 'custom' | 'participation';
 
 const DEFAULT_OPEN_SECTIONS: Record<SectionKey, boolean> = {
   identity: true,
@@ -51,6 +52,7 @@ const DEFAULT_OPEN_SECTIONS: Record<SectionKey, boolean> = {
   address: true,
   notes: true,
   custom: true,
+  participation: true,
 };
 
 interface Props {
@@ -404,19 +406,29 @@ export function ContactDetail({
           </div>
         </section>
 
-        <ParticipationSection
-          contact={syncLegacyFields(draft)}
-          eventSeries={eventSeries}
-          eventOccurrences={eventOccurrences}
-          participations={participations}
-          canEdit
-          onCreateParticipation={onCreateParticipation}
-          onAddPayment={onAddPayment}
-          onUpdatePayment={onUpdatePayment}
-          onDeleteParticipation={onDeleteParticipation}
-          onDeletePayment={onDeletePayment}
-          onSelectEventPayments={onSelectEventPayments}
-        />
+        <div className="space-y-1.5 rounded-lg bg-background/50 p-3">
+          <SectionHeader
+            title="Participation & payments"
+            icon={CreditCard}
+            open={openSections.participation}
+            onToggle={() => toggleSection('participation')}
+          />
+          {openSections.participation && (
+            <ParticipationSection
+              contact={syncLegacyFields(draft)}
+              eventSeries={eventSeries}
+              eventOccurrences={eventOccurrences}
+              participations={participations}
+              canEdit
+              onCreateParticipation={onCreateParticipation}
+              onAddPayment={onAddPayment}
+              onUpdatePayment={onUpdatePayment}
+              onDeleteParticipation={onDeleteParticipation}
+              onDeletePayment={onDeletePayment}
+              onSelectEventPayments={onSelectEventPayments}
+            />
+          )}
+        </div>
       </div>
     </div>
   );
