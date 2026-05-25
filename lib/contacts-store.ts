@@ -10,6 +10,7 @@ import {
   initialLists,
   type ActivityEntry,
   type Contact,
+  type ContactDate,
   type ContactList,
   type CustomField,
   type EventOccurrence,
@@ -79,6 +80,8 @@ function normalizeContact(contact: Contact): Contact {
   const websites = normalizeLabeledValues(contact.websites, [
     { id: "website_primary", label: "Website", value: contact.website },
   ])
+  const significantDates = contact.significantDates ?? []
+  const relatedPeople = contact.relatedPeople ?? []
   const addresses =
     contact.addresses && contact.addresses.length > 0
       ? contact.addresses.filter(hasAddressValue)
@@ -118,6 +121,8 @@ function normalizeContact(contact: Contact): Contact {
     zip: primaryAddress?.zip,
     country: primaryAddress?.country ?? "",
     // legacy date/relationship fields intentionally omitted
+    significantDates,
+    relatedPeople,
     customValues,
   }
 }

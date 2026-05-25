@@ -909,12 +909,14 @@ function LabelInput({
   value,
   onChange,
   suggestions = [],
+  className,
 }: {
   ariaLabel: string
   placeholder?: string
   value: string
   onChange: (value: string) => void
   suggestions?: string[]
+  className?: string
 }) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement | null>(null)
@@ -940,6 +942,7 @@ function LabelInput({
         value={value}
         placeholder={placeholder}
         aria-label={ariaLabel}
+        className={className}
         onFocus={() => setOpen(filteredSuggestions.length > 0)}
         onChange={(event) => {
           onChange(event.target.value)

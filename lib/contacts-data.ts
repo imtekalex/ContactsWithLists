@@ -6,9 +6,15 @@ export type Contact = {
   middleName?: string
   lastName: string
   nameSuffix?: string
-  // phonetic name fields removed
+  // Optional phonetic name fields
+  phoneticFirstName?: string
+  phoneticMiddleName?: string
+  phoneticLastName?: string
   nickname?: string
-  // fileAs removed
+  /** Optional sort name / display name override */
+  fileAs?: string
+  /** Optional department name */
+  department?: string
   /** Primary email ("Email 1") */
   email: string
   /** Optional secondary email ("Email 2") */
@@ -35,7 +41,13 @@ export type Contact = {
   addresses?: ContactAddress[]
   website: string
   websites?: ContactLabeledValue[]
-  // dates & relationships removed
+  birthday?: string
+  significantDate?: string
+  significantDateLabel?: string
+  relatedPerson?: string
+  relationLabel?: string
+  significantDates?: ContactDate[]
+  relatedPeople?: ContactRelatedPerson[]
   notes: string
   starred: boolean
   tags: string[]
