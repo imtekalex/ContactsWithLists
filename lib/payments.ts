@@ -19,6 +19,11 @@ export type EventBalance = ParticipationBalance & {
   participantCount: number;
 };
 
+export function getPaymentStatusLabel(status: PaymentStatus) {
+  if (status === 'paid') return 'settled';
+  return status;
+}
+
 function roundMoney(value: number) {
   return Math.round((value + Number.EPSILON) * 100) / 100;
 }

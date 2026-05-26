@@ -1,11 +1,22 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { CalendarDays, Check, CreditCard, Pencil, Plus, Trash2, UserRound, X } from 'lucide-react';
+import {
+  CalendarDays,
+  Check,
+  ChevronDown,
+  CreditCard,
+  Pencil,
+  Plus,
+  Trash2,
+  UserRound,
+  X,
+} from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { getEventAccentClasses } from '@/components/event-accent';
 import { Input } from '@/components/ui/input';
 import type {
   Contact,
@@ -18,6 +29,7 @@ import {
   getContactName,
   getParticipationBalance,
   getParticipationLabel,
+  getPaymentStatusLabel,
 } from '@/lib/payments';
 import type { CreatePaymentInput, UpdatePaymentInput } from '@/components/participation-section';
 import { cn } from '@/lib/utils';
@@ -100,109 +112,6 @@ function compareRows(a: PaymentRow, b: PaymentRow) {
   const bSettled = b.balance.remaining <= 0;
   if (aSettled !== bSettled) return aSettled ? 1 : -1;
   return (b.label.date ?? '0000-00-00').localeCompare(a.label.date ?? '0000-00-00');
-}
-
-const eventToneKeys = [
-  'sky',
-  'emerald',
-  'amber',
-  'violet',
-  'rose',
-  'cyan',
-  'fuchsia',
-  'lime',
-  'indigo',
-  'orange',
-  'teal',
-  'pink',
-] as const;
-
-type EventToneKey = (typeof eventToneKeys)[number];
-
-const eventToneClasses: Record<
-  EventToneKey,
-  { headerBg: string; iconBg: string; rowHeaderBg: string; cardBg: string }
-> = {
-  sky: {
-    headerBg: 'bg-sky-50/80',
-    iconBg: 'bg-sky-100 border border-sky-200 text-sky-700',
-    rowHeaderBg: 'bg-sky-100/70',
-    cardBg: 'bg-sky-50/80 ring-1 ring-sky-100 border border-sky-100/70 rounded-2xl',
-  },
-  emerald: {
-    headerBg: 'bg-emerald-50/80',
-    iconBg: 'bg-emerald-100 border border-emerald-200 text-emerald-700',
-    rowHeaderBg: 'bg-emerald-100/70',
-    cardBg: 'bg-emerald-50/80 ring-1 ring-emerald-100 border border-emerald-100/70 rounded-2xl',
-  },
-  amber: {
-    headerBg: 'bg-amber-50/80',
-    iconBg: 'bg-amber-100 border border-amber-200 text-amber-700',
-    rowHeaderBg: 'bg-amber-100/70',
-    cardBg: 'bg-amber-50/80 ring-1 ring-amber-100 border border-amber-100/70 rounded-2xl',
-  },
-  violet: {
-    headerBg: 'bg-violet-50/80',
-    iconBg: 'bg-violet-100 border border-violet-200 text-violet-700',
-    rowHeaderBg: 'bg-violet-100/70',
-    cardBg: 'bg-violet-50/80 ring-1 ring-violet-100 border border-violet-100/70 rounded-2xl',
-  },
-  rose: {
-    headerBg: 'bg-rose-50/80',
-    iconBg: 'bg-rose-100 border border-rose-200 text-rose-700',
-    rowHeaderBg: 'bg-rose-100/70',
-    cardBg: 'bg-rose-50/80 ring-1 ring-rose-100 border border-rose-100/70 rounded-2xl',
-  },
-  cyan: {
-    headerBg: 'bg-cyan-50/80',
-    iconBg: 'bg-cyan-100 border border-cyan-200 text-cyan-700',
-    rowHeaderBg: 'bg-cyan-100/70',
-    cardBg: 'bg-cyan-50/80 ring-1 ring-cyan-100 border border-cyan-100/70 rounded-2xl',
-  },
-  fuchsia: {
-    headerBg: 'bg-fuchsia-50/80',
-    iconBg: 'bg-fuchsia-100 border border-fuchsia-200 text-fuchsia-700',
-    rowHeaderBg: 'bg-fuchsia-100/70',
-    cardBg: 'bg-fuchsia-50/80 ring-1 ring-fuchsia-100 border border-fuchsia-100/70 rounded-2xl',
-  },
-  lime: {
-    headerBg: 'bg-lime-50/80',
-    iconBg: 'bg-lime-100 border border-lime-200 text-lime-700',
-    rowHeaderBg: 'bg-lime-100/70',
-    cardBg: 'bg-lime-50/80 ring-1 ring-lime-100 border border-lime-100/70 rounded-2xl',
-  },
-  indigo: {
-    headerBg: 'bg-indigo-50/80',
-    iconBg: 'bg-indigo-100 border border-indigo-200 text-indigo-700',
-    rowHeaderBg: 'bg-indigo-100/70',
-    cardBg: 'bg-indigo-50/80 ring-1 ring-indigo-100 border border-indigo-100/70 rounded-2xl',
-  },
-  orange: {
-    headerBg: 'bg-orange-50/80',
-    iconBg: 'bg-orange-100 border border-orange-200 text-orange-700',
-    rowHeaderBg: 'bg-orange-100/70',
-    cardBg: 'bg-orange-50/80 ring-1 ring-orange-100 border border-orange-100/70 rounded-2xl',
-  },
-  teal: {
-    headerBg: 'bg-teal-50/80',
-    iconBg: 'bg-teal-100 border border-teal-200 text-teal-700',
-    rowHeaderBg: 'bg-teal-100/70',
-    cardBg: 'bg-teal-50/80 ring-1 ring-teal-100 border border-teal-100/70 rounded-2xl',
-  },
-  pink: {
-    headerBg: 'bg-pink-50/80',
-    iconBg: 'bg-pink-100 border border-pink-200 text-pink-700',
-    rowHeaderBg: 'bg-pink-100/70',
-    cardBg: 'bg-pink-50/80 ring-1 ring-pink-100 border border-pink-100/70 rounded-2xl',
-  },
-};
-
-function getEventToneKey(occurrenceId: string): EventToneKey {
-  let hash = 0;
-  for (let i = 0; i < occurrenceId.length; i += 1) {
-    hash = ((hash << 5) - hash + occurrenceId.charCodeAt(i)) >>> 0;
-  }
-  return eventToneKeys[hash % eventToneKeys.length];
 }
 
 export function PaymentsView({
@@ -497,6 +406,8 @@ export function PaymentsView({
                   onDeletePayment={onDeletePayment}
                   onSelectContact={onSelectContact}
                   onSelectEvent={onSelectEvent}
+                  eventSeries={eventSeries}
+                  eventOccurrences={eventOccurrences}
                 />
               ))
             )}
@@ -539,6 +450,8 @@ type GroupControls = {
   onDeletePayment: (participationId: string, paymentId: string) => void;
   onSelectContact: (contactId: string) => void;
   onSelectEvent: (occurrenceId: string) => void;
+  eventSeries?: EventSeries[];
+  eventOccurrences?: EventOccurrence[];
 };
 
 function EventPaymentGroup({
@@ -557,11 +470,24 @@ function EventPaymentGroup({
   activeOccurrenceId?: string | null;
   setGroupNode: (node: HTMLDivElement | null) => void;
 } & GroupControls) {
+  const eventSettled = group.rows.every((row) => row.balance.status === 'paid');
+  const [collapsed, setCollapsed] = useState(eventSettled);
+  const eventAccent = getEventAccentClasses(group.occurrenceId, group.series?.color);
+
+  useEffect(() => {
+    if (eventSettled) setCollapsed(true);
+  }, [eventSettled, group.occurrenceId]);
+
+  function toggleCollapsed() {
+    setCollapsed((value) => !value);
+  }
+
   return (
     <Card
       ref={setGroupNode}
       className={cn(
-        'p-0 overflow-hidden transition-shadow',
+        'gap-0 p-0 overflow-hidden transition-shadow',
+        eventSettled && 'bg-slate-100/70 text-muted-foreground',
         activeOccurrenceId === group.occurrenceId && 'ring-2 ring-primary ring-offset-2'
       )}
     >
@@ -571,31 +497,47 @@ function EventPaymentGroup({
         subtitle={`${group.occurrence?.date ?? 'No date'} · ${group.series?.name ?? 'Standalone event'}`}
         summary={group.summary}
         variant="event"
-        tone={getEventToneKey(group.occurrenceId)}
+        eventAccent={eventAccent}
+        collapsed={collapsed}
+        settled={eventSettled}
+        onToggle={toggleCollapsed}
         onTitleClick={
           group.occurrence ? () => controls.onSelectEvent(group.occurrence!.id) : undefined
         }
       />
-      <div className="divide-y divide-border">
-        {group.rows.map((row) => (
-          <ParticipationPaymentBlock
-            key={row.participation.id}
-            row={row}
-            title={getContactName(row.contact)}
-            subtitle={row.label.eventName}
-            contactId={row.contact?.id}
-            variant="event"
-            tone={getEventToneKey(group.occurrenceId)}
-            {...controls}
-          />
-        ))}
-      </div>
+      {!collapsed && (
+        <div
+          className={cn(
+            '-mt-px divide-y divide-border border-l-4',
+            eventAccent.border,
+            eventAccent.card
+          )}
+          style={eventAccent.borderStyle}
+        >
+          {group.rows.map((row) => (
+            <ParticipationPaymentBlock
+              key={row.participation.id}
+              row={row}
+              title={getContactName(row.contact)}
+              subtitle={row.label.eventName}
+              contactId={row.contact?.id}
+              variant="event"
+              eventAccent={eventAccent}
+              hideCollapseIcon
+              flushTop
+              {...controls}
+            />
+          ))}
+        </div>
+      )}
     </Card>
   );
 }
 
 function PersonPaymentGroup({
   group,
+  eventSeries,
+  eventOccurrences,
   ...controls
 }: {
   group: {
@@ -604,29 +546,58 @@ function PersonPaymentGroup({
     rows: PaymentRow[];
     summary: MoneySummary;
   };
-} & GroupControls) {
+} & GroupControls & { eventSeries?: EventSeries[]; eventOccurrences?: EventOccurrence[] }) {
+  const personSettled = group.rows.every((row) => row.balance.status === 'paid');
+  const [collapsed, setCollapsed] = useState(personSettled);
+
+  useEffect(() => {
+    if (personSettled) setCollapsed(true);
+  }, [personSettled, group.contactId]);
+
+  function toggleCollapsed() {
+    setCollapsed((value) => !value);
+  }
+
   return (
-    <Card className="p-0 overflow-hidden">
+    <Card
+      className={cn(
+        'gap-0 p-0 overflow-hidden transition-shadow',
+        personSettled && 'bg-slate-100/70 text-muted-foreground'
+      )}
+    >
       <GroupHeader
         icon={UserRound}
         title={getContactName(group.contact)}
         subtitle={`${group.rows.length} participation${group.rows.length === 1 ? '' : 's'}`}
         summary={group.summary}
         showCreditOffset
+        collapsed={collapsed}
+        settled={personSettled}
+        onToggle={toggleCollapsed}
         onTitleClick={group.contact ? () => controls.onSelectContact(group.contact!.id) : undefined}
       />
-      <div className="divide-y divide-border">
-        {group.rows.map((row) => (
-          <ParticipationPaymentBlock
-            key={row.participation.id}
-            row={row}
-            title={row.label.eventName}
-            subtitle={row.label.date ?? 'No date'}
-            contactId={undefined}
-            {...controls}
-          />
-        ))}
-      </div>
+      {!collapsed && (
+        <div className="divide-y divide-border">
+          {group.rows.map((row) => (
+            <ParticipationPaymentBlock
+              key={row.participation.id}
+              row={row}
+              title={row.label.eventName}
+              subtitle={row.label.date ?? 'No date'}
+              contactId={undefined}
+              eventAccent={getEventAccentClasses(
+                row.participation.occurrenceId,
+                eventSeries?.find(
+                  (s) =>
+                    s.id ===
+                    eventOccurrences?.find((o) => o.id === row.participation.occurrenceId)?.seriesId
+                )?.color
+              )}
+              {...controls}
+            />
+          ))}
+        </div>
+      )}
     </Card>
   );
 }
@@ -639,7 +610,10 @@ function GroupHeader({
   showCreditOffset = false,
   onTitleClick,
   variant: _variant,
-  tone,
+  eventAccent,
+  collapsed,
+  settled = false,
+  onToggle,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   title: string;
@@ -648,23 +622,29 @@ function GroupHeader({
   showCreditOffset?: boolean;
   onTitleClick?: () => void;
   variant?: 'event' | 'person';
-  tone?: EventToneKey;
+  eventAccent?: ReturnType<typeof getEventAccentClasses>;
+  collapsed?: boolean;
+  settled?: boolean;
+  onToggle?: () => void;
 }) {
-  const toneClasses = tone ? eventToneClasses[tone] : undefined;
-
-  return (
-    <div
-      className={cn(
-        'px-5 py-4 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4',
-        toneClasses?.headerBg ?? 'bg-secondary/40'
-      )}
-    >
-      <div className="flex items-center gap-3 min-w-0">
+  const content = (
+    <>
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        {onToggle && (
+          <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md text-muted-foreground">
+            <ChevronDown
+              className={cn('h-4 w-4 transition-transform', collapsed && '-rotate-90')}
+            />
+          </span>
+        )}
         <div
           className={cn(
             'w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0',
-            toneClasses?.iconBg ?? 'bg-background border border-border text-muted-foreground'
+            settled
+              ? 'bg-slate-200 border border-slate-300 text-slate-600'
+              : (eventAccent?.icon ?? 'bg-background border border-border text-muted-foreground')
           )}
+          style={eventAccent?.iconStyle}
         >
           <Icon className="w-4 h-4" />
         </div>
@@ -672,7 +652,10 @@ function GroupHeader({
           {onTitleClick ? (
             <button
               type="button"
-              onClick={onTitleClick}
+              onClick={(event) => {
+                event.stopPropagation();
+                onTitleClick();
+              }}
               className="font-semibold truncate hover:underline text-left"
             >
               {title}
@@ -683,7 +666,7 @@ function GroupHeader({
           <p className="text-xs text-muted-foreground truncate">{subtitle}</p>
         </div>
       </div>
-      <div className="grid grid-cols-3 gap-5 text-sm xl:text-right">
+      <div className="grid flex-shrink-0 grid-cols-3 gap-5 text-right text-sm">
         <Metric
           label={showCreditOffset ? 'Net due' : 'Open'}
           value={showCreditOffset ? formatNetDue(summary) : formatSummary(summary, 'due')}
@@ -691,6 +674,44 @@ function GroupHeader({
         <Metric label="Credit" value={formatSummary(summary, 'credit')} />
         <Metric label="Paid" value={formatSummary(summary, 'paid')} />
       </div>
+    </>
+  );
+
+  if (onToggle) {
+    return (
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onToggle}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            onToggle();
+          }
+        }}
+        className={cn(
+          'px-5 pt-4 flex cursor-pointer flex-wrap items-center justify-between gap-4 transition-colors hover:bg-background/70',
+          settled ? 'bg-slate-100/70' : eventAccent?.header,
+          collapsed ? 'rounded-lg pb-4' : 'rounded-t-lg rounded-b-none pb-2'
+        )}
+        style={eventAccent?.headerStyle}
+        aria-label={collapsed ? 'Expand event payments' : 'Collapse event payments'}
+        aria-expanded={!collapsed}
+      >
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        'px-5 py-4 flex flex-wrap items-center justify-between gap-4',
+        eventAccent?.header ?? 'bg-secondary/40'
+      )}
+      style={eventAccent?.headerStyle}
+    >
+      {content}
     </div>
   );
 }
@@ -718,7 +739,7 @@ function ParticipationPaymentBlock({
   subtitle,
   contactId,
   variant: _variant,
-  tone,
+  eventAccent,
   paymentDrafts,
   addingForParticipationId,
   editingPaymentId,
@@ -731,49 +752,109 @@ function ParticipationPaymentBlock({
   onCancelEdit,
   onDeletePayment,
   onSelectContact,
+  hideCollapseIcon = false,
+  flushTop = false,
 }: {
   row: PaymentRow;
   title: string;
   subtitle: string;
   contactId: string | undefined;
   variant?: 'event' | 'person';
-  tone?: EventToneKey;
+  eventAccent?: ReturnType<typeof getEventAccentClasses>;
+  hideCollapseIcon?: boolean;
+  flushTop?: boolean;
 } & GroupControls) {
   const { participation, balance } = row;
+  const settled = balance.status === 'paid';
+  const [collapsed, setCollapsed] = useState(settled);
   const newPaymentDraft = paymentDrafts[participation.id] ?? emptyPaymentDraft();
   const paymentGridClass =
     'grid min-w-[52rem] grid-cols-[7rem_minmax(8rem,1fr)_minmax(10rem,1.2fr)_8rem_5rem] gap-3';
-  const toneClasses = tone ? eventToneClasses[tone] : undefined;
-  const containerClass = cn('px-5 py-4 space-y-3', toneClasses?.cardBg);
+  const containerClass = cn(
+    'space-y-3 px-5 pb-4',
+    flushTop ? 'pt-0' : 'pt-4',
+    hideCollapseIcon
+      ? settled && 'bg-slate-100/70 text-muted-foreground'
+      : [
+          'border-l-4',
+          settled
+            ? 'border-slate-300 bg-slate-100/70 text-muted-foreground'
+            : [eventAccent?.border, eventAccent?.card],
+        ]
+  );
+
+  useEffect(() => {
+    if (settled) setCollapsed(true);
+  }, [participation.id, settled]);
+
+  function toggleCollapsed() {
+    setCollapsed((value) => !value);
+  }
 
   return (
-    <div className={containerClass}>
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            {contactId ? (
-              <button
-                type="button"
-                onClick={() => onSelectContact(contactId)}
-                className="font-medium truncate hover:underline text-left"
-              >
-                {title}
-              </button>
-            ) : (
-              <p className="font-medium truncate">{title}</p>
-            )}
-            <Badge
-              variant={balance.status === 'paid' ? 'secondary' : 'outline'}
-              className={cn(
-                'capitalize',
-                balance.remaining > 0 && 'border-red-200 bg-red-50 text-red-800',
-                balance.remaining < 0 && 'border-emerald-300 bg-emerald-50 text-emerald-800'
+    <div className={containerClass} style={eventAccent?.borderStyle}>
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={toggleCollapsed}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            toggleCollapsed();
+          }
+        }}
+        className={cn(
+          '-mx-5 flex cursor-pointer items-start justify-between gap-4 px-5 py-4 transition-colors hover:bg-background/70',
+          flushTop ? 'mt-0 pt-2' : '-mt-4',
+          collapsed ? '-mb-4 rounded-lg' : 'mb-1 rounded-t-lg rounded-b-none'
+        )}
+        aria-label={collapsed ? 'Expand payment details' : 'Collapse payment details'}
+        aria-expanded={!collapsed}
+      >
+        <div className="flex min-w-0 items-start gap-3">
+          {!hideCollapseIcon && (
+            <span className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md text-muted-foreground">
+              <ChevronDown
+                className={cn('h-4 w-4 transition-transform', collapsed && '-rotate-90')}
+              />
+            </span>
+          )}
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              {eventAccent && (
+                <span
+                  className={cn('h-2.5 w-2.5 rounded-full', eventAccent.dot)}
+                  style={eventAccent.dotStyle}
+                />
               )}
-            >
-              {balance.status}
-            </Badge>
+              {contactId ? (
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onSelectContact(contactId);
+                  }}
+                  className="font-medium truncate hover:underline text-left"
+                >
+                  {title}
+                </button>
+              ) : (
+                <p className="font-medium truncate">{title}</p>
+              )}
+              <Badge
+                variant={balance.status === 'paid' ? 'secondary' : 'outline'}
+                className={cn(
+                  'capitalize',
+                  balance.remaining > 0 && 'border-red-200 bg-red-50 text-red-800',
+                  settled && 'bg-slate-200 text-slate-700',
+                  balance.remaining < 0 && 'border-emerald-300 bg-emerald-50 text-emerald-800'
+                )}
+              >
+                {getPaymentStatusLabel(balance.status)}
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
           </div>
-          <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
         </div>
         <div className="grid grid-cols-3 gap-5 text-right text-sm">
           <Metric label="Total" value={formatMoney(balance.total, participation.currency)} />
@@ -786,109 +867,111 @@ function ParticipationPaymentBlock({
         </div>
       </div>
 
-      <div className="rounded-md border border-border overflow-x-auto text-sm">
-        <div
-          className={cn(
-            paymentGridClass,
-            'px-3 py-2 text-xs font-medium text-muted-foreground',
-            toneClasses?.rowHeaderBg ?? 'bg-secondary/50'
-          )}
-        >
-          <span>Date</span>
-          <span>Label</span>
-          <span>Note</span>
-          <span className="text-right">Amount</span>
-          <span />
-        </div>
-
-        {participation.payments.length === 0 && addingForParticipationId !== participation.id && (
-          <div className="px-3 py-4 border-t border-border text-sm text-muted-foreground">
-            No individual payments recorded yet.
+      {!collapsed && (
+        <div className="rounded-md border border-border overflow-x-auto text-sm">
+          <div
+            className={cn(
+              paymentGridClass,
+              'px-3 py-2 text-xs font-medium text-muted-foreground',
+              eventAccent?.rowHeader ?? 'bg-secondary/50'
+            )}
+          >
+            <span>Date</span>
+            <span>Label</span>
+            <span>Note</span>
+            <span className="text-right">Amount</span>
+            <span />
           </div>
-        )}
 
-        {participation.payments.map((payment) => {
-          const editDraft = paymentDrafts[payment.id] ?? {
-            amount: String(payment.amount),
-            date: payment.date ?? getTodayIso(),
-            label: payment.label ?? '',
-            note: payment.note ?? '',
-          };
-
-          if (editingPaymentId === payment.id) {
-            return (
-              <PaymentEditRow
-                key={payment.id}
-                draft={editDraft}
-                gridClass={paymentGridClass}
-                onChange={(next) => onDraftChange((prev) => ({ ...prev, [payment.id]: next }))}
-                onSubmit={() => onSubmitEdit(participation.id, payment.id)}
-                onCancel={onCancelEdit}
-              />
-            );
-          }
-
-          return (
-            <div
-              key={payment.id}
-              className={cn(paymentGridClass, 'px-3 py-2 border-t border-border items-center')}
-            >
-              <span className="text-muted-foreground tabular-nums">
-                {payment.date || 'No date'}
-              </span>
-              <span className="truncate">{payment.label || 'Payment'}</span>
-              <span className={payment.note ? 'truncate' : 'truncate text-muted-foreground'}>
-                {payment.note || 'No note'}
-              </span>
-              <span className="tabular-nums text-emerald-700 text-right">
-                -{formatMoney(payment.amount, participation.currency)}
-              </span>
-              <div className="flex justify-end gap-1">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 w-7 p-0 text-muted-foreground"
-                  onClick={() => onStartEdit(payment.id, payment)}
-                >
-                  <Pencil className="w-3.5 h-3.5" />
-                  <span className="sr-only">Edit payment</span>
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-                  onClick={() => onDeletePayment(participation.id, payment.id)}
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span className="sr-only">Delete payment</span>
-                </Button>
-              </div>
+          {participation.payments.length === 0 && addingForParticipationId !== participation.id && (
+            <div className="px-3 py-4 border-t border-border text-sm text-muted-foreground">
+              No individual payments recorded yet.
             </div>
-          );
-        })}
+          )}
 
-        {addingForParticipationId === participation.id ? (
-          <PaymentEditRow
-            draft={newPaymentDraft}
-            gridClass={paymentGridClass}
-            onChange={(next) => onDraftChange((prev) => ({ ...prev, [participation.id]: next }))}
-            onSubmit={() => onSubmitAdd(participation.id)}
-            onCancel={onCancelAdd}
-          />
-        ) : (
-          <div className="border-t border-border px-3 py-2">
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => onStartAdd(participation.id)}
-              className="h-8 gap-1.5"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              Add payment
-            </Button>
-          </div>
-        )}
-      </div>
+          {participation.payments.map((payment) => {
+            const editDraft = paymentDrafts[payment.id] ?? {
+              amount: String(payment.amount),
+              date: payment.date ?? getTodayIso(),
+              label: payment.label ?? '',
+              note: payment.note ?? '',
+            };
+
+            if (editingPaymentId === payment.id) {
+              return (
+                <PaymentEditRow
+                  key={payment.id}
+                  draft={editDraft}
+                  gridClass={paymentGridClass}
+                  onChange={(next) => onDraftChange((prev) => ({ ...prev, [payment.id]: next }))}
+                  onSubmit={() => onSubmitEdit(participation.id, payment.id)}
+                  onCancel={onCancelEdit}
+                />
+              );
+            }
+
+            return (
+              <div
+                key={payment.id}
+                className={cn(paymentGridClass, 'px-3 py-2 border-t border-border items-center')}
+              >
+                <span className="text-muted-foreground tabular-nums">
+                  {payment.date || 'No date'}
+                </span>
+                <span className="truncate">{payment.label || 'Payment'}</span>
+                <span className={payment.note ? 'truncate' : 'truncate text-muted-foreground'}>
+                  {payment.note || 'No note'}
+                </span>
+                <span className="tabular-nums text-emerald-700 text-right">
+                  -{formatMoney(payment.amount, participation.currency)}
+                </span>
+                <div className="flex justify-end gap-1">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 w-7 p-0 text-muted-foreground"
+                    onClick={() => onStartEdit(payment.id, payment)}
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                    <span className="sr-only">Edit payment</span>
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                    onClick={() => onDeletePayment(participation.id, payment.id)}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span className="sr-only">Delete payment</span>
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+
+          {addingForParticipationId === participation.id ? (
+            <PaymentEditRow
+              draft={newPaymentDraft}
+              gridClass={paymentGridClass}
+              onChange={(next) => onDraftChange((prev) => ({ ...prev, [participation.id]: next }))}
+              onSubmit={() => onSubmitAdd(participation.id)}
+              onCancel={onCancelAdd}
+            />
+          ) : (
+            <div className="border-t border-border px-3 py-2">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => onStartAdd(participation.id)}
+                className="h-8 gap-1.5"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Add payment
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

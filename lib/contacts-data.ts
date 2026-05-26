@@ -105,6 +105,8 @@ export type EventSeries = {
   id: string;
   name: string;
   description?: string;
+  /** Visual color used for this series (predefined color name or hex string) */
+  color?: GroupColor | string;
   recurrence: EventRecurrence;
   defaultCurrency: CurrencyCode;
   defaultAmountOwed?: number;
@@ -856,6 +858,7 @@ export const initialEventSeries: EventSeries[] = [
     id: 'es_retreat_weekend',
     name: 'Retreat Weekend',
     description: 'Annual retreat with tiered prices and participant-specific payments.',
+    color: 'blue',
     recurrence: 'yearly',
     defaultCurrency: 'EUR',
     defaultAmountOwed: 480,
@@ -882,6 +885,7 @@ export const initialEventSeries: EventSeries[] = [
     id: 'es_intro_evening',
     name: 'Intro Evening',
     description: 'Small one-off evening event used as an example of a settled participation.',
+    color: 'green',
     recurrence: 'none',
     defaultCurrency: 'EUR',
     defaultAmountOwed: 65,
@@ -908,6 +912,7 @@ export const initialEventSeries: EventSeries[] = [
     id: 'es_summer_workshop',
     name: 'Summer Workshop',
     description: 'Recurring yearly workshop with participants added from contact lists.',
+    color: 'amber',
     recurrence: 'yearly',
     defaultCurrency: 'EUR',
     defaultAmountOwed: 180,

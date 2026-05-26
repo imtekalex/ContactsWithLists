@@ -117,6 +117,25 @@ const groupColorClasses: Record<
 
 const defaultContactsState = createDefaultContactsState();
 
+const EVENT_COLOR_OPTIONS: GroupColor[] = [
+  'blue',
+  'green',
+  'amber',
+  'rose',
+  'cyan',
+  'slate',
+  'purple',
+];
+
+function pickAvailableEventColor(existingSeries: EventSeries[]): GroupColor {
+  const used = new Set<GroupColor>(
+    existingSeries.map((s) => s.color).filter(Boolean) as GroupColor[]
+  );
+  for (const c of EVENT_COLOR_OPTIONS) if (!used.has(c)) return c;
+  // all used - pick deterministically based on count
+  return EVENT_COLOR_OPTIONS[existingSeries.length % EVENT_COLOR_OPTIONS.length];
+}
+
 function getRecurringOccurrenceDates(startDate: string | undefined, recurrence: EventRecurrence) {
   if (!startDate || recurrence === 'none') return [startDate];
 
@@ -446,7 +465,7 @@ export default function Home() {
   const bulkFieldOptions = useMemo(
     () => [
       ...STANDARD_SEARCHABLE_FIELDS.map((f) => ({ key: f.key, label: f.label })),
-      { key: 'tags', label: 'Keywords' },
+      { key: 'tags', label: 'Tags' },
       ...customFields.map((field) => ({ key: `cf:${field.id}`, label: field.name })),
     ],
     [customFields]
@@ -1044,6 +1063,7 @@ export default function Home() {
       const nextSeries: EventSeries = {
         id: seriesId,
         name: seriesName,
+        color: pickAvailableEventColor(eventSeries),
         recurrence: input.recurrence,
         defaultCurrency: input.currency,
         defaultAmountOwed: input.defaultAmountOwed,
@@ -1081,6 +1101,7 @@ export default function Home() {
     const nextSeries: EventSeries = {
       id: seriesId,
       name: seriesName,
+      color: pickAvailableEventColor(eventSeries),
       recurrence: input.recurrence,
       defaultCurrency: 'EUR',
       defaultAmountOwed: input.defaultAmountOwed,
@@ -1636,7 +1657,7 @@ export default function Home() {
             </section>
 
             {/* Detail column */}
-            <section className="flex-1 overflow-y-auto bg-slate-50">
+            <section className="flex-1 overflow-y-auto bg-slate-100">
               {selected ? (
                 <ContactDetail
                   contact={selected}

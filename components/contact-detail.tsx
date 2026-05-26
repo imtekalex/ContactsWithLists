@@ -2,20 +2,21 @@
 
 import { useEffect, useId, useRef, useState } from 'react';
 import {
+  Building2,
   ChevronDown,
   CreditCard,
   MapPin,
-  Minus,
   NotebookText,
   Phone,
   Plus,
+  SlidersHorizontal,
   Star,
-  Tags,
   Trash2,
   UserRound,
   X,
   type LucideIcon,
 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -44,10 +45,18 @@ import {
 } from '@/components/participation-section';
 
 type ColorClass = { dot: string; bg: string; text: string; ring: string };
-type SectionKey = 'identity' | 'contact' | 'address' | 'notes' | 'custom' | 'participation';
+type SectionKey =
+  | 'identity'
+  | 'organization'
+  | 'contact'
+  | 'address'
+  | 'notes'
+  | 'custom'
+  | 'participation';
 
 const DEFAULT_OPEN_SECTIONS: Record<SectionKey, boolean> = {
   identity: true,
+  organization: true,
   contact: true,
   address: true,
   notes: true,
@@ -99,7 +108,6 @@ export function ContactDetail({
   const [draft, setDraft] = useState<Contact>(() => ensureEditableContact(contact));
   const [dirty, setDirty] = useState(false);
   const [showCustomFields, setShowCustomFields] = useState(false);
-  const [showAllNameFields, setShowAllNameFields] = useState(false);
   const [openSections, setOpenSections] =
     useState<Record<SectionKey, boolean>>(DEFAULT_OPEN_SECTIONS);
 
@@ -107,7 +115,6 @@ export function ContactDetail({
     setDraft(ensureEditableContact(contact));
     setDirty(false);
     setShowCustomFields(false);
-    setShowAllNameFields(false);
   }, [contact]);
 
   function updateDraft(next: Contact) {
@@ -144,64 +151,81 @@ export function ContactDetail({
   });
   const labelSuggestions = buildLabelSuggestions(draft);
   const shouldShowCustomFields = showCustomFields || hasCustomValuesToShow(draft, customFields);
-  const visibleNameFields = getVisibleNameFields(draft, showAllNameFields);
+  const visibleTags = draft.tags ?? [];
 
   return (
-    <div className="h-full bg-slate-50/70">
+    <div className="h-full bg-slate-100">
       <div className="space-y-4 px-4 py-5 md:px-8">
         <section className="mx-auto max-w-6xl">
           <div className="space-y-5">
-            {/* Header with large photo */}
-            <div className="flex flex-col gap-6 md:flex-row md:items-start md:gap-8">
-              <ContactPhotoPicker
-                firstName={draft.firstName}
-                lastName={draft.lastName}
-                photoUrl={draft.photoUrl}
-                size="xl"
-                onChange={(photoUrl) => updateDraft({ ...draft, photoUrl })}
-              />
-              <div className="flex min-w-0 flex-1 flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h2 className="truncate text-2xl font-semibold tracking-tight">{name}</h2>
-                    <button
-                      onClick={() => onToggleStar(contact.id)}
-                      className="flex-shrink-0 text-muted-foreground transition-colors hover:text-amber-400"
-                      aria-label={contact.starred ? 'Unstar contact' : 'Star contact'}
-                    >
-                      <Star
-                        className={cn(
-                          'h-5 w-5',
-                          contact.starred && 'fill-amber-400 text-amber-400'
-                        )}
-                      />
-                    </button>
+            <div className="rounded-lg bg-background p-4">
+              <div className="flex flex-col gap-5 md:flex-row md:items-start">
+                <ContactPhotoPicker
+                  firstName={draft.firstName}
+                  lastName={draft.lastName}
+                  photoUrl={draft.photoUrl}
+                  size="xl"
+                  onChange={(photoUrl) => updateDraft({ ...draft, photoUrl })}
+                />
+                <div className="flex min-w-0 flex-1 flex-col gap-4">
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="min-w-0 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <h2 className="truncate text-2xl font-semibold tracking-tight">{name}</h2>
+                        <button
+                          onClick={() => onToggleStar(contact.id)}
+                          className="flex-shrink-0 text-muted-foreground transition-colors hover:text-amber-400"
+                          aria-label={contact.starred ? 'Unstar contact' : 'Star contact'}
+                        >
+                          <Star
+                            className={cn(
+                              'h-5 w-5',
+                              contact.starred && 'fill-amber-400 text-amber-400'
+                            )}
+                          />
+                        </button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Last modified {lastModifiedLabel}
+                      </p>
+                    </div>
+                    <div className="flex flex-shrink-0 gap-2">
+                      <Button size="sm" onClick={save} disabled={!dirty}>
+                        Save
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={cancel} disabled={!dirty}>
+                        Cancel
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => onDelete(contact.id)}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span className="sr-only">Delete contact</span>
+                      </Button>
+                    </div>
                   </div>
-                </div>
-                <div className="flex flex-shrink-0 gap-2">
-                  <Button size="sm" onClick={save} disabled={!dirty}>
-                    Save
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={cancel} disabled={!dirty}>
-                    Cancel
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => onDelete(contact.id)}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    <span className="sr-only">Delete contact</span>
-                  </Button>
+                  <div className="grid gap-3 text-sm md:grid-cols-2">
+                    <EditableGroupChips
+                      groups={groups}
+                      selectedIds={draft.groupIds}
+                      groupColorClasses={groupColorClasses}
+                      onChange={(groupIds) => updateDraft({ ...draft, groupIds })}
+                    />
+                    <TagEditor
+                      tags={visibleTags}
+                      onChange={(tags) => updateDraft({ ...draft, tags })}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Section 1: Name, Title, Company, Groups */}
-            <div className="space-y-1.5 rounded-lg bg-background/50 p-3">
+            <div className="space-y-1.5 rounded-lg bg-background p-3">
               <SectionHeader
-                title="Name & Organization"
+                title="Name"
                 icon={UserRound}
                 open={openSections.identity}
                 onToggle={() => toggleSection('identity')}
@@ -210,7 +234,7 @@ export function ContactDetail({
                 <div className="space-y-3">
                   <div className="space-y-1">
                     <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-                      {visibleNameFields.map((field) => (
+                      {getNameFields(draft).map((field) => (
                         <CompactInput
                           key={field.key}
                           label={field.label}
@@ -219,89 +243,40 @@ export function ContactDetail({
                         />
                       ))}
                     </div>
-                    <div className="grid grid-cols-1 gap-2 md:grid-cols-[7rem_minmax(12rem,1fr)]">
-                      <span aria-hidden className="hidden md:block" />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-fit justify-start gap-1 px-0.5 text-sm"
-                        onClick={() => setShowAllNameFields((value) => !value)}
-                      >
-                        {showAllNameFields ? (
-                          <Minus className="h-3.5 w-3.5" />
-                        ) : (
-                          <Plus className="h-3.5 w-3.5" />
-                        )}
-                        {showAllNameFields ? 'Hide' : 'Show'}
-                      </Button>
-                    </div>
-                    <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                      <CompactInput
-                        label="Title"
-                        value={draft.title}
-                        onChange={(value) => updateDraft({ ...draft, title: value })}
-                      />
-                      <CompactInput
-                        label="Company"
-                        value={draft.company}
-                        onChange={(value) => updateDraft({ ...draft, company: value })}
-                      />
-                    </div>
-                    <div className="grid grid-cols-1 gap-2">
-                      <div>
-                        <span className="text-xs font-medium uppercase text-muted-foreground">
-                          Last Modified
-                        </span>
-                        <p className="text-sm font-medium">{lastModifiedLabel}</p>
-                      </div>
-                    </div>
                   </div>
-                  {groups.length > 0 && (
-                    <div className="space-y-1">
-                      <p className="text-xs font-medium uppercase text-muted-foreground">Groups</p>
-                      <div className="flex flex-wrap gap-1">
-                        {groups.map((group) => {
-                          const color = groupColorClasses[group.color];
-                          const active = draft.groupIds.includes(group.id);
-                          return (
-                            <button
-                              type="button"
-                              key={group.id}
-                              onClick={() => {
-                                updateDraft({
-                                  ...draft,
-                                  groupIds: active
-                                    ? draft.groupIds.filter((id) => id !== group.id)
-                                    : [...draft.groupIds, group.id],
-                                });
-                              }}
-                              className={cn(
-                                'inline-flex h-6 items-center gap-1 rounded-full border px-2 text-xs font-medium transition-colors',
-                                active
-                                  ? cn(color.bg, color.text, 'border-transparent')
-                                  : 'border-border bg-background text-muted-foreground hover:bg-secondary'
-                              )}
-                            >
-                              <span
-                                className={cn(
-                                  'h-1.5 w-1.5 rounded-full',
-                                  active ? color.dot : 'bg-muted-foreground/50'
-                                )}
-                              />
-                              {group.name}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
             </div>
 
-            {/* Section 2: Phone, Email, Website */}
-            <div className="space-y-1.5 rounded-lg bg-background/50 p-3">
+            <div className="space-y-1.5 rounded-lg bg-background p-3">
+              <SectionHeader
+                title="Organization"
+                icon={Building2}
+                open={openSections.organization}
+                onToggle={() => toggleSection('organization')}
+              />
+              {openSections.organization && (
+                <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+                  <CompactInput
+                    label="Title"
+                    value={draft.title}
+                    onChange={(value) => updateDraft({ ...draft, title: value })}
+                  />
+                  <CompactInput
+                    label="Company"
+                    value={draft.company}
+                    onChange={(value) => updateDraft({ ...draft, company: value })}
+                  />
+                  <CompactInput
+                    label="Department"
+                    value={draft.department ?? ''}
+                    onChange={(value) => updateDraft({ ...draft, department: value })}
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-1.5 rounded-lg bg-background p-3">
               <SectionHeader
                 title="Contact Information"
                 icon={Phone}
@@ -338,8 +313,7 @@ export function ContactDetail({
               )}
             </div>
 
-            {/* Section 3: Address */}
-            <div className="space-y-1.5 rounded-lg bg-background/50 p-3">
+            <div className="space-y-1.5 rounded-lg bg-background p-3">
               <SectionHeader
                 title="Address"
                 icon={MapPin}
@@ -355,8 +329,7 @@ export function ContactDetail({
               )}
             </div>
 
-            {/* Section 4: Notes */}
-            <div className="space-y-1.5 rounded-lg bg-background/50 p-3">
+            <div className="space-y-1.5 rounded-lg bg-background p-3">
               <SectionHeader
                 title="Notes"
                 icon={NotebookText}
@@ -373,11 +346,10 @@ export function ContactDetail({
               )}
             </div>
 
-            {/* Custom Fields */}
-            <div className="space-y-1.5 rounded-lg bg-background/50 p-3">
+            <div className="space-y-1.5 rounded-lg bg-background p-3">
               <SectionHeader
                 title="Custom Fields"
-                icon={Tags}
+                icon={SlidersHorizontal}
                 open={openSections.custom}
                 onToggle={() => toggleSection('custom')}
               />
@@ -406,7 +378,7 @@ export function ContactDetail({
           </div>
         </section>
 
-        <div className="space-y-1.5 rounded-lg bg-background/50 p-3">
+        <div className="mx-auto max-w-6xl space-y-1.5 rounded-lg bg-background p-3">
           <SectionHeader
             title="Participation & payments"
             icon={CreditCard}
@@ -434,6 +406,115 @@ export function ContactDetail({
   );
 }
 
+function EditableGroupChips({
+  groups,
+  selectedIds,
+  groupColorClasses,
+  onChange,
+}: {
+  groups: Group[];
+  selectedIds: string[];
+  groupColorClasses: Record<Group['color'], ColorClass>;
+  onChange: (groupIds: string[]) => void;
+}) {
+  return (
+    <div className="min-w-0 space-y-1">
+      <p className="text-xs font-medium uppercase text-muted-foreground">Groups</p>
+      {groups.length > 0 ? (
+        <div className="flex flex-wrap gap-1">
+          {groups.map((group) => {
+            const color = groupColorClasses[group.color];
+            const active = selectedIds.includes(group.id);
+            return (
+              <button
+                type="button"
+                key={group.id}
+                onClick={() =>
+                  onChange(
+                    active
+                      ? selectedIds.filter((id) => id !== group.id)
+                      : [...selectedIds, group.id]
+                  )
+                }
+                className={cn(
+                  'inline-flex h-6 max-w-full items-center gap-1 rounded-md border px-2 text-xs font-medium transition-colors',
+                  active
+                    ? cn(color.bg, color.text, 'border-transparent')
+                    : 'border-border bg-background text-muted-foreground hover:bg-secondary'
+                )}
+              >
+                <span
+                  className={cn(
+                    'h-1.5 w-1.5 rounded-full',
+                    active ? color.dot : 'bg-muted-foreground/50'
+                  )}
+                />
+                <span className="truncate">{group.name}</span>
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">No groups</p>
+      )}
+    </div>
+  );
+}
+
+function TagEditor({ tags, onChange }: { tags: string[]; onChange: (tags: string[]) => void }) {
+  const [value, setValue] = useState('');
+
+  function addTags(rawValue = value) {
+    const nextTags = rawValue
+      .split(/[,;]+/)
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+    if (nextTags.length === 0) return;
+    onChange(uniqueStrings([...tags, ...nextTags]));
+    setValue('');
+  }
+
+  return (
+    <div className="space-y-1.5">
+      <p className="text-xs font-medium uppercase text-muted-foreground">Tags</p>
+      <div className="flex flex-wrap gap-1">
+        {tags.length > 0 ? (
+          tags.map((tag) => (
+            <Badge key={tag} variant="secondary" className="gap-1">
+              {tag}
+              <button
+                type="button"
+                onClick={() => onChange(tags.filter((current) => current !== tag))}
+                className="rounded-sm text-muted-foreground transition-colors hover:text-foreground"
+                aria-label={`Remove ${tag}`}
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          ))
+        ) : (
+          <p className="text-sm text-muted-foreground">No tags</p>
+        )}
+      </div>
+      <div className="max-w-[22rem]">
+        <Input
+          value={value}
+          onChange={(event) => setValue(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ',' || event.key === ';') {
+              event.preventDefault();
+              addTags();
+            }
+          }}
+          onBlur={() => addTags()}
+          placeholder="Add tag"
+          className="h-9"
+        />
+      </div>
+    </div>
+  );
+}
+
 function SectionHeader({
   title,
   icon: Icon,
@@ -449,7 +530,10 @@ function SectionHeader({
     <button
       type="button"
       onClick={onToggle}
-      className="flex w-full items-center justify-between gap-3 rounded-md px-0.5 py-1 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
+      className={cn(
+        '-mx-3 -mt-3 flex w-[calc(100%+1.5rem)] items-center justify-between gap-3 px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground',
+        open ? 'mb-1 rounded-t-lg rounded-b-none' : '-mb-3 rounded-lg'
+      )}
       aria-expanded={open}
     >
       <span className="flex min-w-0 items-center gap-2">
@@ -936,24 +1020,19 @@ function _hasAnyRelationship(people: ContactRelatedPerson[]) {
   return people.some((person) => person.name.trim().length > 0);
 }
 
-function getVisibleNameFields(contact: Contact, showAll: boolean) {
-  const fields: Array<{
-    key: 'namePrefix' | 'firstName' | 'middleName' | 'lastName' | 'nameSuffix' | 'nickname';
-    label: string;
-    value: string;
-  }> = [
+function getNameFields(contact: Contact) {
+  return [
     { key: 'namePrefix', label: 'Prefix', value: contact.namePrefix ?? '' },
     { key: 'firstName', label: 'First name', value: contact.firstName },
     { key: 'middleName', label: 'Middle name', value: contact.middleName ?? '' },
     { key: 'lastName', label: 'Last name', value: contact.lastName },
     { key: 'nameSuffix', label: 'Suffix', value: contact.nameSuffix ?? '' },
     { key: 'nickname', label: 'Nickname', value: contact.nickname ?? '' },
-  ];
-  if (showAll) return fields;
-  return fields.filter(
-    (field) =>
-      field.key === 'firstName' || field.key === 'lastName' || field.value.trim().length > 0
-  );
+  ] satisfies Array<{
+    key: 'namePrefix' | 'firstName' | 'middleName' | 'lastName' | 'nameSuffix' | 'nickname';
+    label: string;
+    value: string;
+  }>;
 }
 
 function buildLabelSuggestions(contact: Contact) {

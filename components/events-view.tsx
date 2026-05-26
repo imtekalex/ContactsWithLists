@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { getEventAccentClasses } from '@/components/event-accent';
+import { ColorPickerDialog } from '@/components/color-picker-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
@@ -24,7 +26,13 @@ import type {
   GroupColor,
 } from '@/lib/contacts-data';
 import { resolveListMembers, STANDARD_SEARCHABLE_FIELDS } from '@/lib/contacts-data';
-import { formatMoney, getContactName, getParticipationBalance } from '@/lib/payments';
+import {
+  formatMoney,
+  getContactName,
+  getParticipationBalance,
+  getPaymentStatusLabel,
+} from '@/lib/payments';
+import { TAILWIND_COLOR_MAP } from '@/lib/color-utils';
 import { cn } from '@/lib/utils';
 import type { CreatePaymentInput } from '@/components/participation-section';
 
@@ -90,6 +98,18 @@ type Props = {
   onAddPayment: (participationId: string, payment: CreatePaymentInput) => void;
   onSelectContact: (contactId: string) => void;
 };
+
+const COLOR_OPTIONS: GroupColor[] = ['blue', 'green', 'amber', 'rose', 'cyan', 'slate', 'purple'];
+
+function isGroupColor(color: unknown): color is GroupColor {
+  return typeof color === 'string' && COLOR_OPTIONS.includes(color as GroupColor);
+}
+
+function getColorHex(color: GroupColor | string | undefined) {
+  if (typeof color === 'string' && color.startsWith('#')) return color;
+  if (isGroupColor(color)) return TAILWIND_COLOR_MAP[color];
+  return TAILWIND_COLOR_MAP.blue;
+}
 
 type PriceDraft = { id: string; label: string; amount: string; currency: string; notes: string };
 type ParticipantPriceDraft = {
@@ -342,19 +362,29 @@ export function EventsView({
                     {occurrences.map((occurrence) => {
                       const series = eventSeries.find((item) => item.id === occurrence.seriesId);
                       const members = getEventMembers(occurrence, contacts, participations);
+                      const eventAccent = getEventAccentClasses(occurrence.id, series?.color);
                       return (
                         <li key={occurrence.id}>
                           <button
                             onClick={() => setActiveOccurrenceId(occurrence.id)}
                             className={cn(
-                              'w-full text-left px-5 py-3 transition-colors',
+                              'w-full border-l-4 text-left px-5 py-3 transition-colors',
+                              eventAccent.border,
                               activeOccurrence?.id === occurrence.id
-                                ? 'bg-secondary'
+                                ? eventAccent.card
                                 : 'hover:bg-secondary/40'
                             )}
+                            style={
+                              activeOccurrence?.id === occurrence.id
+                                ? { ...eventAccent.borderStyle, ...eventAccent.cardStyle }
+                                : eventAccent.borderStyle
+                            }
                           >
                             <div className="flex items-center gap-2">
-                              <CalendarDays className="w-3.5 h-3.5 text-muted-foreground" />
+                              <span
+                                className={cn('h-2.5 w-2.5 rounded-full', eventAccent.dot)}
+                                style={eventAccent.dotStyle}
+                              />
                               <p className="text-sm font-semibold truncate">{occurrence.name}</p>
                             </div>
                             <p className="text-xs text-muted-foreground mt-0.5 truncate">
@@ -388,6 +418,7 @@ export function EventsView({
           <EventDetail
             occurrence={activeOccurrence}
             series={activeSeries}
+            eventSeries={eventSeries}
             contacts={contacts}
             groups={groups}
             customFields={customFields}
@@ -421,6 +452,7 @@ export function EventsView({
 function EventDetail({
   occurrence,
   series,
+  eventSeries,
   contacts,
   groups,
   customFields,
@@ -435,6 +467,7 @@ function EventDetail({
 }: {
   occurrence: EventOccurrence;
   series: EventSeries;
+  eventSeries: EventSeries[];
   contacts: Contact[];
   groups: Group[];
   customFields: CustomField[];
@@ -449,6 +482,7 @@ function EventDetail({
 }) {
   const [editingEvent, setEditingEvent] = useState(false);
   const [editingParticipants, setEditingParticipants] = useState(false);
+  const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const [eventDraft, setEventDraft] = useState({
     name: occurrence.name,
     date: occurrence.date ?? '',
@@ -456,6 +490,7 @@ function EventDetail({
     notes: occurrence.notes ?? '',
     seriesName: series.name,
     recurrence: series.recurrence,
+    color: (series as EventSeries).color ?? 'blue',
   });
   const [priceDrafts, setPriceDrafts] = useState<PriceDraft[]>(() => priceDraftsFromSeries(series));
   const [filterDraft, setFilterDraft] = useState<FilterDraft>(EMPTY_DRAFT);
@@ -526,6 +561,7 @@ function EventDetail({
       notes: occurrence.notes ?? '',
       seriesName: series.name,
       recurrence: series.recurrence,
+      color: (series as EventSeries).color ?? 'blue',
     });
     setPriceDrafts(priceDraftsFromSeries(series));
     setFilterDraft(EMPTY_DRAFT);
@@ -548,6 +584,7 @@ function EventDetail({
       },
       series: {
         ...series,
+        color: eventDraft.color ?? series.color,
         name: eventDraft.seriesName.trim() || series.name,
         recurrence: eventDraft.recurrence,
         defaultAmountOwed: prices[0]?.amount,
@@ -641,12 +678,52 @@ function EventDetail({
     });
   }
 
+  const eventAccent = getEventAccentClasses(occurrence.id, series?.color);
+  const eventDraftColorHex = getColorHex(eventDraft.color);
+  const otherEventSeries = useMemo(
+    () => eventSeries.filter((item) => item.id !== series.id),
+    [eventSeries, series.id]
+  );
+  const existingEventColors = useMemo(
+    () =>
+      otherEventSeries
+        .map((item) => item.color)
+        .filter((color): color is GroupColor => isGroupColor(color)),
+    [otherEventSeries]
+  );
+  const existingCustomHexes = useMemo(
+    () =>
+      otherEventSeries
+        .map((item) => item.color)
+        .filter((color): color is string => typeof color === 'string' && color.startsWith('#')),
+    [otherEventSeries]
+  );
+
   return (
     <div>
-      <div className="px-8 py-5 border-b border-border flex items-start justify-between gap-4">
+      <ColorPickerDialog
+        open={colorPickerOpen}
+        onOpenChange={setColorPickerOpen}
+        value={eventDraftColorHex}
+        onChange={(color) => setEventDraft({ ...eventDraft, color })}
+        existingEventColors={existingEventColors}
+        existingCustomHexes={existingCustomHexes}
+      />
+
+      <div
+        className={cn(
+          'border-b border-l-4 px-8 py-5 flex items-start justify-between gap-4',
+          eventAccent.border,
+          eventAccent.header
+        )}
+        style={{ ...eventAccent.borderStyle, ...eventAccent.headerStyle }}
+      >
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <CalendarDays className="w-4 h-4 text-muted-foreground" />
+            <span
+              className={cn('h-2.5 w-2.5 rounded-full', eventAccent.dot)}
+              style={eventAccent.dotStyle}
+            />
             <h2 className="text-2xl font-semibold tracking-tight truncate">{occurrence.name}</h2>
             <Badge variant="outline" className="capitalize">
               {series.recurrence}
@@ -722,6 +799,21 @@ function EventDetail({
                   }
                   className="mt-1.5"
                 />
+              </div>
+              <div>
+                <Label className="text-xs">Color</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setColorPickerOpen(true)}
+                  className="mt-1.5 w-full justify-start gap-2"
+                >
+                  <div
+                    className="w-4 h-4 rounded-full border border-foreground/20"
+                    style={{ backgroundColor: eventDraftColorHex }}
+                  />
+                  Pick color
+                </Button>
               </div>
               <div>
                 <Label className="text-xs">Repeats</Label>
@@ -973,8 +1065,15 @@ function EventDetail({
           </Card>
         )}
 
-        <Card className="p-0 overflow-hidden">
-          <div className="px-5 py-4 bg-secondary/40 flex items-center justify-between">
+        <Card className="gap-0 p-0 overflow-hidden">
+          <div
+            className={cn(
+              'px-5 py-4 flex items-center justify-between border-l-4',
+              eventAccent.border,
+              eventAccent.header
+            )}
+            style={{ ...eventAccent.borderStyle, ...eventAccent.headerStyle }}
+          >
             <div>
               <h3 className="font-semibold">Participants</h3>
               <p className="text-xs text-muted-foreground">
@@ -988,7 +1087,10 @@ function EventDetail({
               No participants yet.
             </div>
           ) : (
-            <div className="divide-y divide-border">
+            <div
+              className={cn('divide-y divide-border border-l-4', eventAccent.border)}
+              style={eventAccent.borderStyle}
+            >
               {members.map((contact) => {
                 const hasPaymentParticipation = participations.some(
                   (participation) =>
@@ -1018,7 +1120,11 @@ function EventDetail({
                 return (
                   <div
                     key={contact.id}
-                    className="px-4 py-3 grid grid-cols-[auto_minmax(0,1fr)_8rem_10rem_7rem_7rem_auto] items-center gap-4"
+                    className={cn(
+                      'px-4 py-3 grid grid-cols-[auto_minmax(0,1fr)_8rem_10rem_7rem_7rem_auto] items-center gap-4',
+                      eventAccent.card
+                    )}
+                    style={eventAccent.cardStyle}
                   >
                     <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center text-xs font-semibold flex-shrink-0">
                       {(contact.firstName[0] ?? '') + (contact.lastName[0] ?? '')}
@@ -1048,7 +1154,7 @@ function EventDetail({
                               'border-emerald-300 bg-emerald-50 text-emerald-800'
                           )}
                         >
-                          {balance.remaining < 0 ? 'Credit' : balance.status}
+                          {balance.remaining < 0 ? 'Credit' : getPaymentStatusLabel(balance.status)}
                         </Badge>
                       ) : hasPaymentParticipation ? (
                         <Badge variant="secondary">Payment record</Badge>

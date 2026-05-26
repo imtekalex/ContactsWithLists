@@ -1,7 +1,16 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
-import { CalendarDays, Check, CreditCard, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  CalendarDays,
+  Check,
+  ChevronDown,
+  CreditCard,
+  Pencil,
+  Plus,
+  Trash2,
+  X,
+} from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { getEventAccentClasses } from '@/components/event-accent';
 import type {
   Contact,
   CurrencyCode,
@@ -22,7 +32,12 @@ import type {
   EventParticipation,
   EventSeries,
 } from '@/lib/contacts-data';
-import { formatMoney, getParticipationBalance, getParticipationLabel } from '@/lib/payments';
+import {
+  formatMoney,
+  getParticipationBalance,
+  getParticipationLabel,
+  getPaymentStatusLabel,
+} from '@/lib/payments';
 import { cn } from '@/lib/utils';
 
 export type CreateParticipationInput = {
@@ -130,21 +145,6 @@ export function ParticipationSection({
     [eventOccurrences, eventSeries]
   );
 
-  const eventAccentClasses = useMemo(
-    () =>
-      contactParticipations.map((_, index) => {
-        const palette = [
-          { border: 'border-blue-400/70', dot: 'bg-blue-500' },
-          { border: 'border-emerald-400/70', dot: 'bg-emerald-500' },
-          { border: 'border-amber-400/70', dot: 'bg-amber-500' },
-          { border: 'border-violet-400/70', dot: 'bg-violet-500' },
-          { border: 'border-rose-400/70', dot: 'bg-rose-500' },
-        ];
-        return palette[index % palette.length];
-      }),
-    [contactParticipations]
-  );
-
   const participationNodes = useRef<Record<string, HTMLDivElement | null>>({});
   const highlightTimer = useRef<number | null>(null);
   const [highlightedParticipationId, setHighlightedParticipationId] = useState<string | null>(null);
@@ -163,6 +163,26 @@ export function ParticipationSection({
   const [paymentDrafts, setPaymentDrafts] = useState<Record<string, PaymentDraft>>({});
   const [activePaymentForm, setActivePaymentForm] = useState<string | null>(null);
   const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null);
+  const [collapsedParticipationIds, setCollapsedParticipationIds] = useState<Set<string>>(
+    () => new Set()
+  );
+
+  const settledParticipationIds = useMemo(
+    () =>
+      contactParticipations
+        .filter((participation) => getParticipationBalance(participation).status === 'paid')
+        .map((participation) => participation.id),
+    [contactParticipations]
+  );
+
+  useEffect(() => {
+    if (settledParticipationIds.length === 0) return;
+    setCollapsedParticipationIds((current) => {
+      const next = new Set(current);
+      settledParticipationIds.forEach((id) => next.add(id));
+      return next;
+    });
+  }, [settledParticipationIds]);
 
   function emptyPaymentDraft(): PaymentDraft {
     return { amount: '', date: getTodayIso(), label: '', note: '' };
@@ -300,6 +320,15 @@ export function ParticipationSection({
     onDeleteParticipation(participation.id);
   }
 
+  function toggleParticipation(participationId: string) {
+    setCollapsedParticipationIds((current) => {
+      const next = new Set(current);
+      if (next.has(participationId)) next.delete(participationId);
+      else next.add(participationId);
+      return next;
+    });
+  }
+
   const selectedEventOption = eventOptions.find(
     (item) => item.id === participationDraft.occurrenceId
   );
@@ -317,7 +346,7 @@ export function ParticipationSection({
       : '0';
 
   return (
-    <section className="mx-auto max-w-5xl space-y-4">
+    <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3 border-t border-border pt-5">
         <div>
           <p className="text-xs text-muted-foreground">
@@ -552,48 +581,6 @@ export function ParticipationSection({
         </div>
       )}
 
-      {contactParticipations.length > 0 && (
-        <div className="rounded-lg bg-slate-100/70 p-4">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-xs text-muted-foreground">Total outstanding</p>
-              <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
-                {summaryEntries.map(([currency, summary]) => (
-                  <span
-                    key={currency}
-                    className={cn(
-                      'text-xl font-semibold tabular-nums',
-                      summary.remaining > 0 && 'text-red-800',
-                      summary.remaining < 0 && 'text-emerald-700'
-                    )}
-                  >
-                    {formatMoney(summary.remaining, currency)}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <div className="hidden md:grid grid-cols-2 gap-6 text-right text-sm">
-              <div>
-                <p className="text-xs text-muted-foreground">Total owed</p>
-                <p className="font-medium tabular-nums">
-                  {summaryEntries
-                    .map(([currency, summary]) => formatMoney(summary.total, currency))
-                    .join(' / ')}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Paid</p>
-                <p className="font-medium tabular-nums">
-                  {summaryEntries
-                    .map(([currency, summary]) => formatMoney(summary.paid, currency))
-                    .join(' / ')}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {contactParticipations.length === 0 ? (
         <div className="p-5 text-center">
           <CalendarDays className="w-6 h-6 mx-auto text-muted-foreground mb-2" />
@@ -601,10 +588,15 @@ export function ParticipationSection({
         </div>
       ) : (
         <div className="space-y-3">
-          {contactParticipations.map((participation, index) => {
+          {contactParticipations.map((participation) => {
             const balance = getParticipationBalance(participation);
             const label = getParticipationLabel(participation, eventOccurrences, eventSeries);
             const newPaymentDraft = paymentDrafts[participation.id] ?? emptyPaymentDraft();
+            const collapsed = collapsedParticipationIds.has(participation.id);
+            const settled = balance.status === 'paid';
+            const occ = eventOccurrences.find((o) => o.id === participation.occurrenceId);
+            const series = occ ? eventSeries.find((s) => s.id === occ.seriesId) : undefined;
+            const eventAccent = getEventAccentClasses(participation.occurrenceId, series?.color);
 
             return (
               <div
@@ -615,35 +607,64 @@ export function ParticipationSection({
               >
                 <div
                   className={cn(
-                    'space-y-3 rounded-lg bg-background/70 p-4 border-l-4 transition-shadow',
-                    eventAccentClasses[index]?.border,
+                    'space-y-3 rounded-lg border border-l-4 p-4 shadow-sm transition-shadow',
+                    settled ? 'bg-slate-100/70 text-muted-foreground' : eventAccent.card,
+                    eventAccent.border,
+                    settled && 'border-slate-300',
                     highlightedParticipationId === participation.id &&
                       'ring-2 ring-primary ring-offset-2'
                   )}
+                  style={eventAccent.borderStyle}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => toggleParticipation(participation.id)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        toggleParticipation(participation.id);
+                      }
+                    }}
+                    className={cn(
+                      '-mx-4 -mt-4 flex cursor-pointer items-start gap-3 px-4 py-4 transition-colors hover:bg-background/70',
+                      collapsed ? '-mb-4 rounded-lg' : 'mb-1 rounded-t-lg rounded-b-none'
+                    )}
+                    aria-label={collapsed ? 'Expand participation' : 'Collapse participation'}
+                    aria-expanded={!collapsed}
+                  >
+                    <span className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors">
+                      <ChevronDown
+                        className={cn('h-4 w-4 transition-transform', collapsed && '-rotate-90')}
+                      />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex min-w-0 flex-wrap items-center gap-2">
                         <span
-                          className={cn('h-2.5 w-2.5 rounded-full', eventAccentClasses[index]?.dot)}
+                          className={cn('h-2.5 w-2.5 rounded-full', eventAccent.dot)}
+                          style={eventAccent.dotStyle}
                         />
                         <button
                           type="button"
-                          onClick={() => onSelectEventPayments(participation.occurrenceId)}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            onSelectEventPayments(participation.occurrenceId);
+                          }}
                           className="font-semibold truncate hover:underline text-left"
                         >
                           {label.eventName}
                         </button>
                         <Badge
-                          variant={balance.status === 'paid' ? 'secondary' : 'outline'}
+                          variant={settled ? 'secondary' : 'outline'}
                           className={cn(
                             'capitalize',
                             balance.remaining > 0 && 'border-red-200 bg-red-50 text-red-800',
+                            settled && 'bg-slate-200 text-slate-700',
                             balance.remaining < 0 &&
                               'border-emerald-300 bg-emerald-50 text-emerald-800'
                           )}
                         >
-                          {balance.status}
+                          {getPaymentStatusLabel(balance.status)}
                         </Badge>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
@@ -652,7 +673,7 @@ export function ParticipationSection({
                     </div>
                     <div className="text-right text-sm tabular-nums">
                       <p>
-                        <span className="text-muted-foreground">Owes </span>
+                        <span className="text-muted-foreground">Remaining </span>
                         <span
                           className={cn(
                             balance.remaining > 0 && 'font-semibold text-red-800',
@@ -673,7 +694,10 @@ export function ParticipationSection({
                               ? 'Settle this participation before deleting it.'
                               : 'Delete participation'
                           }
-                          onClick={() => deleteParticipation(participation)}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            deleteParticipation(participation);
+                          }}
                           className="mt-2 h-7 px-2 text-muted-foreground hover:text-destructive disabled:hover:text-muted-foreground"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -683,44 +707,124 @@ export function ParticipationSection({
                     </div>
                   </div>
 
-                  <div className="overflow-hidden rounded-md bg-card text-sm">
-                    <div className="overflow-x-auto">
-                      <div
-                        className={cn(
-                          paymentGridClass,
-                          'px-3 py-2 bg-secondary/50 text-xs font-medium text-muted-foreground'
-                        )}
-                      >
-                        <span>Date</span>
-                        <span>Label</span>
-                        <span>Note</span>
-                        <span className="text-right">Amount</span>
-                        <span />
-                      </div>
-                      <div
-                        className={cn(
-                          paymentGridClass,
-                          'px-3 py-2 border-t border-border items-center'
-                        )}
-                      >
-                        <span className="font-medium">Total</span>
-                        <span />
-                        <span />
-                        <span className="font-medium tabular-nums text-right">
-                          {formatMoney(balance.total, participation.currency)}
-                        </span>
-                        <span />
-                      </div>
+                  {!collapsed && (
+                    <div className="overflow-hidden rounded-md bg-card text-sm shadow-sm">
+                      <div className="overflow-x-auto">
+                        <div
+                          className={cn(
+                            paymentGridClass,
+                            'px-3 py-2 bg-secondary/50 text-xs font-medium text-muted-foreground'
+                          )}
+                        >
+                          <span>Date</span>
+                          <span>Label</span>
+                          <span>Note</span>
+                          <span className="text-right">Amount</span>
+                          <span />
+                        </div>
+                        <div
+                          className={cn(
+                            paymentGridClass,
+                            'px-3 py-2 border-t border-border items-center'
+                          )}
+                        >
+                          <span className="font-medium">Total</span>
+                          <span />
+                          <span />
+                          <span className="font-medium tabular-nums text-right">
+                            {formatMoney(balance.total, participation.currency)}
+                          </span>
+                          <span />
+                        </div>
 
-                      {participation.payments.map((payment) => {
-                        const editDraft = paymentDrafts[payment.id] ?? {
-                          amount: String(payment.amount),
-                          date: payment.date ?? getTodayIso(),
-                          label: payment.label ?? '',
-                          note: payment.note ?? '',
-                        };
+                        {participation.payments.map((payment) => {
+                          const editDraft = paymentDrafts[payment.id] ?? {
+                            amount: String(payment.amount),
+                            date: payment.date ?? getTodayIso(),
+                            label: payment.label ?? '',
+                            note: payment.note ?? '',
+                          };
 
-                        if (editingPaymentId === payment.id && canEdit) {
+                          if (editingPaymentId === payment.id && canEdit) {
+                            return (
+                              <div
+                                key={payment.id}
+                                className={cn(
+                                  paymentGridClass,
+                                  'px-3 py-2 border-t border-border items-center'
+                                )}
+                              >
+                                <Input
+                                  type="date"
+                                  value={editDraft.date}
+                                  aria-label="Payment date"
+                                  onChange={(event) =>
+                                    setPaymentDrafts((prev) => ({
+                                      ...prev,
+                                      [payment.id]: { ...editDraft, date: event.target.value },
+                                    }))
+                                  }
+                                  className="h-8"
+                                />
+                                <Input
+                                  value={editDraft.label}
+                                  aria-label="Payment label"
+                                  onChange={(event) =>
+                                    setPaymentDrafts((prev) => ({
+                                      ...prev,
+                                      [payment.id]: { ...editDraft, label: event.target.value },
+                                    }))
+                                  }
+                                  className="h-8"
+                                />
+                                <Input
+                                  value={editDraft.note}
+                                  aria-label="Payment note"
+                                  onChange={(event) =>
+                                    setPaymentDrafts((prev) => ({
+                                      ...prev,
+                                      [payment.id]: { ...editDraft, note: event.target.value },
+                                    }))
+                                  }
+                                  className="h-8"
+                                />
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  value={editDraft.amount}
+                                  aria-label="Payment amount"
+                                  onChange={(event) =>
+                                    setPaymentDrafts((prev) => ({
+                                      ...prev,
+                                      [payment.id]: { ...editDraft, amount: event.target.value },
+                                    }))
+                                  }
+                                  className="h-8 text-right"
+                                />
+                                <div className="flex justify-end gap-1">
+                                  <Button
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => submitPaymentEdit(participation.id, payment.id)}
+                                  >
+                                    <Check className="w-4 h-4" />
+                                    <span className="sr-only">Save payment</span>
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => setEditingPaymentId(null)}
+                                  >
+                                    <X className="w-4 h-4" />
+                                    <span className="sr-only">Cancel payment edit</span>
+                                  </Button>
+                                </div>
+                              </div>
+                            );
+                          }
+
                           return (
                             <div
                               key={payment.id}
@@ -729,269 +833,191 @@ export function ParticipationSection({
                                 'px-3 py-2 border-t border-border items-center'
                               )}
                             >
-                              <Input
-                                type="date"
-                                value={editDraft.date}
-                                aria-label="Payment date"
-                                onChange={(event) =>
-                                  setPaymentDrafts((prev) => ({
-                                    ...prev,
-                                    [payment.id]: { ...editDraft, date: event.target.value },
-                                  }))
+                              <span className="text-muted-foreground tabular-nums">
+                                {payment.date || 'No date'}
+                              </span>
+                              <span className="truncate">{payment.label || 'Payment'}</span>
+                              <span
+                                className={
+                                  payment.note ? 'truncate' : 'truncate text-muted-foreground'
                                 }
-                                className="h-8"
-                              />
-                              <Input
-                                value={editDraft.label}
-                                aria-label="Payment label"
-                                onChange={(event) =>
-                                  setPaymentDrafts((prev) => ({
-                                    ...prev,
-                                    [payment.id]: { ...editDraft, label: event.target.value },
-                                  }))
-                                }
-                                className="h-8"
-                              />
-                              <Input
-                                value={editDraft.note}
-                                aria-label="Payment note"
-                                onChange={(event) =>
-                                  setPaymentDrafts((prev) => ({
-                                    ...prev,
-                                    [payment.id]: { ...editDraft, note: event.target.value },
-                                  }))
-                                }
-                                className="h-8"
-                              />
-                              <Input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={editDraft.amount}
-                                aria-label="Payment amount"
-                                onChange={(event) =>
-                                  setPaymentDrafts((prev) => ({
-                                    ...prev,
-                                    [payment.id]: { ...editDraft, amount: event.target.value },
-                                  }))
-                                }
-                                className="h-8 text-right"
-                              />
+                              >
+                                {payment.note || 'No note'}
+                              </span>
+                              <span className="tabular-nums text-emerald-700 text-right">
+                                -{formatMoney(payment.amount, participation.currency)}
+                              </span>
                               <div className="flex justify-end gap-1">
-                                <Button
-                                  size="sm"
-                                  className="h-8 w-8 p-0"
-                                  onClick={() => submitPaymentEdit(participation.id, payment.id)}
-                                >
-                                  <Check className="w-4 h-4" />
-                                  <span className="sr-only">Save payment</span>
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-8 w-8 p-0"
-                                  onClick={() => setEditingPaymentId(null)}
-                                >
-                                  <X className="w-4 h-4" />
-                                  <span className="sr-only">Cancel payment edit</span>
-                                </Button>
+                                {canEdit && (
+                                  <>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-7 w-7 p-0 text-muted-foreground"
+                                      onClick={() => startEditingPayment(payment.id, payment)}
+                                    >
+                                      <Pencil className="w-3.5 h-3.5" />
+                                      <span className="sr-only">Edit payment</span>
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                                      onClick={() => onDeletePayment(participation.id, payment.id)}
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                      <span className="sr-only">Delete payment</span>
+                                    </Button>
+                                  </>
+                                )}
                               </div>
                             </div>
                           );
-                        }
+                        })}
 
-                        return (
+                        {canEdit && activePaymentForm === participation.id && (
                           <div
-                            key={payment.id}
                             className={cn(
                               paymentGridClass,
                               'px-3 py-2 border-t border-border items-center'
                             )}
                           >
-                            <span className="text-muted-foreground tabular-nums">
-                              {payment.date || 'No date'}
-                            </span>
-                            <span className="truncate">{payment.label || 'Payment'}</span>
-                            <span
-                              className={
-                                payment.note ? 'truncate' : 'truncate text-muted-foreground'
+                            <Input
+                              type="date"
+                              value={newPaymentDraft.date}
+                              aria-label="New payment date"
+                              onChange={(event) =>
+                                setPaymentDrafts((prev) => ({
+                                  ...prev,
+                                  [participation.id]: {
+                                    ...newPaymentDraft,
+                                    date: event.target.value,
+                                  },
+                                }))
                               }
-                            >
-                              {payment.note || 'No note'}
-                            </span>
-                            <span className="tabular-nums text-emerald-700 text-right">
-                              -{formatMoney(payment.amount, participation.currency)}
-                            </span>
+                              className="h-8"
+                            />
+                            <Input
+                              value={newPaymentDraft.label}
+                              aria-label="New payment label"
+                              onChange={(event) =>
+                                setPaymentDrafts((prev) => ({
+                                  ...prev,
+                                  [participation.id]: {
+                                    ...newPaymentDraft,
+                                    label: event.target.value,
+                                  },
+                                }))
+                              }
+                              className="h-8"
+                              placeholder="Down payment"
+                            />
+                            <Input
+                              value={newPaymentDraft.note}
+                              aria-label="New payment note"
+                              onChange={(event) =>
+                                setPaymentDrafts((prev) => ({
+                                  ...prev,
+                                  [participation.id]: {
+                                    ...newPaymentDraft,
+                                    note: event.target.value,
+                                  },
+                                }))
+                              }
+                              className="h-8"
+                              placeholder="Note"
+                            />
+                            <Input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={newPaymentDraft.amount}
+                              aria-label="New payment amount"
+                              onChange={(event) =>
+                                setPaymentDrafts((prev) => ({
+                                  ...prev,
+                                  [participation.id]: {
+                                    ...newPaymentDraft,
+                                    amount: event.target.value,
+                                  },
+                                }))
+                              }
+                              className="h-8 text-right"
+                            />
                             <div className="flex justify-end gap-1">
-                              {canEdit && (
-                                <>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-7 w-7 p-0 text-muted-foreground"
-                                    onClick={() => startEditingPayment(payment.id, payment)}
-                                  >
-                                    <Pencil className="w-3.5 h-3.5" />
-                                    <span className="sr-only">Edit payment</span>
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-                                    onClick={() => onDeletePayment(participation.id, payment.id)}
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                    <span className="sr-only">Delete payment</span>
-                                  </Button>
-                                </>
-                              )}
+                              <Button
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                onClick={() => submitPayment(participation.id)}
+                              >
+                                <Check className="w-4 h-4" />
+                                <span className="sr-only">Save payment</span>
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 w-8 p-0"
+                                onClick={() => setActivePaymentForm(null)}
+                              >
+                                <X className="w-4 h-4" />
+                                <span className="sr-only">Cancel payment</span>
+                              </Button>
                             </div>
                           </div>
-                        );
-                      })}
+                        )}
 
-                      {canEdit && activePaymentForm === participation.id && (
-                        <div
-                          className={cn(
-                            paymentGridClass,
-                            'px-3 py-2 border-t border-border items-center'
-                          )}
-                        >
-                          <Input
-                            type="date"
-                            value={newPaymentDraft.date}
-                            aria-label="New payment date"
-                            onChange={(event) =>
-                              setPaymentDrafts((prev) => ({
-                                ...prev,
-                                [participation.id]: {
-                                  ...newPaymentDraft,
-                                  date: event.target.value,
-                                },
-                              }))
-                            }
-                            className="h-8"
-                          />
-                          <Input
-                            value={newPaymentDraft.label}
-                            aria-label="New payment label"
-                            onChange={(event) =>
-                              setPaymentDrafts((prev) => ({
-                                ...prev,
-                                [participation.id]: {
-                                  ...newPaymentDraft,
-                                  label: event.target.value,
-                                },
-                              }))
-                            }
-                            className="h-8"
-                            placeholder="Down payment"
-                          />
-                          <Input
-                            value={newPaymentDraft.note}
-                            aria-label="New payment note"
-                            onChange={(event) =>
-                              setPaymentDrafts((prev) => ({
-                                ...prev,
-                                [participation.id]: {
-                                  ...newPaymentDraft,
-                                  note: event.target.value,
-                                },
-                              }))
-                            }
-                            className="h-8"
-                            placeholder="Note"
-                          />
-                          <Input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={newPaymentDraft.amount}
-                            aria-label="New payment amount"
-                            onChange={(event) =>
-                              setPaymentDrafts((prev) => ({
-                                ...prev,
-                                [participation.id]: {
-                                  ...newPaymentDraft,
-                                  amount: event.target.value,
-                                },
-                              }))
-                            }
-                            className="h-8 text-right"
-                          />
-                          <div className="flex justify-end gap-1">
-                            <Button
-                              size="sm"
-                              className="h-8 w-8 p-0"
-                              onClick={() => submitPayment(participation.id)}
-                            >
-                              <Check className="w-4 h-4" />
-                              <span className="sr-only">Save payment</span>
-                            </Button>
+                        {canEdit && activePaymentForm !== participation.id && (
+                          <div
+                            className={cn(
+                              paymentGridClass,
+                              'px-3 py-2 border-t border-border items-center'
+                            )}
+                          >
+                            <span />
+                            <span />
+                            <span />
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="h-8 w-8 p-0"
-                              onClick={() => setActivePaymentForm(null)}
+                              onClick={() => startAddingPayment(participation.id)}
+                              className="h-8 justify-self-end gap-1.5 px-2"
                             >
-                              <X className="w-4 h-4" />
-                              <span className="sr-only">Cancel payment</span>
+                              <CreditCard className="w-3.5 h-3.5" />
+                              Add payment
                             </Button>
+                            <span />
                           </div>
-                        </div>
-                      )}
+                        )}
 
-                      {canEdit && activePaymentForm !== participation.id && (
                         <div
                           className={cn(
                             paymentGridClass,
-                            'px-3 py-2 border-t border-border items-center'
+                            'px-3 py-2 border-t border-border bg-background items-center'
                           )}
                         >
+                          <span className="font-medium">Remaining</span>
                           <span />
                           <span />
-                          <span />
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => startAddingPayment(participation.id)}
-                            className="h-8 justify-self-end gap-1.5 px-2"
+                          <span
+                            className={cn(
+                              'font-semibold tabular-nums text-right',
+                              balance.remaining > 0 && 'text-red-800',
+                              balance.remaining < 0 && 'text-emerald-700'
+                            )}
                           >
-                            <CreditCard className="w-3.5 h-3.5" />
-                            Add payment
-                          </Button>
+                            {formatMoney(balance.remaining, participation.currency)}
+                          </span>
                           <span />
                         </div>
-                      )}
-
-                      <div
-                        className={cn(
-                          paymentGridClass,
-                          'px-3 py-2 border-t border-border bg-background items-center'
-                        )}
-                      >
-                        <span className="font-medium">Remaining</span>
-                        <span />
-                        <span />
-                        <span
-                          className={cn(
-                            'font-semibold tabular-nums text-right',
-                            balance.remaining > 0 && 'text-red-800',
-                            balance.remaining < 0 && 'text-emerald-700'
-                          )}
-                        >
-                          {formatMoney(balance.remaining, participation.currency)}
-                        </span>
-                        <span />
                       </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
             );
           })}
         </div>
       )}
-    </section>
+    </div>
   );
 }
