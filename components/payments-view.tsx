@@ -20,10 +20,12 @@ import { getEventAccentClasses } from '@/components/event-accent';
 import { Input } from '@/components/ui/input';
 import type {
   Contact,
+  ContactSortOrder,
   EventOccurrence,
   EventParticipation,
   EventSeries,
 } from '@/lib/contacts-data';
+import { compareContacts } from '@/lib/contacts-data';
 import {
   formatMoney,
   getContactName,
@@ -40,6 +42,7 @@ type Props = {
   eventOccurrences: EventOccurrence[];
   participations: EventParticipation[];
   activeOccurrenceId?: string | null;
+  contactSortOrder: ContactSortOrder;
   onAddPayment: (participationId: string, payment: CreatePaymentInput) => void;
   onUpdatePayment: (
     participationId: string,
@@ -114,12 +117,25 @@ function compareRows(a: PaymentRow, b: PaymentRow) {
   return (b.label.date ?? '0000-00-00').localeCompare(a.label.date ?? '0000-00-00');
 }
 
+function compareEventRows(
+  a: PaymentRow,
+  b: PaymentRow,
+  contactSortOrder: ContactSortOrder
+) {
+  if (a.contact && b.contact) {
+    const contactOrder = compareContacts(a.contact, b.contact, contactSortOrder);
+    if (contactOrder !== 0) return contactOrder;
+  }
+  return (a.label.date ?? '0000-00-00').localeCompare(b.label.date ?? '0000-00-00');
+}
+
 export function PaymentsView({
   contacts,
   eventSeries,
   eventOccurrences,
   participations,
   activeOccurrenceId,
+  contactSortOrder,
   onAddPayment,
   onUpdatePayment,
   onDeletePayment,
@@ -174,6 +190,9 @@ export function PaymentsView({
         const aOpen = hasOpenBalance(a.summary);
         const bOpen = hasOpenBalance(b.summary);
         if (aOpen !== bOpen) return aOpen ? -1 : 1;
+        if (a.contact && b.contact) {
+          return compareContacts(a.contact, b.contact, contactSortOrder);
+        }
         return getContactName(a.contact).localeCompare(getContactName(b.contact));
       });
   }, [rows]);
@@ -212,7 +231,7 @@ export function PaymentsView({
     return Array.from(groups.entries())
       .map(([occurrenceId, group]) => ({ occurrenceId, ...group }))
       .map((group) => {
-        group.rows.sort(compareRows);
+        group.rows.sort((a, b) => compareEventRows(a, b, contactSortOrder));
         return group;
       })
       .sort((a, b) => {
@@ -471,7 +490,7 @@ function EventPaymentGroup({
   setGroupNode: (node: HTMLDivElement | null) => void;
 } & GroupControls) {
   const eventSettled = group.rows.every((row) => row.balance.status === 'paid');
-  const [collapsed, setCollapsed] = useState(eventSettled);
+  const [collapsed, setCollapsed] = useState(true);
   const eventAccent = getEventAccentClasses(group.occurrenceId, group.series?.color);
 
   useEffect(() => {
@@ -519,7 +538,7 @@ function EventPaymentGroup({
               key={row.participation.id}
               row={row}
               title={getContactName(row.contact)}
-              subtitle={row.label.eventName}
+              subtitle={row.label.date ?? 'No date'}
               contactId={row.contact?.id}
               variant="event"
               eventAccent={eventAccent}
@@ -548,7 +567,7 @@ function PersonPaymentGroup({
   };
 } & GroupControls & { eventSeries?: EventSeries[]; eventOccurrences?: EventOccurrence[] }) {
   const personSettled = group.rows.every((row) => row.balance.status === 'paid');
-  const [collapsed, setCollapsed] = useState(personSettled);
+  const [collapsed, setCollapsed] = useState(true);
 
   useEffect(() => {
     if (personSettled) setCollapsed(true);

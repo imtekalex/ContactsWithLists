@@ -43,6 +43,7 @@ import {
   STANDARD_SEARCHABLE_FIELDS,
   matchesGlobalSearch,
   resolveListMembers,
+  compareContacts,
   type Contact,
   type ContactList,
   type CustomField,
@@ -60,6 +61,7 @@ import {
   createDefaultContactsState,
   loadContactsState,
   saveContactsCollection,
+  type AppPreferences,
   type PrintPreferences,
 } from '@/lib/contacts-store';
 import { ContactDetail } from '@/components/contact-detail';
@@ -170,6 +172,9 @@ export default function Home() {
   const [printPreferences, setPrintPreferences] = useState<PrintPreferences>(
     defaultContactsState.printPreferences
   );
+  const [appPreferences, setAppPreferences] = useState<AppPreferences>(
+    defaultContactsState.appPreferences
+  );
   const [storageReady, setStorageReady] = useState(false);
 
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
@@ -222,6 +227,7 @@ export default function Home() {
         setEventOccurrences(stored.eventOccurrences);
         setParticipations(stored.participations);
         setPrintPreferences(stored.printPreferences);
+        setAppPreferences(stored.appPreferences);
         setSelectedId(stored.contacts[0]?.id ?? null);
       })
       .catch((error) => {
@@ -398,6 +404,21 @@ export default function Home() {
 
     const timeoutId = window.setTimeout(() => {
       trackSave(
+        saveContactsCollection('appPreferences', appPreferences).catch((error) => {
+          console.error(error);
+          showBanner('Could not save app preferences');
+        })
+      );
+    }, 400);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [appPreferences, storageReady]);
+
+  useEffect(() => {
+    if (!storageReady) return;
+
+    const timeoutId = window.setTimeout(() => {
+      trackSave(
         saveContactsCollection('eventSeries', eventSeries).catch((error) => {
           console.error(error);
           showBanner('Could not save event series');
@@ -439,14 +460,14 @@ export default function Home() {
   }, [participations, storageReady]);
 
   const filteredContacts = useMemo(() => {
-    let list = contacts;
+    let list = [...contacts];
     if (starredOnly) list = list.filter((c) => c.starred);
     if (activeGroupId) list = list.filter((c) => c.groupIds.includes(activeGroupId));
     if (search.trim()) {
       list = list.filter((c) => matchesGlobalSearch(c, search, customFields));
     }
-    return list;
-  }, [contacts, search, starredOnly, activeGroupId, customFields]);
+    return list.sort((a, b) => compareContacts(a, b, appPreferences.contactSortOrder));
+  }, [contacts, search, starredOnly, activeGroupId, customFields, appPreferences]);
 
   const selected = contacts.find((c) => c.id === selectedId) ?? null;
 
@@ -1720,6 +1741,7 @@ export default function Home() {
             eventSeries={eventSeries}
             eventOccurrences={eventOccurrences}
             participations={participations}
+            contactSortOrder={appPreferences.contactSortOrder}
             activeOccurrenceId={focusedOccurrenceId}
             onCreateEvent={handleCreateEventOccurrence}
             onUpdateEvent={handleUpdateEventOccurrence}
@@ -1737,6 +1759,7 @@ export default function Home() {
             eventSeries={eventSeries}
             eventOccurrences={eventOccurrences}
             participations={participations}
+            contactSortOrder={appPreferences.contactSortOrder}
             activeOccurrenceId={focusedOccurrenceId}
             onAddPayment={handleAddPayment}
             onUpdatePayment={handleUpdatePayment}
@@ -1759,7 +1782,9 @@ export default function Home() {
             contacts={contacts}
             groups={groups}
             customFields={customFields}
+            appPreferences={appPreferences}
             printPreferences={printPreferences}
+            onUpdateAppPreferences={setAppPreferences}
             onUpdatePrintPreferences={setPrintPreferences}
             onCreateField={handleCreateField}
             onUpdateField={handleUpdateField}
@@ -2231,7 +2256,9 @@ function SettingsView({
   contacts,
   groups,
   customFields,
+  appPreferences,
   printPreferences,
+  onUpdateAppPreferences,
   onUpdatePrintPreferences,
   onCreateField,
   onUpdateField,
@@ -2244,7 +2271,9 @@ function SettingsView({
   contacts: Contact[];
   groups: Group[];
   customFields: CustomField[];
+  appPreferences: AppPreferences;
   printPreferences: PrintPreferences;
+  onUpdateAppPreferences: (prefs: AppPreferences) => void;
   onUpdatePrintPreferences: (prefs: PrintPreferences) => void;
   onCreateField: (f: CustomField) => void;
   onUpdateField: (f: CustomField) => void;
@@ -2341,6 +2370,39 @@ function SettingsView({
             <Stat label="Contacts" value={contacts.length} />
             <Stat label="Groups" value={groups.length} />
             <Stat label="Custom fields" value={customFields.length} />
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <h3 className="text-base font-semibold">Contact sorting</h3>
+          <p className="text-sm text-muted-foreground mt-1">
+            Choose how contacts are ordered across the app.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              variant={appPreferences.contactSortOrder === 'lastName' ? 'default' : 'outline'}
+              onClick={() =>
+                onUpdateAppPreferences({
+                  ...appPreferences,
+                  contactSortOrder: 'lastName',
+                })
+              }
+            >
+              Last name
+            </Button>
+            <Button
+              size="sm"
+              variant={appPreferences.contactSortOrder === 'firstName' ? 'default' : 'outline'}
+              onClick={() =>
+                onUpdateAppPreferences({
+                  ...appPreferences,
+                  contactSortOrder: 'firstName',
+                })
+              }
+            >
+              First name
+            </Button>
           </div>
         </Card>
 

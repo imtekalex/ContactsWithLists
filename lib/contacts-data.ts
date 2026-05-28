@@ -58,6 +58,29 @@ export type Contact = {
   updatedAt: number;
 };
 
+export type ContactSortOrder = 'lastName' | 'firstName';
+
+function normalizeSortValue(value: string) {
+  return value
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
+}
+
+export function getContactSortKey(contact: Contact, order: ContactSortOrder) {
+  const firstName = contact.firstName?.trim() ?? '';
+  const lastName = contact.lastName?.trim() ?? '';
+  const fallback = order === 'lastName' ? `${lastName} ${firstName}` : `${firstName} ${lastName}`;
+  if (fallback.trim()) {
+    return normalizeSortValue(fallback);
+  }
+  return normalizeSortValue(contact.fileAs ?? contact.nickname ?? 'Unnamed contact');
+}
+
+export function compareContacts(a: Contact, b: Contact, order: ContactSortOrder) {
+  return getContactSortKey(a, order).localeCompare(getContactSortKey(b, order));
+}
+
 export type ContactLabeledValue = {
   id: string;
   label: string;

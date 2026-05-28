@@ -11,6 +11,7 @@ import {
   type ActivityEntry,
   type Contact,
   type ContactList,
+  type ContactSortOrder,
   type CustomField,
   type EventOccurrence,
   type EventParticipation,
@@ -42,6 +43,10 @@ export type PrintPreferences = {
   returnAddresses: Record<ReturnAddressKind, ReturnAddress>;
 };
 
+export type AppPreferences = {
+  contactSortOrder: ContactSortOrder;
+};
+
 export type ContactsState = {
   contacts: Contact[];
   deleted: Contact[];
@@ -52,6 +57,7 @@ export type ContactsState = {
   eventSeries: EventSeries[];
   eventOccurrences: EventOccurrence[];
   participations: EventParticipation[];
+  appPreferences: AppPreferences;
   printPreferences: PrintPreferences;
 };
 
@@ -162,6 +168,9 @@ export function createDefaultContactsState(): ContactsState {
     eventSeries: initialEventSeries,
     eventOccurrences: initialEventOccurrences,
     participations: initialParticipations,
+    appPreferences: {
+      contactSortOrder: 'lastName',
+    },
     printPreferences: {
       printType: 'standard',
       addressLayout: 'european',
@@ -216,6 +225,13 @@ export function normalizeContactsState(
     participations: Array.isArray(input?.participations)
       ? input.participations
       : defaults.participations,
+    appPreferences:
+      input?.appPreferences && typeof input.appPreferences === 'object'
+        ? {
+            ...defaults.appPreferences,
+            ...input.appPreferences,
+          }
+        : defaults.appPreferences,
     printPreferences:
       input?.printPreferences && typeof input.printPreferences === 'object'
         ? {

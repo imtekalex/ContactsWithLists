@@ -25,6 +25,7 @@ const collectionFiles: Record<keyof ContactsState, string> = {
   eventSeries: 'event-series-collection.json',
   eventOccurrences: 'event-occurrences-collection.json',
   participations: 'participations-collection.json',
+  appPreferences: 'app-preferences-collection.json',
   printPreferences: 'print-preferences-collection.json',
 };
 
@@ -121,6 +122,7 @@ async function readContactsState(): Promise<ContactsState> {
       eventSeries,
       eventOccurrences,
       participations,
+      appPreferences,
       printPreferences,
     ] = await Promise.all([
       readCollectionFile('contacts', defaults.contacts),
@@ -132,6 +134,7 @@ async function readContactsState(): Promise<ContactsState> {
       readCollectionFile('eventSeries', defaults.eventSeries),
       readCollectionFile('eventOccurrences', defaults.eventOccurrences),
       readCollectionFile('participations', defaults.participations),
+      readCollectionFile('appPreferences', defaults.appPreferences),
       readCollectionFile('printPreferences', defaults.printPreferences),
     ]);
 
@@ -145,6 +148,7 @@ async function readContactsState(): Promise<ContactsState> {
       eventSeries,
       eventOccurrences,
       participations,
+      appPreferences,
       printPreferences,
     };
   } catch (error) {

@@ -16,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import type {
   Contact,
   ContactList,
+  ContactSortOrder,
   CustomField,
   EventOccurrence,
   EventParticipation,
@@ -25,7 +26,7 @@ import type {
   Group,
   GroupColor,
 } from '@/lib/contacts-data';
-import { resolveListMembers, STANDARD_SEARCHABLE_FIELDS } from '@/lib/contacts-data';
+import { compareContacts, resolveListMembers, STANDARD_SEARCHABLE_FIELDS } from '@/lib/contacts-data';
 import {
   formatMoney,
   getContactName,
@@ -89,6 +90,7 @@ type Props = {
   eventSeries: EventSeries[];
   eventOccurrences: EventOccurrence[];
   participations: EventParticipation[];
+  contactSortOrder: ContactSortOrder;
   activeOccurrenceId?: string | null;
   onCreateEvent: (input: CreateEventOccurrenceInput) => void;
   onUpdateEvent: (input: UpdateEventOccurrenceInput) => void;
@@ -191,7 +193,8 @@ function getYear(occurrence: EventOccurrence) {
 function getEventMembers(
   occurrence: EventOccurrence,
   contacts: Contact[],
-  participations: EventParticipation[]
+  participations: EventParticipation[],
+  contactSortOrder: ContactSortOrder
 ) {
   const manualIds = new Set(occurrence.contactIds ?? []);
   participations
@@ -199,7 +202,7 @@ function getEventMembers(
     .forEach((participation) => manualIds.add(participation.contactId));
   return contacts
     .filter((contact) => manualIds.has(contact.id))
-    .sort((a, b) => getContactName(a).localeCompare(getContactName(b)));
+    .sort((a, b) => compareContacts(a, b, contactSortOrder));
 }
 
 export function EventsView({
@@ -210,6 +213,7 @@ export function EventsView({
   eventSeries,
   eventOccurrences,
   participations,
+  contactSortOrder,
   activeOccurrenceId: requestedActiveOccurrenceId,
   onCreateEvent,
   onUpdateEvent,
@@ -361,7 +365,12 @@ export function EventsView({
                   <ul className="divide-y divide-border">
                     {occurrences.map((occurrence) => {
                       const series = eventSeries.find((item) => item.id === occurrence.seriesId);
-                      const members = getEventMembers(occurrence, contacts, participations);
+                      const members = getEventMembers(
+                        occurrence,
+                        contacts,
+                        participations,
+                        contactSortOrder
+                      );
                       const eventAccent = getEventAccentClasses(occurrence.id, series?.color);
                       return (
                         <li key={occurrence.id}>
@@ -424,6 +433,7 @@ export function EventsView({
             customFields={customFields}
             groupColorClasses={groupColorClasses}
             participations={participations}
+            contactSortOrder={contactSortOrder}
             onUpdateEvent={onUpdateEvent}
             onAddParticipants={onAddParticipants}
             onRemoveParticipant={onRemoveParticipant}
@@ -464,6 +474,7 @@ function EventDetail({
   onSetParticipantPrice,
   onAddPayment,
   onSelectContact,
+  contactSortOrder,
 }: {
   occurrence: EventOccurrence;
   series: EventSeries;
@@ -473,6 +484,7 @@ function EventDetail({
   customFields: CustomField[];
   groupColorClasses: Record<GroupColor, ColorClass>;
   participations: EventParticipation[];
+  contactSortOrder: ContactSortOrder;
   onUpdateEvent: (input: UpdateEventOccurrenceInput) => void;
   onAddParticipants: (input: EventParticipantsInput) => void;
   onRemoveParticipant: (input: EventParticipantInput) => void;
@@ -502,8 +514,8 @@ function EventDetail({
   >({});
 
   const members = useMemo(
-    () => getEventMembers(occurrence, contacts, participations),
-    [contacts, occurrence, participations]
+    () => getEventMembers(occurrence, contacts, participations, contactSortOrder),
+    [contacts, occurrence, participations, contactSortOrder]
   );
   const memberIds = useMemo(() => new Set(members.map((contact) => contact.id)), [members]);
   const searchLower = contactSearch.trim().toLowerCase();
@@ -539,7 +551,7 @@ function EventDetail({
       .filter((contact) => stagedContactIds.includes(contact.id) && !memberIds.has(contact.id))
       .forEach((contact) => merged.set(contact.id, contact));
     return Array.from(merged.values()).sort((a, b) =>
-      getContactName(a).localeCompare(getContactName(b))
+      compareContacts(a, b, contactSortOrder)
     );
   }, [contacts, dynamicPreviewContacts, memberIds, stagedContactIds]);
   const includedPreviewContacts = previewContacts.filter(
