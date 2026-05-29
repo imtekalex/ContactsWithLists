@@ -61,10 +61,7 @@ export type Contact = {
 export type ContactSortOrder = 'lastName' | 'firstName';
 
 function normalizeSortValue(value: string) {
-  return value
-    .trim()
-    .replace(/\s+/g, ' ')
-    .toLowerCase();
+  return value.trim().replace(/\s+/g, ' ').toLowerCase();
 }
 
 export function getContactSortKey(contact: Contact, order: ContactSortOrder) {

@@ -26,7 +26,11 @@ import type {
   Group,
   GroupColor,
 } from '@/lib/contacts-data';
-import { compareContacts, resolveListMembers, STANDARD_SEARCHABLE_FIELDS } from '@/lib/contacts-data';
+import {
+  compareContacts,
+  resolveListMembers,
+  STANDARD_SEARCHABLE_FIELDS,
+} from '@/lib/contacts-data';
 import {
   formatMoney,
   getContactName,
@@ -550,10 +554,8 @@ function EventDetail({
     contacts
       .filter((contact) => stagedContactIds.includes(contact.id) && !memberIds.has(contact.id))
       .forEach((contact) => merged.set(contact.id, contact));
-    return Array.from(merged.values()).sort((a, b) =>
-      compareContacts(a, b, contactSortOrder)
-    );
-  }, [contacts, dynamicPreviewContacts, memberIds, stagedContactIds]);
+    return Array.from(merged.values()).sort((a, b) => compareContacts(a, b, contactSortOrder));
+  }, [contactSortOrder, contacts, dynamicPreviewContacts, memberIds, stagedContactIds]);
   const includedPreviewContacts = previewContacts.filter(
     (contact) => !excludedContactIds.includes(contact.id)
   );

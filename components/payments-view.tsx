@@ -68,6 +68,13 @@ type MoneySummary = Record<
   string,
   { due: number; credit: number; net: number; paid: number; total: number }
 >;
+type MoneyTone = 'outgoing' | 'incoming';
+
+function moneyToneClass(tone?: MoneyTone) {
+  if (tone === 'outgoing') return 'text-red-800';
+  if (tone === 'incoming') return 'text-emerald-700';
+  return undefined;
+}
 
 function getTodayIso() {
   return new Date().toISOString().slice(0, 10);
@@ -106,22 +113,35 @@ function formatNetDue(summary: MoneySummary) {
     .join(' / ');
 }
 
-function hasOpenBalance(summary: MoneySummary) {
-  return Object.values(summary).some((value) => value.net > 0);
+function hasPositiveSummary(summary: MoneySummary, key: keyof MoneySummary[string]) {
+  return Object.values(summary).some((value) => value[key] > 0);
+}
+
+function paymentSortRank(remaining: number) {
+  if (remaining > 0) return 0;
+  if (remaining < 0) return 1;
+  return 2;
+}
+
+function summarySortRank(summary: MoneySummary) {
+  if (Object.values(summary).some((value) => value.net > 0)) return 0;
+  if (Object.values(summary).some((value) => value.credit > 0)) return 1;
+  return 2;
+}
+
+function comparePaymentRank(a: PaymentRow, b: PaymentRow) {
+  return paymentSortRank(a.balance.remaining) - paymentSortRank(b.balance.remaining);
 }
 
 function compareRows(a: PaymentRow, b: PaymentRow) {
-  const aSettled = a.balance.remaining <= 0;
-  const bSettled = b.balance.remaining <= 0;
-  if (aSettled !== bSettled) return aSettled ? 1 : -1;
+  const rankOrder = comparePaymentRank(a, b);
+  if (rankOrder !== 0) return rankOrder;
   return (b.label.date ?? '0000-00-00').localeCompare(a.label.date ?? '0000-00-00');
 }
 
-function compareEventRows(
-  a: PaymentRow,
-  b: PaymentRow,
-  contactSortOrder: ContactSortOrder
-) {
+function compareEventRows(a: PaymentRow, b: PaymentRow, contactSortOrder: ContactSortOrder) {
+  const rankOrder = comparePaymentRank(a, b);
+  if (rankOrder !== 0) return rankOrder;
   if (a.contact && b.contact) {
     const contactOrder = compareContacts(a.contact, b.contact, contactSortOrder);
     if (contactOrder !== 0) return contactOrder;
@@ -187,15 +207,14 @@ export function PaymentsView({
         return { contactId, ...group };
       })
       .sort((a, b) => {
-        const aOpen = hasOpenBalance(a.summary);
-        const bOpen = hasOpenBalance(b.summary);
-        if (aOpen !== bOpen) return aOpen ? -1 : 1;
+        const rankOrder = summarySortRank(a.summary) - summarySortRank(b.summary);
+        if (rankOrder !== 0) return rankOrder;
         if (a.contact && b.contact) {
           return compareContacts(a.contact, b.contact, contactSortOrder);
         }
         return getContactName(a.contact).localeCompare(getContactName(b.contact));
       });
-  }, [rows]);
+  }, [contactSortOrder, rows]);
 
   const eventGroups = useMemo(() => {
     const groups = new Map<
@@ -235,14 +254,13 @@ export function PaymentsView({
         return group;
       })
       .sort((a, b) => {
-        const aOpen = hasOpenBalance(a.summary);
-        const bOpen = hasOpenBalance(b.summary);
-        if (aOpen !== bOpen) return aOpen ? -1 : 1;
+        const rankOrder = summarySortRank(a.summary) - summarySortRank(b.summary);
+        if (rankOrder !== 0) return rankOrder;
         return (b.occurrence?.date ?? '0000-00-00').localeCompare(
           a.occurrence?.date ?? '0000-00-00'
         );
       });
-  }, [eventOccurrences, eventSeries, rows]);
+  }, [contactSortOrder, eventOccurrences, eventSeries, rows]);
 
   const overview = useMemo(() => {
     const gross: MoneySummary = {};
@@ -367,10 +385,26 @@ export function PaymentsView({
 
       <div className="px-8 py-6 space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Stat label="Net due after credits" value={formatSummary(overview.netByPerson, 'net')} />
-          <Stat label="Gross outstanding" value={formatSummary(overview.gross, 'due')} />
-          <Stat label="Available credit" value={formatSummary(overview.gross, 'credit')} />
-          <Stat label="Payments received" value={formatSummary(overview.gross, 'paid')} />
+          <Stat
+            label="Net due after credits"
+            value={formatSummary(overview.netByPerson, 'net')}
+            tone={hasPositiveSummary(overview.netByPerson, 'net') ? 'outgoing' : undefined}
+          />
+          <Stat
+            label="Gross outstanding"
+            value={formatSummary(overview.gross, 'due')}
+            tone={hasPositiveSummary(overview.gross, 'due') ? 'outgoing' : undefined}
+          />
+          <Stat
+            label="Available credit"
+            value={formatSummary(overview.gross, 'credit')}
+            tone={hasPositiveSummary(overview.gross, 'credit') ? 'incoming' : undefined}
+          />
+          <Stat
+            label="Payments received"
+            value={formatSummary(overview.gross, 'paid')}
+            tone={hasPositiveSummary(overview.gross, 'paid') ? 'incoming' : undefined}
+          />
         </div>
 
         {viewMode === 'events' ? (
@@ -437,11 +471,11 @@ export function PaymentsView({
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ label, value, tone }: { label: string; value: string; tone?: MoneyTone }) {
   return (
     <Card className="p-4">
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-xl font-semibold tabular-nums mt-1">{value}</p>
+      <p className={cn('text-xl font-semibold tabular-nums mt-1', moneyToneClass(tone))}>{value}</p>
     </Card>
   );
 }
@@ -538,12 +572,12 @@ function EventPaymentGroup({
               key={row.participation.id}
               row={row}
               title={getContactName(row.contact)}
-              subtitle={row.label.date ?? 'No date'}
+              subtitle=""
               contactId={row.contact?.id}
               variant="event"
               eventAccent={eventAccent}
-              hideCollapseIcon
               flushTop
+              initiallyCollapsed
               {...controls}
             />
           ))}
@@ -612,6 +646,7 @@ function PersonPaymentGroup({
                     eventOccurrences?.find((o) => o.id === row.participation.occurrenceId)?.seriesId
                 )?.color
               )}
+              initiallyCollapsed
               {...controls}
             />
           ))}
@@ -689,9 +724,20 @@ function GroupHeader({
         <Metric
           label={showCreditOffset ? 'Net due' : 'Open'}
           value={showCreditOffset ? formatNetDue(summary) : formatSummary(summary, 'due')}
+          tone={
+            hasPositiveSummary(summary, showCreditOffset ? 'net' : 'due') ? 'outgoing' : undefined
+          }
         />
-        <Metric label="Credit" value={formatSummary(summary, 'credit')} />
-        <Metric label="Paid" value={formatSummary(summary, 'paid')} />
+        <Metric
+          label="Credit"
+          value={formatSummary(summary, 'credit')}
+          tone={hasPositiveSummary(summary, 'credit') ? 'incoming' : undefined}
+        />
+        <Metric
+          label="Paid"
+          value={formatSummary(summary, 'paid')}
+          tone={hasPositiveSummary(summary, 'paid') ? 'incoming' : undefined}
+        />
       </div>
     </>
   );
@@ -735,19 +781,11 @@ function GroupHeader({
   );
 }
 
-function Metric({ label, value, tone }: { label: string; value: string; tone?: 'due' | 'credit' }) {
+function Metric({ label, value, tone }: { label: string; value: string; tone?: MoneyTone }) {
   return (
     <div>
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p
-        className={cn(
-          'font-semibold tabular-nums mt-0.5',
-          tone === 'due' && 'text-red-800',
-          tone === 'credit' && 'text-emerald-700'
-        )}
-      >
-        {value}
-      </p>
+      <p className={cn('font-semibold tabular-nums mt-0.5', moneyToneClass(tone))}>{value}</p>
     </div>
   );
 }
@@ -771,8 +809,8 @@ function ParticipationPaymentBlock({
   onCancelEdit,
   onDeletePayment,
   onSelectContact,
-  hideCollapseIcon = false,
   flushTop = false,
+  initiallyCollapsed = false,
 }: {
   row: PaymentRow;
   title: string;
@@ -780,26 +818,22 @@ function ParticipationPaymentBlock({
   contactId: string | undefined;
   variant?: 'event' | 'person';
   eventAccent?: ReturnType<typeof getEventAccentClasses>;
-  hideCollapseIcon?: boolean;
   flushTop?: boolean;
+  initiallyCollapsed?: boolean;
 } & GroupControls) {
   const { participation, balance } = row;
   const settled = balance.status === 'paid';
-  const [collapsed, setCollapsed] = useState(settled);
+  const [collapsed, setCollapsed] = useState(initiallyCollapsed || settled);
   const newPaymentDraft = paymentDrafts[participation.id] ?? emptyPaymentDraft();
   const paymentGridClass =
     'grid min-w-[52rem] grid-cols-[7rem_minmax(8rem,1fr)_minmax(10rem,1.2fr)_8rem_5rem] gap-3';
   const containerClass = cn(
     'space-y-3 px-5 pb-4',
     flushTop ? 'pt-0' : 'pt-4',
-    hideCollapseIcon
-      ? settled && 'bg-slate-100/70 text-muted-foreground'
-      : [
-          'border-l-4',
-          settled
-            ? 'border-slate-300 bg-slate-100/70 text-muted-foreground'
-            : [eventAccent?.border, eventAccent?.card],
-        ]
+    'border-l-4',
+    settled
+      ? 'border-slate-300 bg-slate-100/70 text-muted-foreground'
+      : [eventAccent?.border, eventAccent?.card]
   );
 
   useEffect(() => {
@@ -823,21 +857,19 @@ function ParticipationPaymentBlock({
           }
         }}
         className={cn(
-          '-mx-5 flex cursor-pointer items-start justify-between gap-4 px-5 py-4 transition-colors hover:bg-background/70',
+          '-mx-5 flex cursor-pointer items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-background/70',
           flushTop ? 'mt-0 pt-2' : '-mt-4',
           collapsed ? '-mb-4 rounded-lg' : 'mb-1 rounded-t-lg rounded-b-none'
         )}
         aria-label={collapsed ? 'Expand payment details' : 'Collapse payment details'}
         aria-expanded={!collapsed}
       >
-        <div className="flex min-w-0 items-start gap-3">
-          {!hideCollapseIcon && (
-            <span className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md text-muted-foreground">
-              <ChevronDown
-                className={cn('h-4 w-4 transition-transform', collapsed && '-rotate-90')}
-              />
-            </span>
-          )}
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md text-muted-foreground">
+            <ChevronDown
+              className={cn('h-4 w-4 transition-transform', collapsed && '-rotate-90')}
+            />
+          </span>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               {eventAccent && (
@@ -865,23 +897,29 @@ function ParticipationPaymentBlock({
                 className={cn(
                   'capitalize',
                   balance.remaining > 0 && 'border-red-200 bg-red-50 text-red-800',
-                  settled && 'bg-slate-200 text-slate-700',
+                  settled && 'border-emerald-300 bg-emerald-50 text-emerald-800',
                   balance.remaining < 0 && 'border-emerald-300 bg-emerald-50 text-emerald-800'
                 )}
               >
                 {getPaymentStatusLabel(balance.status)}
               </Badge>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
+            {subtitle && <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>}
           </div>
         </div>
         <div className="grid grid-cols-3 gap-5 text-right text-sm">
           <Metric label="Total" value={formatMoney(balance.total, participation.currency)} />
-          <Metric label="Paid" value={formatMoney(balance.paid, participation.currency)} />
+          <Metric
+            label="Paid"
+            value={formatMoney(balance.paid, participation.currency)}
+            tone={balance.paid > 0 ? 'incoming' : undefined}
+          />
           <Metric
             label={balance.remaining < 0 ? 'Credit' : 'Open'}
             value={formatMoney(Math.abs(balance.remaining), participation.currency)}
-            tone={balance.remaining > 0 ? 'due' : balance.remaining < 0 ? 'credit' : undefined}
+            tone={
+              balance.remaining > 0 ? 'outgoing' : balance.remaining < 0 ? 'incoming' : undefined
+            }
           />
         </div>
       </div>
